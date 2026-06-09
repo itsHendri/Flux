@@ -69,9 +69,9 @@ vec3 render(vec2 uv) {
   float cellDist = sqrt(md);
   vec3 col = cellCol * (0.25 + 0.75 * cellDist);
 
-  // Glowing borders — mid-driven.
+  // Glowing borders — steerable Edge Glow plus mid drive.
   float edge = smoothstep(0.07, 0.0, border);
-  col += vec3(0.8, 0.95, 1.0) * edge * (0.35 + uMid * 0.9);
+  col += vec3(0.8, 0.95, 1.0) * edge * (0.2 + uCellEdge * 1.5 + uMid * 0.7);
 
   // Cell-core sparkle on high.
   float core = smoothstep(0.18, 0.0, cellDist);

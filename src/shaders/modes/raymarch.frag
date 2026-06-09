@@ -99,8 +99,8 @@ vec3 render(vec2 uv) {
     col += palette(0.1 + uHigh * 0.4) * fre * 0.6;
   }
 
-  // Additive proximity glow, coloured and level-driven.
-  col += palette(0.6 + uLevel * 0.3) * glow * (0.6 + uLevel * 1.2);
+  // Additive proximity glow, coloured and level-driven (steerable amount).
+  col += palette(0.6 + uLevel * 0.3) * glow * (0.6 + uLevel * 1.2) * uRayGlow;
 
   // Overall brightness control.
   col *= mix(0.7, 1.6, uGain);

@@ -34,9 +34,9 @@ vec3 render(vec2 uv) {
   // Brightness shaped by layer 1 and overall level.
   col *= smoothstep(0.15, 0.95, n1) * (0.45 + uLevel * 0.9);
 
-  // Mid-driven glowing veins along an iso-contour of layer 1.
+  // Glowing veins along an iso-contour of layer 1 (intensity is steerable).
   float veins = smoothstep(0.045, 0.0, abs(n1 - 0.5));
-  col += hsv(0.12 + uMid * 0.25, 0.7, 1.0) * veins * uMid * 0.8;
+  col += hsv(0.12 + uMid * 0.25, 0.7, 1.0) * veins * (0.3 + uMid) * uPlasmaVeins;
 
   col += vec3(0.015, 0.02, 0.03);
   return col;

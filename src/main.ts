@@ -86,11 +86,17 @@ for (const mode of MODES) {
 modeSection.appendChild(modeRow);
 panel.appendChild(modeSection);
 
+/** Refresh which controls the panel shows for the current mode + enabled passes. */
+function refreshControls(): void {
+  controlPanel.update(app.getMode(), (n) => renderer.isPassEnabled(n));
+}
+
 function selectMode(name: string): void {
   app.setMode(name);
   for (const [n, btn] of Object.entries(modeButtons)) {
     btn.classList.toggle('active', n === name);
   }
+  refreshControls();
 }
 
 // Highlight a default mode up front so the chip shows as selected on load.
@@ -112,6 +118,7 @@ if (renderer.passNames.length > 0) {
       const on = !renderer.isPassEnabled(name);
       renderer.setPassEnabled(name, on);
       btn.classList.toggle('active', on);
+      refreshControls();
     });
     fxRow.appendChild(btn);
   }

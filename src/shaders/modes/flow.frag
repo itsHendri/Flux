@@ -32,8 +32,8 @@ vec3 render(vec2 uv) {
   // Level 1 warp — drift the field over time so it flows.
   vec2 q = vec2(fbm(p + vec2(0.0, 0.0) + t), fbm(p + vec2(5.2, 1.3) - t));
 
-  // Level 2 warp — sample displaced by level 1, plus high-freq detail from high.
-  float detail = 1.0 + uHigh * 1.5;
+  // Level 2 warp — sample displaced by level 1; detail from high + Turbulence.
+  float detail = 1.0 + uHigh * 1.5 + uFlowTurb * 2.0;
   vec2 r = vec2(
     fbm((p + w * q) * detail + vec2(1.7, 9.2) + t * 1.3),
     fbm((p + w * q) * detail + vec2(8.3, 2.8) - t * 0.9)

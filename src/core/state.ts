@@ -63,6 +63,14 @@ export interface ControlDef {
   /** select only */
   options?: SelectOption[];
   default: number | boolean | [number, number, number];
+  /**
+   * Visibility scope (live-steering polish). A control shows only when it's
+   * relevant: `modes` limits it to those shader modes; `pass` shows it only
+   * while that post-pass is enabled. Omit both for a global control. The
+   * uniform is always declared + uploaded regardless of visibility.
+   */
+  modes?: string[];
+  pass?: string;
 }
 
 /** True if a control drives a `vec3` uniform (only `color` does). */

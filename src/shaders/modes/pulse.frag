@@ -26,8 +26,8 @@ vec3 render(vec2 uv) {
   rings = pow(rings, 6.0) * smoothstep(1.3, 0.0, r);
   col += vec3(1.0, 0.30, 0.40) * rings * uBass * gain;
 
-  // --- mid: rotating petal bloom ---------------------------------------
-  float petalCount = floor(mix(4.0, 9.0, uMid));
+  // --- mid: rotating petal bloom (petal count is live-steerable) -------
+  float petalCount = floor(uPetals);
   float bloom = petals(p, petalCount, uTime * 0.6);
   col += vec3(1.0, 0.72, 0.32) * bloom * (0.35 + uMid * gain);
 

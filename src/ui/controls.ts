@@ -1,14 +1,24 @@
 import type { ControlDef } from '../core/state.ts';
 
+// Modes that share the generic Warp/Scale controls (the procedural fields).
+const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
+const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells'];
+
 /**
  * THE uniform schema — single source of truth.
  *
  * Each entry generates both a panel widget (ControlPanel, per `type`) and a
- * shader uniform declaration + per-frame upload (Renderer). Add a control here
- * and it appears in both places automatically; nothing else needs to change.
- * `type` defaults to `'slider'`, so existing numeric entries need no `type`.
+ * shader uniform declaration + per-frame upload (Renderer). `type` defaults to
+ * `'slider'`. `modes`/`pass` scope a control's visibility (see ControlDef): a
+ * control shows only when its mode is active / its pass is enabled, so the panel
+ * always reflects what's actually steerable right now. The uniform is declared
+ * and uploaded regardless.
+ *
+ * Per-mode controls are grouped at the end so each mode has an expressive,
+ * distinctive set on top of the shared Gain/Warp/Scale.
  */
 export const CONTROLS: ControlDef[] = [
+  // --- Shared --------------------------------------------------------------
   {
     id: 'gain',
     name: 'Gain',
@@ -26,6 +36,7 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.4,
+    modes: WARP_MODES,
   },
   {
     id: 'scale',
@@ -35,8 +46,82 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.4,
+    modes: SCALE_MODES,
   },
-  // Trails/feedback pass — how long motion smears persist (0..1).
+
+  // --- Per-mode (distinctive) ---------------------------------------------
+  {
+    id: 'barCount',
+    name: 'Bar Count',
+    glslName: 'uBarCount',
+    min: 8,
+    max: 48,
+    step: 1,
+    default: 28,
+    modes: ['bars'],
+  },
+  {
+    id: 'barGlow',
+    name: 'Bar Glow',
+    glslName: 'uBarGlow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.45,
+    modes: ['bars'],
+  },
+  {
+    id: 'petals',
+    name: 'Petals',
+    glslName: 'uPetals',
+    min: 3,
+    max: 10,
+    step: 1,
+    default: 6,
+    modes: ['pulse'],
+  },
+  {
+    id: 'plasmaVeins',
+    name: 'Veins',
+    glslName: 'uPlasmaVeins',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.7,
+    modes: ['plasma'],
+  },
+  {
+    id: 'rayGlow',
+    name: 'Glow',
+    glslName: 'uRayGlow',
+    min: 0,
+    max: 2,
+    step: 0.01,
+    default: 1.0,
+    modes: ['raymarch'],
+  },
+  {
+    id: 'flowTurb',
+    name: 'Turbulence',
+    glslName: 'uFlowTurb',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+    modes: ['flow'],
+  },
+  {
+    id: 'cellEdge',
+    name: 'Edge Glow',
+    glslName: 'uCellEdge',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['cells'],
+  },
+
+  // --- Post-pass controls (shown only while their pass is enabled) ---------
   {
     id: 'trailDecay',
     name: 'Trail Decay',
@@ -45,8 +130,8 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.9,
+    pass: 'trails',
   },
-  // Dither pass — matrix size (a select of {2,4,8}); levels = steps per channel.
   {
     id: 'ditherSize',
     name: 'Dither Matrix',
@@ -58,6 +143,7 @@ export const CONTROLS: ControlDef[] = [
       { label: '8', value: 8 },
     ],
     default: 4,
+    pass: 'dither',
   },
   {
     id: 'ditherLevels',
@@ -67,8 +153,8 @@ export const CONTROLS: ControlDef[] = [
     max: 8,
     step: 1,
     default: 4,
+    pass: 'dither',
   },
-  // Palette quantize pass — N colours + manual palette phase offset.
   {
     id: 'paletteColors',
     name: 'Palette Colors',
@@ -77,6 +163,7 @@ export const CONTROLS: ControlDef[] = [
     max: 16,
     step: 1,
     default: 6,
+    pass: 'quantize',
   },
   {
     id: 'paletteShift',
@@ -86,6 +173,7 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0,
+    pass: 'quantize',
   },
   {
     id: 'paletteCycle',
@@ -93,6 +181,7 @@ export const CONTROLS: ControlDef[] = [
     glslName: 'uPaletteCycle',
     type: 'toggle',
     default: false,
+    pass: 'quantize',
   },
   {
     id: 'paletteTint',
@@ -100,8 +189,8 @@ export const CONTROLS: ControlDef[] = [
     glslName: 'uPaletteTint',
     type: 'color',
     default: [1, 1, 1],
+    pass: 'quantize',
   },
-  // Bloom pass — brightness threshold + additive glow intensity.
   {
     id: 'bloomThreshold',
     name: 'Bloom Threshold',
@@ -110,6 +199,7 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.55,
+    pass: 'bloom',
   },
   {
     id: 'bloomIntensity',
@@ -119,8 +209,8 @@ export const CONTROLS: ControlDef[] = [
     max: 3,
     step: 0.01,
     default: 1.1,
+    pass: 'bloom',
   },
-  // Chromatic aberration — radial RGB split magnitude (also scaled by level).
   {
     id: 'chromaAmount',
     name: 'Chroma Split',
@@ -129,8 +219,8 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.4,
+    pass: 'chroma',
   },
-  // Kaleidoscope — number of mirrored angular segments.
   {
     id: 'kaleidoSegments',
     name: 'Kaleido Segments',
@@ -139,8 +229,8 @@ export const CONTROLS: ControlDef[] = [
     max: 16,
     step: 1,
     default: 6,
+    pass: 'kaleido',
   },
-  // Scanline / VHS — overall grunge intensity (scanlines + jitter + grain).
   {
     id: 'scanlineIntensity',
     name: 'Scanline / VHS',
@@ -149,5 +239,6 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0.5,
+    pass: 'scanline',
   },
 ];

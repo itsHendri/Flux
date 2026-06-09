@@ -24,11 +24,14 @@ function rgbToHex(rgb: [number, number, number]): string {
  */
 export class ControlPanel {
   private readonly values: Record<string, number | number[]> = {};
+  private readonly items: { def: ControlDef; wrap: HTMLElement }[] = [];
+  private readonly section: HTMLElement;
 
   constructor(parent: HTMLElement, controls: ControlDef[]) {
     const section = document.createElement('div');
     section.className = 'section';
     section.innerHTML = '<h2>Controls</h2>';
+    this.section = section;
 
     for (const def of controls) {
       const type = def.type ?? 'slider';
@@ -48,9 +51,28 @@ export class ControlPanel {
           this.buildSlider(wrap, def);
       }
       section.appendChild(wrap);
+      this.items.push({ def, wrap });
     }
 
     parent.appendChild(section);
+  }
+
+  /**
+   * Show only the controls relevant to the current state: a control with
+   * `modes` shows when the active mode is in it; one with `pass` shows when that
+   * pass is enabled; otherwise it's always shown. Keeps live steering focused on
+   * what's actually adjustable. The whole section hides if nothing is visible.
+   */
+  update(activeMode: string, isPassEnabled: (pass: string) => boolean): void {
+    let anyVisible = false;
+    for (const { def, wrap } of this.items) {
+      const modeOk = !def.modes || def.modes.includes(activeMode);
+      const passOk = !def.pass || isPassEnabled(def.pass);
+      const visible = modeOk && passOk;
+      wrap.style.display = visible ? '' : 'none';
+      anyVisible = anyVisible || visible;
+    }
+    this.section.style.display = anyVisible ? '' : 'none';
   }
 
   /** Label row: the control name on the left, an optional value readout right. */

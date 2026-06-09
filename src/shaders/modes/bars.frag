@@ -2,8 +2,6 @@
 // columns with smooth weighting, and each bar carries its own animated noise
 // so neighbours dance independently rather than moving as three blocks.
 
-const float N = 28.0;
-
 // Height for a bar at normalised position t (0 = left/bass, 1 = right/high).
 float barHeight(float t) {
   float wb = exp(-pow((t - 0.12) / 0.20, 2.0));
@@ -19,6 +17,7 @@ vec3 render(vec2 uv) {
   vec3 col = vec3(0.02, 0.024, 0.03);
   float gain = mix(0.6, 2.4, uGain);
 
+  float N = floor(uBarCount); // bar count (live-steerable)
   float fb = uv.x * N;
   float idx = floor(fb);
   float local = fract(fb);
@@ -38,8 +37,8 @@ vec3 render(vec2 uv) {
   // Bright cap riding the top of each bar.
   col += vec3(1.0) * smoothstep(0.016, 0.0, abs(uv.y - h)) * bar * 0.95;
 
-  // Soft glow halo around the cap.
-  col += tint * smoothstep(0.12, 0.0, abs(uv.y - h)) * bar * 0.45;
+  // Soft glow halo around the cap (live-steerable amount).
+  col += tint * smoothstep(0.12, 0.0, abs(uv.y - h)) * bar * uBarGlow;
 
   // Dim mirrored reflection in the bottom strip.
   float refl = smoothstep(h * 0.45, 0.0, uv.y) * bar * (1.0 - body);

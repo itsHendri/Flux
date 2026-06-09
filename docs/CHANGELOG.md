@@ -5,6 +5,55 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 1 COMPLETE — review
+
+Phase 1 (shader & sound-visualization core) is done — all 13 tasks landed, each
+as its own verified atomic commit. What FLUX has now:
+
+- **Multi-pass pipeline** — the active mode renders into an off-screen FBO, then
+  an ordered, individually-toggleable post-pass chain runs across a ping-pong
+  pair (with a history FBO for feedback and a `uScene` snapshot for multi-stage
+  passes), blitted to screen.
+- **7 post-effects**, each toggleable with live controls: trails (feedback),
+  Bayer dither, palette quantize (+ bass hue shift, cycle, tint), bloom
+  (separable Gaussian), chromatic aberration, kaleidoscope, scanline/VHS.
+- **6 modes** — bars, pulse, plasma, plus three research-led additions:
+  raymarched SDF metaball (iq raymarching/smin), domain-warp flow field (iq
+  domain warping), and a Voronoi cells field (iq Voronoi edges).
+- **Typed controls** — slider / toggle / select / color, each driving the right
+  uniform (float or vec3).
+- **Context-aware control panel** — shows only the controls relevant to the
+  active mode and the enabled passes, so live steering stays focused.
+
+Everything is audio-reactive (bass/mid/high/level) and steerable while sound
+plays. Next is the Phase 2+ backlog (beat detection, presets, logo upload, MIDI,
+performance output, gated deploy) — **paused here for review** per the loop
+protocol; the backlog is not started.
+
+---
+
+## Phase 1 — Per-mode controls + live-steering polish
+
+Made the control panel context-aware and gave every mode a distinctive set.
+
+- **Scoping** — `ControlDef` gains optional `modes` / `pass`. The panel
+  (`ControlPanel.update`) now shows a control only when its mode is active /
+  its pass is enabled, so live steering reflects exactly what's adjustable. The
+  uniform is still always declared + uploaded. `main.ts` refreshes on mode
+  switch and effect toggle. Shared Warp/Scale are scoped to the modes that use
+  them.
+- **Per-mode controls** — each mode now exposes ≥3 meaningful controls including
+  a distinctive one: bars → Bar Count + Bar Glow, pulse → Petals, plasma →
+  Veins, raymarch → Glow, flow → Turbulence, cells → Edge Glow. New uniforms
+  wired into each `.frag`.
+
+Verified: `npm run build` clean, 12/12 tests pass; Preview confirms each mode
+shows only its relevant controls (bars: Gain/Bar Count/Bar Glow; raymarch:
+Gain/Warp/Scale/Glow; etc.), pass controls appear/disappear with their toggle,
+error overlay empty, console clean on a fresh server.
+
+---
+
 ## Phase 1 — New mode: Voronoi cells (trending technique)
 
 Picked an audio-reactive **Voronoi cellular** field — the organic, shifting

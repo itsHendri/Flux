@@ -79,7 +79,7 @@ sources in the commit + CHANGELOG, then implement.
   awesome-audio-visualization; pick the best fit and adapt (cite source/licence).
   *Done:* as above.
 
-- [ ] **Per-mode controls + live-steering polish.** Give each mode an expressive
+- [x] **Per-mode controls + live-steering polish.** Give each mode an expressive
   control set; ensure smooth live manipulation and sensible defaults. *Done:*
   each mode has ≥3 meaningful controls; build + Preview clean.
 
