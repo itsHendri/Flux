@@ -2,7 +2,9 @@
 
 The single source of truth for what's built and what's next. The autonomous
 loop (see `AGENT_LOOP.md`) reads this file, takes the **first unchecked task**,
-completes it, and ticks it. One task per iteration.
+completes it, ticks it, and rolls straight on to the next — building
+continuously through Phase 1, with one atomic commit per task, then stopping at
+the Phase 1 → backlog boundary for review.
 
 Task format: `- [ ]` unchecked / `- [x]` done. Each task has a **Done:**
 criterion — the machine-checkable condition that means it's finished.
@@ -104,8 +106,9 @@ sources in the commit + CHANGELOG, then implement.
 
 ## Notes for the loop
 
-- If the first unchecked task needs a human product decision, **stop and record
-  the question in `CHANGELOG.md`** rather than guessing — move to nothing else.
-- Keep tasks small enough to finish in one iteration. If a task is too big,
-  split it: tick nothing, instead replace it with 2–3 smaller `- [ ]` tasks and
-  commit that planning change.
+- Build continuously through Phase 1, one atomic commit per task. **Stop at the
+  end of Phase 1** (don't start the backlog) and flag for review.
+- If a task needs a human product decision, **stop and record the question in
+  `CHANGELOG.md`** rather than guessing.
+- Keep tasks small enough to finish as one commit. If a task is too big, split
+  it into 2–3 smaller `- [ ]` tasks and commit that planning change first.

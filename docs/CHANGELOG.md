@@ -5,6 +5,17 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Loop protocol — continuous multi-task build
+
+Adjusted the autonomous loop from one-task-per-iteration to **continuous
+building**: each run works through tasks back-to-back, with one atomic commit
+per task, and stops at the **end of Phase 1** for review (or when blocked /
+context grows heavy). Per-task commits + per-task verification are preserved, so
+a long unattended run stays fully reviewable and reversible. Designed to run on
+an interval `/loop` so context auto-resets between runs.
+
+---
+
 ## Phase 0 — Loop infrastructure
 
 Set up everything an autonomous loop needs to keep building FLUX safely:

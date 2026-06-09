@@ -1,26 +1,43 @@
 # FLUX Autonomous Loop Protocol
 
-This is the exact procedure to follow on each loop iteration. The goal: make
-real, verified progress on `ROADMAP.md` — one task at a time — without a human
-in the loop, while keeping every change reviewable and reversible.
+This is the exact procedure to follow when building FLUX autonomously. The goal:
+make real, verified progress on `ROADMAP.md` — working through tasks
+continuously — while keeping every change reviewable and reversible.
 
-## The one rule
+## The model
 
-**One task per iteration.** Take the first unchecked task, finish it
-completely (including verification, commit, and docs), then stop. Do not start
-a second task.
+**Work through tasks continuously; commit each one atomically.** Each run takes
+the first unchecked task, completes it fully (research → implement → verify →
+commit → log → tick), then **immediately moves on to the next unchecked task**,
+and keeps going until a **stop condition** is hit.
 
-## Procedure
+Per-task commits are non-negotiable: they're what make a long autonomous run
+safe. Every task is its own atomic, reversible checkpoint in `git log`, narrated
+in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
+
+### Stop conditions (end the run when any is true)
+1. **End of Phase 1.** When the last Phase 1 task in `ROADMAP.md` is ticked,
+   STOP. Do not start the Phase 2+ backlog. Add a `## PHASE 1 COMPLETE — review`
+   note to `CHANGELOG.md` summarising what landed, and finish.
+2. **Blocked on a human decision.** A task needs a genuine product call (not an
+   aesthetic judgment you can research). Record it under `## NEEDS DECISION` in
+   `CHANGELOG.md`, commit only that, and stop.
+3. **Unfixable failure.** A task can't be made to pass verification after a
+   reasonable effort. Revert that task's changes (`git checkout -- .`), record
+   what blocked you in `CHANGELOG.md`, and stop. Never commit a red build.
+4. **Context getting large** (interval-loop hygiene). If this run has already
+   completed several tasks and the working context is getting heavy, finish the
+   **current** task cleanly (commit + log + tick), then stop. State lives
+   entirely in git + `ROADMAP.md`, so the next interval run resumes seamlessly
+   with a fresh context.
+
+## Per-task procedure
 
 ### 1. Pick the task
-- Read `docs/ROADMAP.md`. Take the **first unchecked `- [ ]` task** under the
-  current phase.
-- Confirm the working tree is clean (`git status`). If it isn't, something from
-  a prior run is unfinished — inspect, finish or revert it, don't pile on.
-- **If the task needs a human product decision** (genuinely ambiguous, not just
-  an aesthetic judgment you can research): do **not** guess. Add a dated
-  `## NEEDS DECISION` entry to `docs/CHANGELOG.md` describing the question and
-  options, commit only that, and stop.
+- Read `docs/ROADMAP.md`. Take the **first unchecked `- [ ]` task** in Phase 1.
+- Confirm the working tree is clean (`git status`). If not, a prior task is
+  half-done — inspect, finish or revert it before starting new work.
+- Check the stop conditions above before beginning.
 
 ### 2. Research first (mandatory for any visual/aesthetic task)
 - Web-search the technique. Study open-source and reference implementations:
@@ -28,39 +45,32 @@ a second task.
   `docs/sprint-2-research.md`, awesome-audio-visualization, etc.
 - Note what's currently trending / considered good for music visualization.
 - Prefer adapting proven, well-licensed open-source approaches over inventing
-  from scratch. **Record the sources** — you'll cite them in the commit and
-  CHANGELOG.
+  from scratch. **Record the sources** — cite them in the commit and CHANGELOG.
 
 ### 3. Implement
 - Follow the existing module seams (see `README.md`). Key ones:
   - New shader mode = a `vec3 render(vec2 uv)` `.frag` + an entry in
-    `src/shaders/modes.ts`. The Renderer composes the header/uniforms/common.
+    `src/shaders/modes.ts`. The Renderer composes header/uniforms/common.
   - New control = an entry in `src/ui/controls.ts`; it auto-wires to a slider
-    and a uniform. No other change needed (until control-types land).
+    and a uniform (until control-types land, then richer types are available).
   - Post-passes (once the pipeline exists) = the `PostPass` seam on `Renderer`.
-- Keep every failure visible via the error overlay (`src/core/errors.ts`). Never
-  swallow errors.
-- Match the house style; keep diffs focused on the one task.
+- Keep every failure visible via the error overlay (`src/core/errors.ts`).
+- Keep the diff focused on the one task.
 
-### 4. Verify (all gates must pass)
+### 4. Verify (all gates must pass before committing)
 - `npm run build` exits 0 (type-check + bundle).
 - `npm test` passes (if tests exist).
 - **Visual gate** via the Preview MCP:
   - `preview_start` the dev server.
-  - `preview_screenshot` — save it; it goes in the CHANGELOG entry so the human
-    can eyeball the result later.
+  - `preview_screenshot` — save it; reference it in the CHANGELOG entry.
   - `preview_console_logs` at level `error` — must be empty.
-  - Assert the on-screen error overlay (`#errors`) is empty (no shader failed to
-    compile). Use `preview_eval` to check
-    `document.getElementById('errors')?.childElementCount === 0` if needed.
-- If any gate fails: fix it within this iteration, or if unfixable, revert the
-  change (`git checkout -- .`), record what blocked you in `CHANGELOG.md`, and
-  stop. Never commit a red build.
+  - Assert the error overlay is empty:
+    `preview_eval` → `document.getElementById('errors')?.childElementCount === 0`.
+- If a gate fails: fix it, or if unfixable, trigger stop condition 3.
 
 ### 5. Commit
-- Stage and commit the change with a clear message and a `Changelog:` trailer
-  (house convention), citing research sources in the body for visual tasks.
-  Example:
+- Commit the task with a clear message + `Changelog:` trailer, citing research
+  sources in the body for visual tasks. Example:
   ```
   Add Bayer ordered-dither post-pass
 
@@ -72,22 +82,24 @@ a second task.
 - **Never push.** Local commits only.
 
 ### 6. Log + tick
-- Add a plain-English entry to `docs/CHANGELOG.md` (newest first): what changed,
-  why, sources cited, and the saved screenshot path.
+- Prepend a plain-English entry to `docs/CHANGELOG.md`: what changed, why,
+  sources cited, saved screenshot path.
 - Tick the task in `docs/ROADMAP.md` (`- [ ]` → `- [x]`).
-- Commit those doc updates (can be folded into the step-5 commit if done
-  together).
+- Commit the doc updates (fold into the step-5 commit if done together).
 
-### 7. Stop
-Leave the tree clean. The next iteration starts fresh from step 1.
+### 7. Next task
+- Re-check the stop conditions. If none apply, return to step 1 for the next
+  unchecked task. Otherwise, end the run with a clean working tree.
 
 ## Splitting a task that's too big
-If the first unchecked task can't be finished in one iteration, don't half-do
-it. Replace it in `ROADMAP.md` with 2–3 smaller `- [ ]` tasks, commit that
-planning change, and stop. The next iteration picks up the first sub-task.
+If a task can't be finished as one atomic commit, don't half-do it. Replace it in
+`ROADMAP.md` with 2–3 smaller `- [ ]` tasks, commit that planning change, and
+continue with the first sub-task.
 
-## Guardrails
-- One task per iteration; never push; never commit a failing build.
+## Guardrails (always)
+- Commit per task; never push; never commit a failing build.
 - Research before any aesthetic decision; cite sources.
 - Keep failures visible; keep diffs focused.
-- When genuinely blocked on a human decision, flag it in CHANGELOG and stop.
+- Stop at the end of Phase 1, when blocked on a human decision, on an unfixable
+  failure, or when context grows heavy. State is always recoverable from git +
+  `ROADMAP.md`.

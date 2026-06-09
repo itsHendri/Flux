@@ -49,8 +49,9 @@ npm test         # run the unit tests (vitest)
 
 ## Project direction
 
-This project is built **incrementally, one verified task at a time**, and can
-run under an autonomous agent loop.
+This project is built **incrementally, one verified task at a time** (one atomic
+commit each), and can run under an autonomous agent loop that builds
+continuously through a phase before pausing for review.
 
 - **`docs/ROADMAP.md`** — the source of truth for what's done and what's next.
 - **`docs/AGENT_LOOP.md`** — the protocol an autonomous agent follows each
