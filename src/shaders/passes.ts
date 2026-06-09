@@ -4,6 +4,7 @@ import bloomH from './passes/bloom-h.frag?raw';
 import bloomV from './passes/bloom-v.frag?raw';
 import dither from './passes/dither.frag?raw';
 import quantize from './passes/quantize.frag?raw';
+import chroma from './passes/chroma.frag?raw';
 
 /**
  * The post-pass registry — mirrors `modes.ts`. Each entry becomes a toggleable
@@ -18,6 +19,7 @@ export const PASSES: PostPass[] = [
   { name: 'quantize', fragSource: quantize },
   // Multi-stage: separable Gaussian (horizontal then vertical) + composite.
   { name: 'bloom', stages: [bloomH, bloomV] },
+  { name: 'chroma', fragSource: chroma },
 ];
 
 type PassesListener = (passes: PostPass[]) => void;

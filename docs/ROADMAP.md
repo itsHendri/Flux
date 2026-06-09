@@ -53,7 +53,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Bloom pass.** Bright-pass + separable Gaussian blur, additive composite;
   intensity + threshold controls. *Done:* highlights bloom when on; build clean.
 
-- [ ] **Chromatic aberration pass.** Per-channel UV offset scaled by a control
+- [x] **Chromatic aberration pass.** Per-channel UV offset scaled by a control
   and/or audio. *Done:* visible RGB split when on; build clean.
 
 - [ ] **Kaleidoscope / mirror-symmetry pass.** Angular reflection with a

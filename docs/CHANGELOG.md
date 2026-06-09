@@ -5,6 +5,20 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Chromatic aberration pass
+
+- **`src/shaders/passes/chroma.frag`** — samples R and B along the radial
+  direction from screen centre with opposite offsets (G fixed), so colour
+  fringing grows toward the edges. Magnitude is `uChromaAmount` scaled by the
+  audio level, so the split pulses with the sound. Toggleable.
+- New schema control: **Chroma Split**.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows clear RGB
+fringing — unmistakable at band boundaries with quantize also on — error
+overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Bloom pass (+ multi-stage pass support)
 
 A proper separable-Gaussian bloom, which needed a small pipeline extension first.

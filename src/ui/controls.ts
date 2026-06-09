@@ -102,6 +102,16 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 1.1,
   },
+  // Chromatic aberration — radial RGB split magnitude (also scaled by level).
+  {
+    id: 'chromaAmount',
+    name: 'Chroma Split',
+    glslName: 'uChromaAmount',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */
