@@ -3,6 +3,7 @@ import bars from './modes/bars.frag?raw';
 import pulse from './modes/pulse.frag?raw';
 import plasma from './modes/plasma.frag?raw';
 import raymarch from './modes/raymarch.frag?raw';
+import flow from './modes/flow.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -10,6 +11,7 @@ export const MODES: ShaderMode[] = [
   { name: 'pulse', fragSource: pulse },
   { name: 'plasma', fragSource: plasma },
   { name: 'raymarch', fragSource: raymarch },
+  { name: 'flow', fragSource: flow },
 ];
 
 type ModesListener = (modes: ShaderMode[]) => void;

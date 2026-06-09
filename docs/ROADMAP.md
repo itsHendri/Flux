@@ -72,7 +72,7 @@ sources in the commit + CHANGELOG, then implement.
   `src/shaders/modes/*.frag` + entry in `src/shaders/modes.ts`; audio-reactive.
   *Done:* mode appears in the switcher, renders, reacts; build clean.
 
-- [ ] **New mode: domain-warp flow field.** Research iq domain warping. *Done:*
+- [x] **New mode: domain-warp flow field.** Research iq domain warping. *Done:*
   as above.
 
 - [ ] **New mode: a trending technique.** Research Shadertoy trending /

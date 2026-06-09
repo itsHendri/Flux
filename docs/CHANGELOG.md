@@ -5,6 +5,25 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — New mode: domain-warp flow field
+
+- **`src/shaders/modes/flow.frag`** — recursive domain warping (`fbm` of `fbm`
+  of `fbm`): each level displaces the next level's sampling position, the
+  intermediate warp vectors `q`/`r` drive the colour, and advecting them over
+  time makes the field churn like slow fluid. Coloured deep violet → ember with
+  blue/teal accents (iq's q/r colouring) plus a mid-driven hue tint and
+  high-sharpened filaments. Audio: bass adds turbulence, mid shifts hue, high
+  sharpens detail, level drives brightness; `uScale`/`uWarp`/`uGain` steer
+  zoom/warp/brightness. Visually distinct from `plasma` (single-level warp).
+- Registered as the `flow` mode.
+
+Source: Inigo Quilez — domain warping
+(https://iquilezles.org/articles/warp/). Verified: `npm run build` clean, 12/12
+tests pass, Preview shows a turbulent marbled fluid field in the switcher, error
+overlay empty, no console errors.
+
+---
+
 ## Phase 1 — New mode: raymarched SDF
 
 The first 3D mode — an audio-reactive metaball blob via signed distance fields.
