@@ -1,0 +1,284 @@
+:root {
+  --bg: #0a0b0d;
+  --panel: #121419;
+  --panel-edge: #23262e;
+  --ink: #c7ccd6;
+  --ink-dim: #6b7280;
+  --accent: #5fd3c6;
+  --bass: #ff5d73;
+  --mid: #ffb95d;
+  --high: #5fd3c6;
+  --warn: #ff5d73;
+}
+
+* {
+  box-sizing: border-box;
+  margin: 0;
+  padding: 0;
+}
+
+html,
+body {
+  height: 100%;
+  background: var(--bg);
+  color: var(--ink);
+  font: 12px/1.4 ui-monospace, 'SF Mono', Menlo, Consolas, monospace;
+  overflow: hidden;
+}
+
+#stage {
+  position: fixed;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+  display: block;
+}
+
+/* Panel itself is transparent — only the cards carry a background, so they
+   read as gear floating over the visuals. The panel docks in/out. */
+#panel {
+  position: fixed;
+  top: 0;
+  right: 0;
+  bottom: 0;
+  width: 300px;
+  padding: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  overflow-y: auto;
+  user-select: none;
+  transition: transform 0.28s ease;
+}
+
+#panel.collapsed {
+  transform: translateX(112%);
+}
+
+#panel-toggle {
+  position: fixed;
+  top: 14px;
+  right: 14px;
+  z-index: 100;
+  width: 32px;
+  height: 32px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  background: var(--panel);
+  border: 1px solid var(--panel-edge);
+  border-radius: 4px;
+  color: var(--ink);
+  cursor: pointer;
+}
+
+#panel-toggle:hover {
+  border-color: var(--accent);
+  color: var(--accent);
+}
+
+.panel-title {
+  /* Same 32px height as #panel-toggle so the title and the dock icon sit on
+     one shared row, vertically centred against each other. */
+  height: 32px;
+  display: flex;
+  align-items: center;
+  font-size: 19px;
+  letter-spacing: 0.42em;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.section {
+  border: 1px solid var(--panel-edge);
+  border-radius: 4px;
+  padding: 10px;
+  background: #0e1014;
+}
+
+.section h2 {
+  font-size: 9px;
+  letter-spacing: 0.18em;
+  color: var(--ink-dim);
+  text-transform: uppercase;
+  margin-bottom: 8px;
+}
+
+.btn-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+button {
+  font: inherit;
+  color: var(--ink);
+  background: #1a1d24;
+  border: 1px solid var(--panel-edge);
+  border-radius: 3px;
+  padding: 6px 9px;
+  cursor: pointer;
+  letter-spacing: 0.06em;
+}
+
+button:hover {
+  border-color: var(--accent);
+}
+
+button.active {
+  background: var(--accent);
+  color: #06120f;
+  border-color: var(--accent);
+}
+
+.big-btn {
+  width: 100%;
+  padding: 10px;
+  font-size: 13px;
+  letter-spacing: 0.16em;
+}
+
+.big-btn.paused {
+  background: var(--mid);
+  color: #1a1205;
+  border-color: var(--mid);
+}
+
+.control {
+  margin-bottom: 10px;
+}
+
+.control:last-child {
+  margin-bottom: 0;
+}
+
+.control label {
+  display: flex;
+  justify-content: space-between;
+  font-size: 10px;
+  color: var(--ink-dim);
+  margin-bottom: 3px;
+}
+
+.control label .val {
+  color: var(--ink);
+}
+
+input[type='range'] {
+  width: 100%;
+  accent-color: var(--accent);
+}
+
+.meters {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.meter {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.meter .name {
+  width: 34px;
+  font-size: 9px;
+  color: var(--ink-dim);
+}
+
+.meter .track {
+  flex: 1;
+  height: 8px;
+  background: #05060a;
+  border: 1px solid var(--panel-edge);
+  border-radius: 2px;
+  overflow: hidden;
+}
+
+.meter .fill {
+  height: 100%;
+  width: 0%;
+  transition: none;
+}
+
+.meter.bass .fill {
+  background: var(--bass);
+}
+.meter.mid .fill {
+  background: var(--mid);
+}
+.meter.high .fill {
+  background: var(--high);
+}
+.meter.level .fill {
+  background: var(--ink);
+}
+
+.source-select {
+  width: 100%;
+  font: inherit;
+  color: var(--ink);
+  background: #1a1d24;
+  border: 1px solid var(--panel-edge);
+  border-radius: 3px;
+  padding: 7px 8px;
+  cursor: pointer;
+  letter-spacing: 0.04em;
+}
+
+.source-select:hover {
+  border-color: var(--accent);
+}
+
+.source-select optgroup {
+  background: #0e1014;
+  color: var(--ink-dim);
+}
+
+.source-select option {
+  background: #1a1d24;
+  color: var(--ink);
+}
+
+#file-input {
+  display: none;
+}
+
+#errors {
+  position: fixed;
+  left: 0;
+  bottom: 0;
+  max-width: calc(100% - 300px);
+  max-height: 40%;
+  overflow-y: auto;
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  z-index: 50;
+}
+
+.err {
+  background: rgba(40, 8, 12, 0.94);
+  border-left: 3px solid var(--warn);
+  color: #ffd2d8;
+  padding: 6px 10px;
+  font-size: 11px;
+  white-space: pre-wrap;
+}
+
+.err .err-src {
+  color: var(--warn);
+  font-weight: 600;
+  margin-right: 6px;
+}
+
+.err.warn {
+  background: rgba(40, 30, 8, 0.94);
+  border-left-color: var(--mid);
+  color: #ffe9c2;
+}
+.err.warn .err-src {
+  color: var(--mid);
+}
