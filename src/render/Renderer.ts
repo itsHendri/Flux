@@ -11,14 +11,17 @@ export interface ShaderMode {
 }
 
 /**
- * A post-processing pass. Like a mode, it provides a `vec3 render(vec2 uv)`
- * body — but it also gets the scene texture (`uSource`) and the previous frame's
- * final output (`uPrevFrame`, for feedback) bound as samplers. Passes run in an
- * ordered, individually-toggleable chain after the mode is drawn.
+ * A post-processing pass. Like a mode, each stage provides a `vec3 render(vec2
+ * uv)` body — but it also gets samplers: `uSource` (previous stage), `uPrevFrame`
+ * (last frame, for feedback) and `uScene` (this pass's input). Most passes are a
+ * single fragment (`fragSource`); set `stages` instead for a multi-stage effect
+ * (e.g. a separable blur) that runs back-to-back under one toggle. Passes run in
+ * an ordered, individually-toggleable chain after the mode is drawn.
  */
 export interface PostPass {
   name: string;
-  fragSource: string;
+  fragSource?: string;
+  stages?: string[];
 }
 
 export interface ShaderError {
@@ -32,9 +35,19 @@ interface CompiledProgram {
   uniforms: Map<string, WebGLUniformLocation | null>;
 }
 
+/** A compiled post-pass: one or more stage programs run back-to-back. */
+interface CompiledPass {
+  name: string;
+  stages: CompiledProgram[];
+}
+
 const BUILTIN_UNIFORMS = ['uTime', 'uResolution', 'uBass', 'uMid', 'uHigh', 'uLevel'];
-/** Sampler uniforms only post-passes declare. */
-const PASS_SAMPLERS = ['uSource', 'uPrevFrame'];
+/**
+ * Sampler uniforms only post-passes declare. `uSource` = previous stage,
+ * `uPrevFrame` = last frame (feedback), `uScene` = this pass's own input
+ * (fixed across a multi-stage pass, so a final stage can composite onto it).
+ */
+const PASS_SAMPLERS = ['uSource', 'uPrevFrame', 'uScene'];
 
 /**
  * WebGL2 renderer with a multi-pass pipeline. The active mode renders into an
@@ -55,17 +68,19 @@ export class Renderer {
 
   // Post-pass registry — mirrors the mode registry. `passOrder` is the fixed
   // chain order; `enabled` selects which run this frame.
-  private readonly passes = new Map<string, CompiledProgram>();
+  private readonly passes = new Map<string, CompiledPass>();
   private readonly passOrder: string[] = [];
   private readonly enabled = new Set<string>();
 
   // Render targets. `scene` holds the mode output; `ping`/`pong` are the
   // post-chain ping-pong pair; `history` keeps last frame's final output so
-  // feedback passes can sample it via uPrevFrame.
+  // feedback passes can sample it via uPrevFrame; `passInput` snapshots a
+  // multi-stage pass's input so its final stage can composite (uScene).
   private scene: Fbo | null = null;
   private ping: Fbo | null = null;
   private pong: Fbo | null = null;
   private history: Fbo | null = null;
+  private passInput: Fbo | null = null;
   private historyValid = false;
 
   private errorCb: (e: ShaderError) => void = () => {};
@@ -194,15 +209,28 @@ export class Renderer {
 
   /**
    * Register a post-pass. Mirrors registerMode. New passes append to the chain
-   * order (and start disabled); re-registering (e.g. HMR) keeps position.
+   * order (and start disabled); re-registering (e.g. HMR) keeps position. A
+   * multi-stage pass compiles all stages; if any stage fails the pass is left
+   * unchanged so the app keeps running.
    */
   registerPass(pass: PostPass): boolean {
-    const compiled = this.compile(pass.name, this.composePass(pass.fragSource), PASS_SAMPLERS);
-    if (!compiled) return false;
+    const sources = pass.stages ?? (pass.fragSource ? [pass.fragSource] : []);
+    if (sources.length === 0) {
+      this.errorCb({ mode: pass.name, log: `Pass "${pass.name}" has no stages.` });
+      return false;
+    }
+
+    const stages: CompiledProgram[] = [];
+    for (let i = 0; i < sources.length; i++) {
+      const label = sources.length > 1 ? `${pass.name}[${i}]` : pass.name;
+      const compiled = this.compile(label, this.composePass(sources[i]), PASS_SAMPLERS);
+      if (!compiled) return false; // error already reported; keep previous version
+      stages.push(compiled);
+    }
 
     const previous = this.passes.get(pass.name);
-    if (previous) this.gl.deleteProgram(previous.program);
-    this.passes.set(pass.name, compiled);
+    if (previous) for (const s of previous.stages) this.gl.deleteProgram(s.program);
+    this.passes.set(pass.name, { name: pass.name, stages });
     if (!this.passOrder.includes(pass.name)) this.passOrder.push(pass.name);
     this.successCb(pass.name);
     return true;
@@ -242,12 +270,14 @@ export class Renderer {
       this.ping = createFbo(gl, w, h);
       this.pong = createFbo(gl, w, h);
       this.history = createFbo(gl, w, h);
+      this.passInput = createFbo(gl, w, h);
       return;
     }
     resizeFbo(gl, this.scene, w, h);
     resizeFbo(gl, this.ping!, w, h);
     resizeFbo(gl, this.pong!, w, h);
     resizeFbo(gl, this.history!, w, h);
+    resizeFbo(gl, this.passInput!, w, h);
     this.historyValid = false; // old contents are the wrong size
   }
 
@@ -308,23 +338,40 @@ export class Renderer {
     let readFbo = this.scene;
     let writeFbo = this.ping!;
 
+    const prevTex = (this.historyValid ? this.history! : this.scene).texture;
+
     for (const name of chain) {
       const pass = this.passes.get(name);
       if (!pass) continue;
-      gl.bindFramebuffer(gl.FRAMEBUFFER, writeFbo.framebuffer);
-      gl.useProgram(pass.program);
-      this.uploadFrameUniforms(pass, state);
-      // uSource = previous stage, on unit 0; uPrevFrame = last frame, on unit 1.
-      gl.activeTexture(gl.TEXTURE0);
-      gl.bindTexture(gl.TEXTURE_2D, readFbo.texture);
-      gl.uniform1i(pass.uniforms.get('uSource') ?? null, 0);
-      gl.activeTexture(gl.TEXTURE1);
-      gl.bindTexture(gl.TEXTURE_2D, (this.historyValid ? this.history! : this.scene).texture);
-      gl.uniform1i(pass.uniforms.get('uPrevFrame') ?? null, 1);
-      this.drawFullscreen();
 
-      readFbo = writeFbo;
-      writeFbo = readFbo === this.ping ? this.pong! : this.ping!;
+      // uScene = this pass's input, fixed across its stages. For a multi-stage
+      // pass, snapshot the input so its final stage can composite onto it even
+      // after the ping-pong has cycled back over the input FBO.
+      const sceneTex =
+        pass.stages.length > 1
+          ? (this.blit(readFbo, this.passInput!, w, h), this.passInput!.texture)
+          : readFbo.texture;
+
+      for (const stage of pass.stages) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, writeFbo.framebuffer);
+        gl.useProgram(stage.program);
+        this.uploadFrameUniforms(stage, state);
+        // uSource = previous stage (unit 0); uPrevFrame = last frame (unit 1);
+        // uScene = this pass's input (unit 2).
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, readFbo.texture);
+        gl.uniform1i(stage.uniforms.get('uSource') ?? null, 0);
+        gl.activeTexture(gl.TEXTURE1);
+        gl.bindTexture(gl.TEXTURE_2D, prevTex);
+        gl.uniform1i(stage.uniforms.get('uPrevFrame') ?? null, 1);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, sceneTex);
+        gl.uniform1i(stage.uniforms.get('uScene') ?? null, 2);
+        this.drawFullscreen();
+
+        readFbo = writeFbo;
+        writeFbo = readFbo === this.ping ? this.pong! : this.ping!;
+      }
     }
 
     // 3. Present final texture to the screen.
@@ -344,13 +391,14 @@ export class Renderer {
   dispose(): void {
     const gl = this.gl;
     for (const m of this.modes.values()) gl.deleteProgram(m.program);
-    for (const p of this.passes.values()) gl.deleteProgram(p.program);
+    for (const p of this.passes.values()) for (const s of p.stages) gl.deleteProgram(s.program);
     this.modes.clear();
     this.passes.clear();
     if (this.scene) deleteFbo(gl, this.scene);
     if (this.ping) deleteFbo(gl, this.ping);
     if (this.pong) deleteFbo(gl, this.pong);
     if (this.history) deleteFbo(gl, this.history);
+    if (this.passInput) deleteFbo(gl, this.passInput);
     gl.deleteVertexArray(this.vao);
   }
 }

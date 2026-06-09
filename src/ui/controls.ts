@@ -83,6 +83,25 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0,
   },
+  // Bloom pass — brightness threshold + additive glow intensity.
+  {
+    id: 'bloomThreshold',
+    name: 'Bloom Threshold',
+    glslName: 'uBloomThreshold',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.55,
+  },
+  {
+    id: 'bloomIntensity',
+    name: 'Bloom Intensity',
+    glslName: 'uBloomIntensity',
+    min: 0,
+    max: 3,
+    step: 0.01,
+    default: 1.1,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */

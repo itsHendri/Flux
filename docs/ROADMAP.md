@@ -50,7 +50,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Feedback / trails pass.** Use the ping-pong pair; decay amount as a
   control. *Done:* motion leaves decaying trails when on; build clean.
 
-- [ ] **Bloom pass.** Bright-pass + separable Gaussian blur, additive composite;
+- [x] **Bloom pass.** Bright-pass + separable Gaussian blur, additive composite;
   intensity + threshold controls. *Done:* highlights bloom when on; build clean.
 
 - [ ] **Chromatic aberration pass.** Per-channel UV offset scaled by a control

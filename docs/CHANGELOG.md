@@ -5,6 +5,29 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Bloom pass (+ multi-stage pass support)
+
+A proper separable-Gaussian bloom, which needed a small pipeline extension first.
+
+- **Multi-stage passes.** `PostPass` now accepts `stages: string[]` (multiple
+  fragments run back-to-back under one toggle) alongside the single-`fragSource`
+  form. Added a `uScene` sampler bound to **the pass's own input** (snapshotted
+  into a dedicated `passInput` FBO for multi-stage passes), so a final stage can
+  composite onto what entered the pass — not just the previous stage. Existing
+  single-stage passes are unchanged.
+- **`bloom-h.frag` / `bloom-v.frag`** — stage 1 does a bright-pass (luma soft
+  knee at `uBloomThreshold`) + horizontal 9-tap Gaussian; stage 2 does the
+  vertical 9-tap and adds the blurred highlights onto `uScene` scaled by
+  `uBloomIntensity`. Standard GPU-Gems separable kernel weights.
+- New schema controls: **Bloom Threshold** and **Bloom Intensity**.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows highlights
+gaining a soft feathered glow when toggled on (dramatic at intensity 2.6), the
+existing passes still render correctly through the refactored chain, error
+overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Feedback / trails pass
 
 The first pass to exploit the pipeline's history FBO (`uPrevFrame`).

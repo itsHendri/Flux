@@ -1,5 +1,7 @@
 import type { PostPass } from '../render/Renderer.ts';
 import trails from './passes/trails.frag?raw';
+import bloomH from './passes/bloom-h.frag?raw';
+import bloomV from './passes/bloom-v.frag?raw';
 import dither from './passes/dither.frag?raw';
 import quantize from './passes/quantize.frag?raw';
 
@@ -14,6 +16,8 @@ export const PASSES: PostPass[] = [
   { name: 'trails', fragSource: trails },
   { name: 'dither', fragSource: dither },
   { name: 'quantize', fragSource: quantize },
+  // Multi-stage: separable Gaussian (horizontal then vertical) + composite.
+  { name: 'bloom', stages: [bloomH, bloomV] },
 ];
 
 type PassesListener = (passes: PostPass[]) => void;
