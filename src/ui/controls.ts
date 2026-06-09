@@ -54,6 +54,25 @@ export const CONTROLS: ControlDef[] = [
     step: 1,
     default: 4,
   },
+  // Palette quantize pass — N colours + manual palette phase offset.
+  {
+    id: 'paletteColors',
+    name: 'Palette Colors',
+    glslName: 'uPaletteColors',
+    min: 2,
+    max: 16,
+    step: 1,
+    default: 6,
+  },
+  {
+    id: 'paletteShift',
+    name: 'Palette Shift',
+    glslName: 'uPaletteShift',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */

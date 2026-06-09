@@ -5,6 +5,23 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Palette quantization pass
+
+A toggleable pass that reduces the scene to N flat colours.
+
+- **`src/shaders/passes/quantize.frag`** — maps scene luminance onto a cosine
+  palette sampled at `uPaletteColors` quantised steps, so the output collapses
+  to a small banded palette. **Bass rotates the palette phase**, plus a manual
+  `uPaletteShift` offset, so the colour scheme shifts on the beat.
+- New schema controls: **Palette Colors** (N) and **Palette Shift**.
+
+Source: Inigo Quilez's cosine-palette technique
+(https://iquilezles.org/articles/palettes/). Verified: `npm run build` clean,
+12/12 tests pass, Preview shows the plasma collapse to ~6 flat banded colours
+when toggled on, error overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Bayer ordered-dither pass
 
 First post-effect on the new pipeline: a toggleable ordered-dither pass that

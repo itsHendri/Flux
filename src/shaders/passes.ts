@@ -1,5 +1,6 @@
 import type { PostPass } from '../render/Renderer.ts';
 import dither from './passes/dither.frag?raw';
+import quantize from './passes/quantize.frag?raw';
 
 /**
  * The post-pass registry — mirrors `modes.ts`. Each entry becomes a toggleable
@@ -9,6 +10,7 @@ import dither from './passes/dither.frag?raw';
  */
 export const PASSES: PostPass[] = [
   { name: 'dither', fragSource: dither },
+  { name: 'quantize', fragSource: quantize },
 ];
 
 type PassesListener = (passes: PostPass[]) => void;

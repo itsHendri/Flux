@@ -43,7 +43,7 @@ sources in the commit + CHANGELOG, then implement.
   glsl-dither. Add a toggleable dither post-pass; matrix size (2/4/8) as a
   control. *Done:* toggling it visibly dithers; off = unchanged; build clean.
 
-- [ ] **Palette quantization pass.** Quantize output to N colours; optional
+- [x] **Palette quantization pass.** Quantize output to N colours; optional
   band-driven palette shift (e.g. bass rotates hue). Toggleable, N as a control.
   *Done:* quantization visible when on; build + Preview clean.
 
