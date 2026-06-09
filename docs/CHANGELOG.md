@@ -5,6 +5,25 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — New mode: Voronoi cells (trending technique)
+
+Picked an audio-reactive **Voronoi cellular** field — the organic, shifting
+cellular look that's ubiquitous in modern audio-reactive motion work.
+
+- **`src/shaders/modes/cells.frag`** — two-pass Voronoi: pass 1 finds the
+  nearest cell, pass 2 measures distance to the border between it and its
+  neighbours. Each cell's feature point orbits over time (faster on bass); cells
+  are tinted from a cosine palette by id, borders glow (mid), cell cores sparkle
+  (high). `uScale`/`uWarp`/`uGain` steer density/orbit/brightness.
+- Registered as the `cells` mode.
+
+Source: Inigo Quilez — Voronoi edges
+(https://iquilezles.org/articles/voronoilines/). Verified: `npm run build`
+clean, 12/12 tests pass, Preview shows a vivid glowing-edged cellular field in
+the switcher, error overlay empty, no console errors.
+
+---
+
 ## Phase 1 — New mode: domain-warp flow field
 
 - **`src/shaders/modes/flow.frag`** — recursive domain warping (`fbm` of `fbm`

@@ -75,7 +75,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **New mode: domain-warp flow field.** Research iq domain warping. *Done:*
   as above.
 
-- [ ] **New mode: a trending technique.** Research Shadertoy trending /
+- [x] **New mode: a trending technique.** Research Shadertoy trending /
   awesome-audio-visualization; pick the best fit and adapt (cite source/licence).
   *Done:* as above.
 
