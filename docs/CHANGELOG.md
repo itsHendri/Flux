@@ -5,6 +5,22 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Feedback / trails pass
+
+The first pass to exploit the pipeline's history FBO (`uPrevFrame`).
+
+- **`src/shaders/passes/trails.frag`** — max-blends the current scene with the
+  previous frame's output decayed by `uTrailDecay`, so motion smears into
+  glowing trails that accumulate frame over frame. Registered **first** in the
+  chain so feedback operates on raw motion before stylisation.
+- New schema control: **Trail Decay** (0..1) — higher = longer-lived trails.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows plasma motion
+building into smeared glowing trails (clearly stronger at decay 0.99), error
+overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Palette quantization pass
 
 A toggleable pass that reduces the scene to N flat colours.

@@ -47,7 +47,7 @@ sources in the commit + CHANGELOG, then implement.
   band-driven palette shift (e.g. bass rotates hue). Toggleable, N as a control.
   *Done:* quantization visible when on; build + Preview clean.
 
-- [ ] **Feedback / trails pass.** Use the ping-pong pair; decay amount as a
+- [x] **Feedback / trails pass.** Use the ping-pong pair; decay amount as a
   control. *Done:* motion leaves decaying trails when on; build clean.
 
 - [ ] **Bloom pass.** Bright-pass + separable Gaussian blur, additive composite;

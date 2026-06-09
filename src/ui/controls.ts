@@ -35,6 +35,16 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.4,
   },
+  // Trails/feedback pass — how long motion smears persist (0..1).
+  {
+    id: 'trailDecay',
+    name: 'Trail Decay',
+    glslName: 'uTrailDecay',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.9,
+  },
   // Dither pass — matrix size snaps to {2,4,8}; levels = steps per channel.
   {
     id: 'ditherSize',
