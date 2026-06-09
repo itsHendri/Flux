@@ -31,7 +31,7 @@ Every task here is **research-first**: study trending and open-source/reference
 shaders (Shadertoy, Inigo Quilez, awesome-audio-visualization, etc.), cite
 sources in the commit + CHANGELOG, then implement.
 
-- [ ] **Multi-pass FBO pipeline.** Refactor `src/render/Renderer.ts` to render
+- [x] **Multi-pass FBO pipeline.** Refactor `src/render/Renderer.ts` to render
   the active mode into an off-screen framebuffer/texture, then run an ordered,
   toggleable post-pass chain to the screen. Add a ping-pong FBO pair so passes
   can sample the previous frame (feedback). New seam: a `PostPass` interface and

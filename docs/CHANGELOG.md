@@ -5,6 +5,38 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Multi-pass FBO pipeline
+
+Refactored the `Renderer` from a single direct-to-screen draw into a multi-pass
+pipeline, the foundation for every post-effect that follows (dither, bloom,
+feedback, etc.):
+
+- **New `Framebuffer` helper** (`src/render/Framebuffer.ts`) — allocates RGBA8
+  off-screen render targets (LINEAR/CLAMP, no depth), with resize + delete.
+- **Mode → off-screen `scene` FBO.** The active mode no longer draws straight to
+  the screen; it renders into a texture.
+- **Ordered, toggleable post-pass chain** across a **ping-pong** pair
+  (`ping`/`pong`), so each pass samples the previous stage as `uSource`. The
+  final texture is blitted to the screen (`gl.blitFramebuffer`). With an empty
+  chain the mode's texture is presented unchanged — the 3 existing modes look
+  identical to before.
+- **Feedback support.** A `history` FBO keeps last frame's final output, bound
+  as `uPrevFrame`, so trail/feedback passes can sample the previous frame.
+- **New `PostPass` seam + pass registry** on `Renderer` (`registerPass`,
+  `setPassEnabled`, `passNames`), mirroring the existing mode registry. Passes
+  share the mode header (builtins + control uniforms + `common.glsl`) plus the
+  two sampler uniforms.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows plasma
+rendering identically through the new path, error overlay empty
+(`#errors.childElementCount === 0`), WebGL context alive, no console errors.
+
+This is plumbing, not an aesthetic change, so no reference shader was adapted;
+the ping-pong + blit-to-screen pattern is the standard WebGL2 post-processing
+approach.
+
+---
+
 ## Loop protocol — continuous multi-task build
 
 Adjusted the autonomous loop from one-task-per-iteration to **continuous
