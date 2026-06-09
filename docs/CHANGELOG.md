@@ -5,6 +5,19 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Kaleidoscope / mirror-symmetry pass
+
+- **`src/shaders/passes/kaleido.frag`** — converts each pixel to polar coords
+  around centre, folds the angle into `uKaleidoSegments` equal wedges with a
+  mirror inside each (for seamless seams), and samples the source at the folded
+  position. Classic kaleidoscope rosette; segment count is live-controllable.
+- New schema control: **Kaleido Segments**.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows clear 6-fold
+radial mirror symmetry when toggled on, error overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Chromatic aberration pass
 
 - **`src/shaders/passes/chroma.frag`** — samples R and B along the radial

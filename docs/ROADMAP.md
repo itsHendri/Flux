@@ -56,7 +56,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Chromatic aberration pass.** Per-channel UV offset scaled by a control
   and/or audio. *Done:* visible RGB split when on; build clean.
 
-- [ ] **Kaleidoscope / mirror-symmetry pass.** Angular reflection with a
+- [x] **Kaleidoscope / mirror-symmetry pass.** Angular reflection with a
   segment-count control. *Done:* radial symmetry when on; build clean.
 
 - [ ] **Scanline / VHS pass.** Scanlines + slight noise/jitter; intensity

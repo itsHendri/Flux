@@ -112,6 +112,16 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.4,
   },
+  // Kaleidoscope — number of mirrored angular segments.
+  {
+    id: 'kaleidoSegments',
+    name: 'Kaleido Segments',
+    glslName: 'uKaleidoSegments',
+    min: 2,
+    max: 16,
+    step: 1,
+    default: 6,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */
