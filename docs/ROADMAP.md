@@ -62,7 +62,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Scanline / VHS pass.** Scanlines + slight noise/jitter; intensity
   control. *Done:* visible when on; build clean.
 
-- [ ] **Control-type expansion.** Extend `ControlDef` (`src/core/state.ts`,
+- [x] **Control-type expansion.** Extend `ControlDef` (`src/core/state.ts`,
   `src/ui/controls.ts`) with `type: 'slider' | 'toggle' | 'select' | 'color'`;
   branch in `src/ui/ControlPanel.ts`. Pass toggles reuse this. *Done:* a toggle
   and a select render and drive their uniforms; existing sliders unchanged;

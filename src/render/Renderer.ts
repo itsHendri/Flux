@@ -1,4 +1,5 @@
-import type { FrameState } from '../core/state.ts';
+import type { ControlDef, FrameState } from '../core/state.ts';
+import { isColor } from '../core/state.ts';
 import { buildProgram } from './shaderProgram.ts';
 import { createFbo, resizeFbo, deleteFbo, type Fbo } from './Framebuffer.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
@@ -61,7 +62,8 @@ export class Renderer {
   private readonly gl: WebGL2RenderingContext;
   private readonly canvas: HTMLCanvasElement;
   private readonly vao: WebGLVertexArrayObject;
-  private readonly controlUniforms: string[];
+  private readonly controls: ControlDef[];
+  private readonly controlNames: string[];
 
   private readonly modes = new Map<string, CompiledProgram>();
   private current: CompiledProgram | null = null;
@@ -87,12 +89,14 @@ export class Renderer {
   private successCb: (mode: string) => void = () => {};
 
   /**
-   * @param controlUniforms glslNames of every control-schema uniform. Declared
-   *   in every program header (modes and passes) and uploaded each frame.
+   * @param controls the control schema. Each control's uniform is declared in
+   *   every program header (modes and passes) — `vec3` for `color`, else
+   *   `float` — and uploaded from FrameState.controls each frame.
    */
-  constructor(canvas: HTMLCanvasElement, controlUniforms: string[]) {
+  constructor(canvas: HTMLCanvasElement, controls: ControlDef[]) {
     this.canvas = canvas;
-    this.controlUniforms = controlUniforms;
+    this.controls = controls;
+    this.controlNames = controls.map((c) => c.glslName);
     const gl = canvas.getContext('webgl2', {
       antialias: false,
       alpha: false,
@@ -129,7 +133,9 @@ export class Renderer {
 
   /** Control-uniform declarations shared by every mode and pass header. */
   private controlDecls(): string {
-    return this.controlUniforms.map((n) => `uniform float ${n};`).join('\n');
+    return this.controls
+      .map((c) => `uniform ${isColor(c) ? 'vec3' : 'float'} ${c.glslName};`)
+      .join('\n');
   }
 
   /** Assemble a mode's full fragment source: header + common + mode body. */
@@ -176,7 +182,7 @@ export class Renderer {
       return null;
     }
     const uniforms = new Map<string, WebGLUniformLocation | null>();
-    for (const n of [...BUILTIN_UNIFORMS, ...samplers, ...this.controlUniforms]) {
+    for (const n of [...BUILTIN_UNIFORMS, ...samplers, ...this.controlNames]) {
       uniforms.set(n, this.gl.getUniformLocation(result.program, n));
     }
     return { name, program: result.program, uniforms };
@@ -291,8 +297,15 @@ export class Renderer {
     gl.uniform1f(u.get('uMid') ?? null, state.audio.mid);
     gl.uniform1f(u.get('uHigh') ?? null, state.audio.high);
     gl.uniform1f(u.get('uLevel') ?? null, state.audio.level);
-    for (const name of this.controlUniforms) {
-      gl.uniform1f(u.get(name) ?? null, state.controls[name] ?? 0);
+    for (const c of this.controls) {
+      const loc = u.get(c.glslName) ?? null;
+      const v = state.controls[c.glslName];
+      if (isColor(c)) {
+        const rgb = Array.isArray(v) ? v : [1, 1, 1];
+        gl.uniform3f(loc, rgb[0] ?? 1, rgb[1] ?? 1, rgb[2] ?? 1);
+      } else {
+        gl.uniform1f(loc, typeof v === 'number' ? v : 0);
+      }
     }
   }
 

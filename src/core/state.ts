@@ -20,13 +20,33 @@ export interface FrameState {
   /** Drawing-buffer size in device pixels. */
   resolution: [number, number];
   audio: AudioFrame;
-  /** glslName -> value, derived from the control schema. */
-  controls: Record<string, number>;
+  /**
+   * glslName -> value, derived from the control schema. A number for
+   * slider/toggle/select uniforms, an `[r,g,b]` triple for `color` uniforms.
+   */
+  controls: Record<string, number | number[]>;
   /** Name of the active shader mode. */
   mode: string;
 }
 
-/** A single user-facing control. Drives one shader uniform. */
+/** How a control renders and what GLSL uniform type it drives. */
+export type ControlType = 'slider' | 'toggle' | 'select' | 'color';
+
+/** One choice in a `select` control: a label and the float it uploads. */
+export interface SelectOption {
+  label: string;
+  value: number;
+}
+
+/**
+ * A single user-facing control. Drives one shader uniform.
+ *
+ * `type` (default `'slider'`) picks the widget and the uniform it feeds:
+ * - `slider`  → `float`; uses `min`/`max`/`step`, numeric `default`.
+ * - `toggle`  → `float` 0/1; boolean `default`.
+ * - `select`  → `float`; one of `options`, numeric `default` (an option value).
+ * - `color`   → `vec3`; `[r,g,b]` in 0..1, `[r,g,b]` `default`.
+ */
 export interface ControlDef {
   /** Stable id, used for presets later. */
   id: string;
@@ -34,8 +54,18 @@ export interface ControlDef {
   name: string;
   /** Uniform name in GLSL, e.g. "uWarp". */
   glslName: string;
-  min: number;
-  max: number;
-  step: number;
-  default: number;
+  /** Widget + uniform type. Omitted means `'slider'`. */
+  type?: ControlType;
+  /** slider only */
+  min?: number;
+  max?: number;
+  step?: number;
+  /** select only */
+  options?: SelectOption[];
+  default: number | boolean | [number, number, number];
+}
+
+/** True if a control drives a `vec3` uniform (only `color` does). */
+export function isColor(def: ControlDef): boolean {
+  return def.type === 'color';
 }

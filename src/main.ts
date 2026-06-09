@@ -9,7 +9,7 @@ import {
   onDeviceChange,
   requestAudioPermission,
 } from './audio/devices.ts';
-import { CONTROLS, CONTROL_UNIFORMS } from './ui/controls.ts';
+import { CONTROLS } from './ui/controls.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
@@ -48,7 +48,7 @@ document.body.appendChild(panelToggle);
 // --- Renderer -------------------------------------------------------------
 let renderer: Renderer;
 try {
-  renderer = new Renderer(canvas, CONTROL_UNIFORMS);
+  renderer = new Renderer(canvas, CONTROLS);
 } catch (e) {
   reportError('renderer', e);
   throw e;

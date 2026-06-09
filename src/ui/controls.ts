@@ -3,9 +3,10 @@ import type { ControlDef } from '../core/state.ts';
 /**
  * THE uniform schema — single source of truth.
  *
- * Each entry generates both a panel slider (ControlPanel) and a shader uniform
- * declaration + per-frame upload (Renderer). Add a control here and it appears
- * in both places automatically; nothing else needs to change.
+ * Each entry generates both a panel widget (ControlPanel, per `type`) and a
+ * shader uniform declaration + per-frame upload (Renderer). Add a control here
+ * and it appears in both places automatically; nothing else needs to change.
+ * `type` defaults to `'slider'`, so existing numeric entries need no `type`.
  */
 export const CONTROLS: ControlDef[] = [
   {
@@ -45,14 +46,17 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.9,
   },
-  // Dither pass — matrix size snaps to {2,4,8}; levels = steps per channel.
+  // Dither pass — matrix size (a select of {2,4,8}); levels = steps per channel.
   {
     id: 'ditherSize',
     name: 'Dither Matrix',
     glslName: 'uDitherSize',
-    min: 2,
-    max: 8,
-    step: 1,
+    type: 'select',
+    options: [
+      { label: '2', value: 2 },
+      { label: '4', value: 4 },
+      { label: '8', value: 8 },
+    ],
     default: 4,
   },
   {
@@ -82,6 +86,20 @@ export const CONTROLS: ControlDef[] = [
     max: 1,
     step: 0.01,
     default: 0,
+  },
+  {
+    id: 'paletteCycle',
+    name: 'Palette Cycle',
+    glslName: 'uPaletteCycle',
+    type: 'toggle',
+    default: false,
+  },
+  {
+    id: 'paletteTint',
+    name: 'Palette Tint',
+    glslName: 'uPaletteTint',
+    type: 'color',
+    default: [1, 1, 1],
   },
   // Bloom pass — brightness threshold + additive glow intensity.
   {
@@ -133,6 +151,3 @@ export const CONTROLS: ControlDef[] = [
     default: 0.5,
   },
 ];
-
-/** glslNames of every control — handed to the Renderer for uniform plumbing. */
-export const CONTROL_UNIFORMS: string[] = CONTROLS.map((c) => c.glslName);

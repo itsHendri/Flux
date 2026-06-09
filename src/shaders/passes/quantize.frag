@@ -16,7 +16,7 @@ vec3 render(vec2 uv) {
   float N = max(2.0, floor(uPaletteColors + 0.5));
   float idx = floor(lum * (N - 1.0) + 0.5) / (N - 1.0);
 
-  // Manual phase offset plus a bass-driven hue rotation.
-  float shift = uPaletteShift + uBass * 0.4;
-  return palette(idx + shift);
+  // Manual phase offset, bass-driven rotation, and an optional time auto-cycle.
+  float shift = uPaletteShift + uBass * 0.4 + uPaletteCycle * uTime * 0.08;
+  return palette(idx + shift) * uPaletteTint;
 }

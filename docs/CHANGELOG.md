@@ -5,6 +5,32 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Control-type expansion
+
+The control schema was slider-only; now it supports four widget/uniform types.
+
+- **`ControlDef.type`** (`src/core/state.ts`): `'slider' | 'toggle' | 'select' |
+  'color'`, defaulting to `'slider'` so existing entries are untouched. `select`
+  adds `options: {label, value}[]`; `color` drives a **`vec3`** uniform (others
+  drive `float`). FrameState.controls values are now `number | number[]`.
+- **`ControlPanel`** branches on type: slider (range), toggle (on/off button),
+  select (button group), color (native swatch). Hex⇄rgb conversion for colors.
+- **`Renderer`** now takes the control defs (not just glsl names): it declares
+  each uniform as `vec3` for `color` else `float`, and uploads `uniform3f` /
+  `uniform1f` accordingly.
+- **Demonstrations** wired to real uniforms: **Dither Matrix** is now a
+  `select` (2/4/8 → `uDitherSize`); new **Palette Cycle** `toggle`
+  (`uPaletteCycle`, time auto-rotates the quantize palette) and **Palette Tint**
+  `color` (`uPaletteTint`, multiplies the quantize output).
+
+Verified: `npm run build` clean, 12/12 tests pass; Preview confirms all four
+widget types render, existing sliders unchanged, and select/toggle/color each
+drive their uniform (coarse↔fine dither, palette rotation, green tint); error
+overlay empty; console clean on a fresh server (earlier console noise was stale
+HMR churn from the multi-file edit, not the final build).
+
+---
+
 ## Phase 1 — Scanline / VHS pass
 
 - **`src/shaders/passes/scanline.frag`** — final-stage analog-video grunge:
