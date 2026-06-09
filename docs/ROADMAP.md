@@ -39,7 +39,7 @@ sources in the commit + CHANGELOG, then implement.
   *Done:* the 3 existing modes render identically through the new path with an
   empty/no-op pass chain; build + Preview screenshot clean; no console errors.
 
-- [ ] **Bayer ordered-dither pass.** Research Codrops / Maxime Heckel /
+- [x] **Bayer ordered-dither pass.** Research Codrops / Maxime Heckel /
   glsl-dither. Add a toggleable dither post-pass; matrix size (2/4/8) as a
   control. *Done:* toggling it visibly dithers; off = unchanged; build clean.
 

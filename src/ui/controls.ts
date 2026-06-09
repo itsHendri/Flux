@@ -35,6 +35,25 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.4,
   },
+  // Dither pass — matrix size snaps to {2,4,8}; levels = steps per channel.
+  {
+    id: 'ditherSize',
+    name: 'Dither Matrix',
+    glslName: 'uDitherSize',
+    min: 2,
+    max: 8,
+    step: 1,
+    default: 4,
+  },
+  {
+    id: 'ditherLevels',
+    name: 'Dither Levels',
+    glslName: 'uDitherLevels',
+    min: 2,
+    max: 8,
+    step: 1,
+    default: 4,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */

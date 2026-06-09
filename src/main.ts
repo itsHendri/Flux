@@ -11,6 +11,7 @@ import {
 } from './audio/devices.ts';
 import { CONTROLS, CONTROL_UNIFORMS } from './ui/controls.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
+import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -57,6 +58,7 @@ renderer.onError((e) => reportError(`shader:${e.mode}`, e.log));
 renderer.onCompileSuccess((mode) => clearErrors(`shader:${mode}`));
 
 for (const mode of MODES) renderer.registerMode(mode);
+for (const pass of PASSES) renderer.registerPass(pass);
 
 // --- Audio ----------------------------------------------------------------
 const audio = new AudioEngine({ fftSize: 2048 });
@@ -93,6 +95,29 @@ function selectMode(name: string): void {
 
 // Highlight a default mode up front so the chip shows as selected on load.
 if (MODES.length > 0) selectMode(MODES[0].name);
+
+// Post-pass effect toggles. Each registered pass is a toggle button that drives
+// renderer.setPassEnabled; effects start off, so the pipeline is a no-op until
+// one is switched on. (Until typed toggle controls land, this is the seam.)
+if (renderer.passNames.length > 0) {
+  const fxSection = document.createElement('div');
+  fxSection.className = 'section';
+  fxSection.innerHTML = '<h2>Effects</h2>';
+  const fxRow = document.createElement('div');
+  fxRow.className = 'btn-row';
+  for (const name of renderer.passNames) {
+    const btn = document.createElement('button');
+    btn.textContent = name;
+    btn.addEventListener('click', () => {
+      const on = !renderer.isPassEnabled(name);
+      renderer.setPassEnabled(name, on);
+      btn.classList.toggle('active', on);
+    });
+    fxRow.appendChild(btn);
+  }
+  fxSection.appendChild(fxRow);
+  panel.appendChild(fxSection);
+}
 
 // --- Source picker --------------------------------------------------------
 // The render loop runs from boot — visuals are always live, they just sit
@@ -168,4 +193,8 @@ onModesChanged((modes) => {
   for (const mode of modes) renderer.registerMode(mode);
   // Keep the current mode pointed at its freshly compiled program.
   if (app.getMode()) renderer.setMode(app.getMode());
+});
+
+onPassesChanged((passes) => {
+  for (const pass of passes) renderer.registerPass(pass);
 });

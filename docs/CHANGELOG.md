@@ -5,6 +5,30 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Bayer ordered-dither pass
+
+First post-effect on the new pipeline: a toggleable ordered-dither pass that
+gives the classic cross-hatched retro look.
+
+- **`src/shaders/passes/dither.frag`** — samples the scene (`uSource`) and
+  quantises each channel to `uDitherLevels` steps, dithering between adjacent
+  levels with a Bayer ordered threshold matrix. Matrix size snaps to 2 / 4 / 8
+  via `uDitherSize` (finer pattern at 8). Canonical 2×2 / 4×4 / 8×8 Bayer
+  matrices.
+- **`src/shaders/passes.ts`** — the pass registry, mirroring `modes.ts`
+  (`PASSES` + HMR), so adding a `.frag` + an entry is all it takes.
+- **Effects panel + toggle** — `main.ts` registers every pass and renders an
+  "Effects" section of toggle buttons wired to `renderer.setPassEnabled`. This
+  is the lightweight pass-toggle seam until typed toggle controls land.
+- Two new schema controls: **Dither Matrix** and **Dither Levels**.
+
+Sources: hughsk/glsl-dither (MIT), Maxime Heckel's ordered-dithering writeup,
+and the Codrops dithering guide. Verified: `npm run build` clean, 12/12 tests
+pass, Preview shows the cross-hatch dither appear when toggled on and the
+gradients return smooth when off, error overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Multi-pass FBO pipeline
 
 Refactored the `Renderer` from a single direct-to-screen draw into a multi-pass
