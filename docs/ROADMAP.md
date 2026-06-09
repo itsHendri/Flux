@@ -68,7 +68,7 @@ sources in the commit + CHANGELOG, then implement.
   and a select render and drive their uniforms; existing sliders unchanged;
   build + tests clean.
 
-- [ ] **New mode: raymarched SDF.** Research Inigo Quilez raymarching/SDF. New
+- [x] **New mode: raymarched SDF.** Research Inigo Quilez raymarching/SDF. New
   `src/shaders/modes/*.frag` + entry in `src/shaders/modes.ts`; audio-reactive.
   *Done:* mode appears in the switcher, renders, reacts; build clean.
 

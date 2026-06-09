@@ -5,6 +5,28 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — New mode: raymarched SDF
+
+The first 3D mode — an audio-reactive metaball blob via signed distance fields.
+
+- **`src/shaders/modes/raymarch.frag`** — sphere-traces a scene SDF: a pulsing
+  core smooth-unioned (iq `smin`) with three orbiting spheres, plus high-
+  frequency surface displacement. Lit with diffuse + rim + specular, coloured by
+  a cosine palette, with an additive proximity glow. Audio wiring: bass pulses
+  the core, mid drives surface wobble, high adds shimmer/specular, level drives
+  the glow. Steering reuses `uScale` (zoom), `uWarp` (spin), `uGain`
+  (brightness), so it's expressive without sound.
+- Registered as the `raymarch` mode in `modes.ts`.
+
+Sources: Inigo Quilez — raymarching distance fields
+(https://iquilezles.org/articles/raymarchingdf/), distance functions
+(https://iquilezles.org/articles/distfunctions/), smooth-min
+(https://iquilezles.org/articles/smin/). Verified: `npm run build` clean, 12/12
+tests pass, Preview shows a lit, glowing 3D metaball blob in the switcher, error
+overlay empty, no console errors.
+
+---
+
 ## Phase 1 — Control-type expansion
 
 The control schema was slider-only; now it supports four widget/uniform types.

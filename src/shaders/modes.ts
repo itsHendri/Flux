@@ -2,12 +2,14 @@ import type { ShaderMode } from '../render/Renderer.ts';
 import bars from './modes/bars.frag?raw';
 import pulse from './modes/pulse.frag?raw';
 import plasma from './modes/plasma.frag?raw';
+import raymarch from './modes/raymarch.frag?raw';
 
-/** All shader modes available in Sprint 0. */
+/** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
   { name: 'bars', fragSource: bars },
   { name: 'pulse', fragSource: pulse },
   { name: 'plasma', fragSource: plasma },
+  { name: 'raymarch', fragSource: raymarch },
 ];
 
 type ModesListener = (modes: ShaderMode[]) => void;
