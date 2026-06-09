@@ -122,6 +122,16 @@ export const CONTROLS: ControlDef[] = [
     step: 1,
     default: 6,
   },
+  // Scanline / VHS — overall grunge intensity (scanlines + jitter + grain).
+  {
+    id: 'scanlineIntensity',
+    name: 'Scanline / VHS',
+    glslName: 'uScanlineIntensity',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+  },
 ];
 
 /** glslNames of every control — handed to the Renderer for uniform plumbing. */

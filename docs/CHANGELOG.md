@@ -5,6 +5,21 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 1 — Scanline / VHS pass
+
+- **`src/shaders/passes/scanline.frag`** — final-stage analog-video grunge:
+  periodic horizontal scanline darkening, a small per-band horizontal jitter
+  that wobbles over time (VHS tracking), and film grain — all scaled by
+  `uScanlineIntensity`, from subtle CRT texture to heavy degraded tape. Reuses
+  `noise()`/`hash()` from `common.glsl`.
+- New schema control: **Scanline / VHS**.
+
+Verified: `npm run build` clean, 12/12 tests pass, Preview shows scanline
+striping + grain + jitter when toggled on (heavy at 0.9), error overlay empty,
+no console errors.
+
+---
+
 ## Phase 1 — Kaleidoscope / mirror-symmetry pass
 
 - **`src/shaders/passes/kaleido.frag`** — converts each pixel to polar coords

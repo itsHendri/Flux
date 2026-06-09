@@ -6,6 +6,7 @@ import dither from './passes/dither.frag?raw';
 import quantize from './passes/quantize.frag?raw';
 import chroma from './passes/chroma.frag?raw';
 import kaleido from './passes/kaleido.frag?raw';
+import scanline from './passes/scanline.frag?raw';
 
 /**
  * The post-pass registry — mirrors `modes.ts`. Each entry becomes a toggleable
@@ -22,6 +23,7 @@ export const PASSES: PostPass[] = [
   { name: 'bloom', stages: [bloomH, bloomV] },
   { name: 'chroma', fragSource: chroma },
   { name: 'kaleido', fragSource: kaleido },
+  { name: 'scanline', fragSource: scanline },
 ];
 
 type PassesListener = (passes: PostPass[]) => void;

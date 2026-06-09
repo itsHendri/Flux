@@ -59,7 +59,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Kaleidoscope / mirror-symmetry pass.** Angular reflection with a
   segment-count control. *Done:* radial symmetry when on; build clean.
 
-- [ ] **Scanline / VHS pass.** Scanlines + slight noise/jitter; intensity
+- [x] **Scanline / VHS pass.** Scanlines + slight noise/jitter; intensity
   control. *Done:* visible when on; build clean.
 
 - [ ] **Control-type expansion.** Extend `ControlDef` (`src/core/state.ts`,
