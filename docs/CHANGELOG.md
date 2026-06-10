@@ -5,6 +5,40 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2a — HDR float-FBO pipeline
+
+All five off-screen render targets (scene, ping, pong, history, passInput) are
+now **RGBA16F** where the hardware can render to float, so bloom and trails
+accumulate real energy past 1.0 instead of plateauing at the old RGBA8 clamp.
+
+- **Format detection** (`Framebuffer.ts: detectFboFormat`) — try
+  `EXT_color_buffer_float`, fall back to `EXT_color_buffer_half_float`
+  (16F-only devices), and verify with a probe FBO + `checkFramebufferStatus`
+  before trusting it; otherwise a clean RGBA8 fallback. Half-float **linear
+  filtering is core WebGL2**, so the roadmap's `OES_texture_half_float_linear`
+  (a WebGL1 extension) is not needed — correction noted from research.
+- **Present pass replaces the present blit** (`src/shaders/present.frag`).
+  ES 3.0 forbids `blitFramebuffer` from a float read buffer to the fixed-point
+  default framebuffer, so the final present is now a fullscreen draw — used on
+  the RGBA8 path too (one code path). It carries the new global **Tonemap**
+  select (None / Reinhard / ACES-approx, Narkowicz 2015), default **None** so
+  this lands look-neutral; flip to Reinhard/ACES to resolve HDR highlights.
+- FBO→FBO blits (history, passInput) stay blits — same-format, legal.
+- Known/accepted: `dither`/`quantize` clamp internally (LDR stylisation passes
+  flatten HDR headroom downstream of themselves); FBO memory ×2.
+
+Sources: [MDN EXT_color_buffer_float](https://developer.mozilla.org/en-US/docs/Web/API/EXT_color_buffer_float),
+[Khronos EXT_color_buffer_half_float](https://registry.khronos.org/webgl/extensions/EXT_color_buffer_half_float/),
+[Khronos blitting rules](https://www.khronos.org/opengl/wiki/Blitting),
+[Narkowicz ACES fit](https://knarkowicz.wordpress.com/2016/01/06/aces-filmic-tone-mapping-curve/).
+
+Verified: build clean, 12/12 tests; Preview on raymarch + trails + bloom renders
+through the new path (error overlay empty, console clean), Reinhard visibly
+recovers highlight detail that clips under None (HDR values reach the present
+pass), and a session-forced RGBA8 fallback renders identically clean.
+
+---
+
 ## PHASE 1 COMPLETE — review
 
 Phase 1 (shader & sound-visualization core) is done — all 13 tasks landed, each

@@ -1,9 +1,17 @@
 import type { ControlDef, FrameState } from '../core/state.ts';
 import { isColor } from '../core/state.ts';
 import { buildProgram } from './shaderProgram.ts';
-import { createFbo, resizeFbo, deleteFbo, type Fbo } from './Framebuffer.ts';
+import {
+  createFbo,
+  resizeFbo,
+  deleteFbo,
+  detectFboFormat,
+  type Fbo,
+  type FboFormat,
+} from './Framebuffer.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
 import commonSource from '../shaders/common.glsl?raw';
+import presentSource from '../shaders/present.frag?raw';
 
 /** A shader mode: a name and the source of its fragment `render()` function. */
 export interface ShaderMode {
@@ -85,6 +93,12 @@ export class Renderer {
   private passInput: Fbo | null = null;
   private historyValid = false;
 
+  // RGBA16F where renderable (HDR headroom for bloom/trails), RGBA8 fallback.
+  private readonly fboFormat: FboFormat;
+  // Final draw to the default framebuffer (tonemap + clamp). Not in the pass
+  // registry — it always runs, and never appears in the Effects panel.
+  private present: CompiledProgram | null = null;
+
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
 
@@ -106,6 +120,7 @@ export class Renderer {
       throw new Error('WebGL2 is not available in this browser.');
     }
     this.gl = gl;
+    this.fboFormat = detectFboFormat(gl);
 
     const vao = gl.createVertexArray();
     if (!vao) throw new Error('Failed to create vertex array object.');
@@ -120,6 +135,11 @@ export class Renderer {
   /** Drawing-buffer size in device pixels. */
   get resolution(): [number, number] {
     return [this.canvas.width, this.canvas.height];
+  }
+
+  /** True when render targets are float (RGBA16F) — values can exceed 1.0. */
+  get isHdr(): boolean {
+    return this.fboFormat.type !== this.gl.UNSIGNED_BYTE;
   }
 
   onError(cb: (e: ShaderError) => void): void {
@@ -272,11 +292,11 @@ export class Renderer {
   private ensureTargets(w: number, h: number): void {
     const gl = this.gl;
     if (!this.scene) {
-      this.scene = createFbo(gl, w, h);
-      this.ping = createFbo(gl, w, h);
-      this.pong = createFbo(gl, w, h);
-      this.history = createFbo(gl, w, h);
-      this.passInput = createFbo(gl, w, h);
+      this.scene = createFbo(gl, w, h, this.fboFormat);
+      this.ping = createFbo(gl, w, h, this.fboFormat);
+      this.pong = createFbo(gl, w, h, this.fboFormat);
+      this.history = createFbo(gl, w, h, this.fboFormat);
+      this.passInput = createFbo(gl, w, h, this.fboFormat);
       return;
     }
     resizeFbo(gl, this.scene, w, h);
@@ -311,6 +331,21 @@ export class Renderer {
 
   private drawFullscreen(): void {
     this.gl.drawArrays(this.gl.TRIANGLES, 0, 3);
+  }
+
+  private presentTried = false;
+
+  /**
+   * Compile the present program on first use — lazily, so a compile failure
+   * lands after the app has wired onError and stays visible in the overlay.
+   */
+  private ensurePresent(): CompiledProgram | null {
+    if (!this.present && !this.presentTried) {
+      this.presentTried = true;
+      this.present = this.compile('present', this.composePass(presentSource), PASS_SAMPLERS);
+      if (this.present) this.successCb('present');
+    }
+    return this.present;
   }
 
   /** Blit a source framebuffer's colour into a destination (null = screen). */
@@ -387,8 +422,23 @@ export class Renderer {
       }
     }
 
-    // 3. Present final texture to the screen.
-    this.blit(readFbo, null, w, h);
+    // 3. Present final texture to the screen via the present program (tonemap
+    // + clamp). A draw, not a blit: ES 3.0 forbids blitting a float read buffer
+    // to the fixed-point default framebuffer, and the same path serves the
+    // RGBA8 fallback. Falls back to a blit only if `present` failed to compile
+    // (error already surfaced; blit is exact on the RGBA8 path).
+    const present = this.ensurePresent();
+    if (present) {
+      gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+      gl.useProgram(present.program);
+      this.uploadFrameUniforms(present, state);
+      gl.activeTexture(gl.TEXTURE0);
+      gl.bindTexture(gl.TEXTURE_2D, readFbo.texture);
+      gl.uniform1i(present.uniforms.get('uSource') ?? null, 0);
+      this.drawFullscreen();
+    } else {
+      this.blit(readFbo, null, w, h);
+    }
 
     // 4. Keep the final result as history for next frame's feedback passes.
     if (chain.length > 0) {
@@ -405,6 +455,8 @@ export class Renderer {
     const gl = this.gl;
     for (const m of this.modes.values()) gl.deleteProgram(m.program);
     for (const p of this.passes.values()) for (const s of p.stages) gl.deleteProgram(s.program);
+    if (this.present) gl.deleteProgram(this.present.program);
+    this.present = null;
     this.modes.clear();
     this.passes.clear();
     if (this.scene) deleteFbo(gl, this.scene);

@@ -29,6 +29,19 @@ export const CONTROLS: ControlDef[] = [
     default: 0.5,
   },
   {
+    // Read only by present.frag — resolves the HDR chain output for display.
+    id: 'tonemap',
+    name: 'Tonemap',
+    glslName: 'uTonemap',
+    type: 'select',
+    options: [
+      { label: 'None', value: 0 },
+      { label: 'Reinhard', value: 1 },
+      { label: 'ACES', value: 2 },
+    ],
+    default: 0,
+  },
+  {
     id: 'warp',
     name: 'Warp',
     glslName: 'uWarp',

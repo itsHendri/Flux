@@ -93,7 +93,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 
 ### 2a — Rendering quality (validated upgrades)
 
-- [ ] **HDR float-FBO pipeline.** Switch the off-screen targets in
+- [x] **HDR float-FBO pipeline.** Switch the off-screen targets in
   `src/render/Framebuffer.ts` from `RGBA8` to `RGBA16F`, gated on
   `EXT_color_buffer_float` (fallback `EXT_color_buffer_half_float`) +
   `OES_texture_half_float_linear`, with a clean RGBA8 fallback if unsupported.
