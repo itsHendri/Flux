@@ -22,10 +22,15 @@ function rgbToHex(rgb: [number, number, number]): string {
  * into FrameState.controls. Slider/toggle/select store a number; color stores
  * an `[r,g,b]` triple.
  */
+type ApplyFn = (v: number | number[]) => void;
+
 export class ControlPanel {
   private readonly values: Record<string, number | number[]> = {};
   private readonly items: { def: ControlDef; wrap: HTMLElement }[] = [];
   private readonly section: HTMLElement;
+  // Per-widget repaint hooks so values applied programmatically (presets)
+  // update the visible widget state too. Keyed by glslName.
+  private readonly appliers = new Map<string, ApplyFn>();
 
   /**
    * @param controls rendered as widgets in the Controls section.
@@ -120,6 +125,11 @@ export class ControlPanel {
       this.values[def.glslName] = v;
       val.textContent = v.toFixed(2);
     });
+    this.appliers.set(def.glslName, (v) => {
+      if (typeof v !== 'number') return;
+      input.value = String(v);
+      val.textContent = v.toFixed(2);
+    });
     wrap.append(row, input);
   }
 
@@ -140,6 +150,7 @@ export class ControlPanel {
       this.values[def.glslName] = next ? 1 : 0;
       paint(next);
     });
+    this.appliers.set(def.glslName, (v) => paint(v === 1));
     wrap.append(row, btn);
   }
 
@@ -163,6 +174,11 @@ export class ControlPanel {
       buttons.push(btn);
       group.appendChild(btn);
     }
+    this.appliers.set(def.glslName, (v) => {
+      for (let i = 0; i < options.length; i++) {
+        buttons[i].classList.toggle('active', options[i].value === v);
+      }
+    });
     wrap.append(row, group);
   }
 
@@ -179,6 +195,11 @@ export class ControlPanel {
     input.value = rgbToHex(init);
     input.addEventListener('input', () => {
       this.values[def.glslName] = hexToRgb(input.value);
+    });
+    this.appliers.set(def.glslName, (v) => {
+      if (Array.isArray(v) && v.length === 3) {
+        input.value = rgbToHex(v as [number, number, number]);
+      }
     });
     wrap.append(row, input);
   }
@@ -197,5 +218,18 @@ export class ControlPanel {
   /** Write one scalar value — the path external widgets (Effects row) use. */
   setValue(glslName: string, value: number): void {
     this.values[glslName] = value;
+  }
+
+  /**
+   * Apply a batch of values (keyed by glslName) — preset recall. Updates the
+   * store and repaints each control's widget; unknown names are ignored,
+   * absent names keep their current value.
+   */
+  applyValues(values: Record<string, number | number[]>): void {
+    for (const [glslName, v] of Object.entries(values)) {
+      if (!(glslName in this.values)) continue;
+      this.values[glslName] = Array.isArray(v) ? v.slice() : v;
+      this.appliers.get(glslName)?.(v);
+    }
   }
 }

@@ -125,7 +125,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   is part of the serializable schema (prerequisite for clean presets; resolves
   the parallel-toggle tech debt). *Done:* effects toggle through the unified
   state; behaviour unchanged; build + tests clean.
-- [ ] **Presets.** Save/recall control + mode + pass state to localStorage
+- [x] **Presets.** Save/recall control + mode + pass state to localStorage
   (`src/presets/`). `ControlDef.id` already gives stable keys; do this after the
   toggle unification so pass state serializes too. *Done:* a preset round-trips
   mode + controls + enabled passes; build clean.

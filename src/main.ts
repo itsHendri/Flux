@@ -16,6 +16,8 @@ import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
+import { PresetPanel } from './ui/PresetPanel.ts';
+import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
 
 installGlobalErrorHooks();
 
@@ -51,10 +53,11 @@ document.body.appendChild(panelToggle);
 // declared as uniforms, stored alongside the other control values, read by the
 // Renderer to build the chain. One serialisable home for all live state.
 const passToggles = passToggleDefs(PASSES.map((p) => p.name));
+const allControls = [...CONTROLS, ...passToggles];
 
 let renderer: Renderer;
 try {
-  renderer = new Renderer(canvas, [...CONTROLS, ...passToggles]);
+  renderer = new Renderer(canvas, allControls);
 } catch (e) {
   reportError('renderer', e);
   throw e;
@@ -117,6 +120,7 @@ if (MODES.length > 0) selectMode(MODES[0].name);
 // its uFx* control value — the single home for pass-enable state, which the
 // Renderer reads per frame. Effects start off (toggle default false), so the
 // pipeline is a no-op until one is switched on.
+const fxButtons: Record<string, HTMLButtonElement> = {};
 if (renderer.passNames.length > 0) {
   const fxSection = document.createElement('div');
   fxSection.className = 'section';
@@ -132,11 +136,43 @@ if (renderer.passNames.length > 0) {
       btn.classList.toggle('active', on);
       refreshControls();
     });
+    fxButtons[name] = btn;
     fxRow.appendChild(btn);
   }
   fxSection.appendChild(fxRow);
   panel.appendChild(fxSection);
 }
+
+/** Repaint the Effects row from the control store (after a preset recall). */
+function repaintFxButtons(): void {
+  for (const [name, btn] of Object.entries(fxButtons)) {
+    btn.classList.toggle('active', isPassEnabled(name));
+  }
+}
+
+// --- Presets ----------------------------------------------------------------
+// Snapshot/recall of mode + all control values (pass toggles included) in
+// localStorage, keyed by stable ControlDef ids.
+const presetStore = new PresetStore(window.localStorage);
+const presetPanel = new PresetPanel(panel, {
+  onSave: (name) => {
+    presetStore.save(name, snapshotPreset(app.getMode(), allControls, controlPanel.getValues()));
+    presetPanel.refresh(presetStore.list());
+  },
+  onLoad: (name) => {
+    const preset = presetStore.load(name);
+    if (!preset) return;
+    if (MODES.some((m) => m.name === preset.mode)) selectMode(preset.mode);
+    controlPanel.applyValues(resolvePreset(preset, allControls));
+    repaintFxButtons();
+    refreshControls();
+  },
+  onDelete: (name) => {
+    presetStore.remove(name);
+    presetPanel.refresh(presetStore.list());
+  },
+});
+presetPanel.refresh(presetStore.list());
 
 // --- Source picker --------------------------------------------------------
 // The render loop runs from boot — visuals are always live, they just sit

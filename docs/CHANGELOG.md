@@ -5,6 +5,35 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2c — Presets (localStorage save / recall)
+
+Live state is now capturable: a **Presets** panel section saves the active
+mode + every control value (pass toggles included, thanks to the toggle
+unification) under a name, recalls it with one click, and deletes with ×.
+
+- **`src/presets/presets.ts`** — pure + tested: `snapshotPreset` /
+  `resolvePreset` translate between the live store (keyed by `glslName`) and
+  the persisted shape (keyed by stable `ControlDef.id`, the contract that
+  survives uniform renames); ids missing from either side are skipped, so old
+  presets stay loadable across schema changes. `PresetStore` wraps a `Storage`
+  (localStorage in app, a stub in tests) under one JSON key
+  (`flux.presets.v1`); corrupt JSON degrades to empty.
+- **`ControlPanel.applyValues`** — programmatic batch apply that also repaints
+  each widget (slider position/readout, toggle label, select actives, color
+  swatch) via per-widget apply hooks.
+- **`src/ui/PresetPanel.ts`** — name field + save, chip-per-preset list
+  (click = recall, × = delete); `main.ts` wires recall to mode switch +
+  `applyValues` + Effects-row repaint.
+
+Verified: build clean, 32/32 tests (round-trip incl. colors + pass toggles,
+unknown-id tolerance, store CRUD, corrupt-JSON); Preview end-to-end: set
+cells + bloom + trails + Gain 0.9 → save "club" → scramble to bars/all-off/
+Gain 0.1 → load → mode, both effects, slider position and readout all
+restore, scoped controls reappear; preset survives a page reload; delete
+removes it; error overlay empty, console clean.
+
+---
+
 ## Phase 2c — Pass toggles unified into the control system
 
 Resolved the Phase 1 "parallel toggle mechanisms" tech debt: pass-enable state
