@@ -5,6 +5,39 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2a — Dither quality options (IGN + blue noise)
+
+The dither pass gains a **Dither Noise** select alongside the Bayer matrices,
+addressing the audit note that Bayer shows structured lines in static frames:
+
+- **Bayer** (default, unchanged) — most temporally stable in motion.
+- **IGN** — Jimenez's interleaved gradient noise (SIGGRAPH 2014), procedural
+  (one dot + two fracts), diagonal-gradient character, far less structured.
+- **Blue Noise** — samples a tileable 128×128 threshold texture from Christoph
+  Peters' public-domain set (`src/assets/blue-noise-128.png`, **CC0**,
+  momentsingraphics.de/BlueNoise.html); structureless grain, best static look.
+- **Animate Noise** toggle — re-seeds the pattern each frame (Jimenez's
+  golden-ratio-flavoured offset, 64-frame cycle) for temporal averaging.
+
+Plumbing: `PASS_SAMPLERS` gains `uBlueNoise` on texture unit 3, bound for every
+pass like the other samplers (unused declarations are free, matching the
+controls convention). The texture allocates as 1×1 mid-grey and upgrades when
+the PNG decodes (NEAREST + REPEAT — exact thresholds, free tiling); a load
+failure routes to the error overlay. Dither Matrix (2/4/8) still applies to
+Bayer only.
+
+Sources: [demofox on IGN](https://blog.demofox.org/2022/01/01/interleaved-gradient-noise-a-different-kind-of-low-discrepancy-sequence/),
+[Bart Wronski: dithering pt 3](https://bartwronski.com/2016/10/30/dithering-part-three-real-world-2d-quantization-dithering/),
+[momentsingraphics.de blue noise (CC0)](https://momentsingraphics.de/BlueNoise.html)
+(via the [Calinou mirror](https://github.com/Calinou/free-blue-noise-textures)).
+
+Verified: build clean (PNG bundles), 17/17 tests; Preview on plasma cycles
+Bayer → IGN → Blue Noise with clearly distinct pattern character (cross-hatch →
+fine diagonal grain → structureless grain), Animate Noise toggles, the PNG
+loads (no 404), error overlay empty, console clean on a fresh server.
+
+---
+
 ## Phase 2a — Mip-chain / energy-conserving bloom
 
 Replaced the fixed-resolution separable Gaussian bloom with the Jimenez 2014

@@ -104,7 +104,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   resolution-independent wide glow; drop the hard threshold for an
   energy-conserving bright-pass. Depends on the HDR FBOs. *Done:* glow is wide
   and stable across output sizes; intensity control still works; build clean.
-- [ ] **Dither quality options.** Add interleaved gradient noise (IGN,
+- [x] **Dither quality options.** Add interleaved gradient noise (IGN,
   procedural) and/or a blue-noise texture as alternatives to Bayer in
   `dither.frag`, selectable via a control; keep Bayer (best temporal stability).
   *Done:* the dither pattern visibly changes between options; build clean.

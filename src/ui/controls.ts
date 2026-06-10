@@ -146,6 +146,28 @@ export const CONTROLS: ControlDef[] = [
     pass: 'trails',
   },
   {
+    id: 'ditherMode',
+    name: 'Dither Noise',
+    glslName: 'uDitherMode',
+    type: 'select',
+    options: [
+      { label: 'Bayer', value: 0 },
+      { label: 'IGN', value: 1 },
+      { label: 'Blue Noise', value: 2 },
+    ],
+    default: 0,
+    pass: 'dither',
+  },
+  {
+    id: 'ditherTemporal',
+    name: 'Animate Noise',
+    glslName: 'uDitherTemporal',
+    type: 'toggle',
+    default: false,
+    pass: 'dither',
+  },
+  {
+    // Bayer matrix size — no effect on the IGN / blue-noise modes.
     id: 'ditherSize',
     name: 'Dither Matrix',
     glslName: 'uDitherSize',

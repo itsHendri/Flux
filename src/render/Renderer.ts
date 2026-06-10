@@ -13,6 +13,7 @@ import { BloomPipeline } from './BloomPipeline.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
 import commonSource from '../shaders/common.glsl?raw';
 import presentSource from '../shaders/present.frag?raw';
+import blueNoiseUrl from '../assets/blue-noise-128.png';
 
 /** A shader mode: a name and the source of its fragment `render()` function. */
 export interface ShaderMode {
@@ -55,9 +56,12 @@ const BUILTIN_UNIFORMS = ['uTime', 'uResolution', 'uBass', 'uMid', 'uHigh', 'uLe
 /**
  * Sampler uniforms only post-passes declare. `uSource` = previous stage,
  * `uPrevFrame` = last frame (feedback), `uScene` = this pass's own input
- * (fixed across a multi-stage pass, so a final stage can composite onto it).
+ * (fixed across a multi-stage pass, so a final stage can composite onto it),
+ * `uBlueNoise` = a tileable 128×128 blue-noise threshold texture (Christoph
+ * Peters, momentsingraphics.de, CC0), bound for every pass like the others —
+ * unused declarations cost nothing, matching the controls convention.
  */
-const PASS_SAMPLERS = ['uSource', 'uPrevFrame', 'uScene'];
+const PASS_SAMPLERS = ['uSource', 'uPrevFrame', 'uScene', 'uBlueNoise'];
 
 /**
  * WebGL2 renderer with a multi-pass pipeline. The active mode renders into an
@@ -105,6 +109,10 @@ export class Renderer {
   // here instead (it still toggles/orders/HMRs like any pass).
   private bloom: BloomPipeline | null = null;
 
+  // Blue-noise threshold texture (uBlueNoise, unit 3). Starts as 1×1 mid-grey
+  // so the option degrades gracefully until the async PNG decode lands.
+  private blueNoise: WebGLTexture | null = null;
+
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
 
@@ -130,6 +138,7 @@ export class Renderer {
     this.bloom = new BloomPipeline(gl, (name, body) =>
       this.compile(name, this.composePass(body), PASS_SAMPLERS),
     );
+    this.blueNoise = this.createBlueNoiseTexture();
 
     const vao = gl.createVertexArray();
     if (!vao) throw new Error('Failed to create vertex array object.');
@@ -139,6 +148,50 @@ export class Renderer {
       e.preventDefault();
       this.errorCb({ mode: '*', log: 'WebGL context lost.' });
     });
+  }
+
+  /**
+   * Blue-noise threshold texture for the dither pass: 128×128 tileable, from
+   * Christoph Peters' CC0 set (momentsingraphics.de/BlueNoise.html). NEAREST
+   * (thresholds must stay exact) + REPEAT (tiling for free in the shader).
+   * Allocated immediately as 1×1 mid-grey; the PNG decodes in asynchronously.
+   */
+  private createBlueNoiseTexture(): WebGLTexture | null {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    if (!tex) return null;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA8,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([128, 128, 128, 255]),
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.REPEAT);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.REPEAT);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+
+    const img = new Image();
+    img.src = blueNoiseUrl;
+    img
+      .decode()
+      .then(() => {
+        if (!this.blueNoise) return; // disposed before the decode finished
+        gl.bindTexture(gl.TEXTURE_2D, this.blueNoise);
+        gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, img);
+        gl.bindTexture(gl.TEXTURE_2D, null);
+      })
+      .catch((e: unknown) => {
+        this.errorCb({ mode: 'dither', log: `Blue-noise texture failed to load: ${String(e)}` });
+      });
+    return tex;
   }
 
   /** Drawing-buffer size in device pixels. */
@@ -446,6 +499,9 @@ export class Renderer {
         gl.activeTexture(gl.TEXTURE2);
         gl.bindTexture(gl.TEXTURE_2D, sceneTex);
         gl.uniform1i(stage.uniforms.get('uScene') ?? null, 2);
+        gl.activeTexture(gl.TEXTURE3);
+        gl.bindTexture(gl.TEXTURE_2D, this.blueNoise);
+        gl.uniform1i(stage.uniforms.get('uBlueNoise') ?? null, 3);
         this.drawFullscreen();
 
         readFbo = writeFbo;
@@ -490,6 +546,8 @@ export class Renderer {
     this.present = null;
     this.bloom?.dispose();
     this.bloom = null;
+    if (this.blueNoise) gl.deleteTexture(this.blueNoise);
+    this.blueNoise = null;
     this.modes.clear();
     this.passes.clear();
     if (this.scene) deleteFbo(gl, this.scene);
