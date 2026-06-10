@@ -135,7 +135,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 - [x] **Logo / image upload.** Rasterise an uploaded SVG/PNG → `texImage2D` →
   `uniform sampler2D uLogo`; modes that displace/mask/ripple it on audio.
   *Done:* an uploaded image renders and reacts in at least one mode; build clean.
-- [ ] **Web MIDI — engine + learn UI.** `src/audio/midi.ts`: Web MIDI access,
+- [x] **Web MIDI — engine + learn UI.** `src/audio/midi.ts`: Web MIDI access,
   CC parsing (pure + tested), a MIDI-learn flow (pick control → twist knob →
   bound), bindings persisted to localStorage, MIDI section in the panel.
   *Done:* a simulated CC message drives a control (slider moves, uniform

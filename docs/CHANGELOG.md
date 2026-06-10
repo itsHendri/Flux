@@ -5,6 +5,31 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2d — Web MIDI engine + learn UI (hardware verify pending)
+
+Hardware knobs/faders can drive the visuals: `src/audio/midi.ts` provides a
+**MIDI-learn** pipeline, split for testability — `parseMidi` (CC extraction)
+and `MidiMap` (learn/route/scale, one binding per control and per CC) are
+pure; `MidiEngine` wraps `requestMIDIAccess` with hot-plug tracking;
+`MidiBindingStore` persists bindings by stable `ControlDef.id`.
+
+- **MIDI panel section** — connect button (permission on demand), status line
+  (devices / unsupported / errors), control picker + learn button
+  ("twist a knob…"), a chip per binding with unbind ×.
+- CC values scale into the bound slider's min/max with step snapping, applied
+  through `ControlPanel.applyValues` so the widget moves live.
+- Degrades cleanly: no Web MIDI (Safari) → status note, no devices → hint.
+
+Verified: build clean, 40/40 tests (parse, scaling, learn/rebind/unbind,
+persistence incl. corrupt JSON); Preview with a simulated CC stream through
+the real handler: learn binds Gain ← CC21 (chip + localStorage), CC values
+127/32/96 move the slider + readout live, the binding routes after a page
+reload without re-learning, unbind clears storage; overlay empty, console
+clean. **The hardware half of the original task stays unchecked in the
+roadmap** — needs the user's Traktor S2 on a real session.
+
+---
+
 ## Phase 2d — Logo / image upload
 
 FLUX can now perform around a brand mark: a **Logo** panel section uploads an

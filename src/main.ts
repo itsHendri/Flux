@@ -18,6 +18,8 @@ import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
 import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
+import { MidiPanel } from './ui/MidiPanel.ts';
+import { MidiEngine, MidiMap, MidiBindingStore } from './audio/midi.ts';
 
 installGlobalErrorHooks();
 
@@ -228,6 +230,67 @@ const presetPanel = new PresetPanel(panel, {
   },
 });
 presetPanel.refresh(presetStore.list());
+
+// --- MIDI -------------------------------------------------------------------
+// Hardware knobs/faders drive slider controls via MIDI-learn: pick a control,
+// press learn, twist a knob. Bindings persist (stable ControlDef ids). The
+// engine/mapping/persistence split lives in src/audio/midi.ts.
+{
+  const midiMap = new MidiMap(allControls);
+  const midiStore = new MidiBindingStore(window.localStorage);
+  midiMap.setAll(midiStore.load());
+
+  const learnable = allControls.filter((d) => (d.type ?? 'slider') === 'slider');
+  const byId = new Map(allControls.map((d) => [d.id, d]));
+  const bindingChips = () =>
+    midiMap.all.map((b) => ({
+      controlId: b.controlId,
+      text: `${byId.get(b.controlId)?.name ?? b.controlId} ← CC${b.controller} ch${b.channel + 1}`,
+    }));
+
+  // One handler for every CC, hardware or simulated: completes a pending
+  // learn (and persists it), then routes the value into the control store.
+  const handleCc = (ev: { channel: number; controller: number; value: number }): void => {
+    const wasArmed = midiMap.armedControl !== null;
+    const hit = midiMap.feed(ev);
+    if (wasArmed && midiMap.armedControl === null) {
+      midiStore.save(midiMap.all);
+      midiPanel.setLearning(false);
+      midiPanel.refreshBindings(bindingChips());
+    }
+    if (hit) controlPanel.applyValues({ [hit.glslName]: hit.value });
+  };
+
+  const midiPanel = new MidiPanel(
+    panel,
+    learnable.map((d) => ({ id: d.id, name: d.name })),
+    {
+      onConnect: () => {
+        const engine = new MidiEngine();
+        engine.onDevicesChanged((names) => {
+          midiPanel.setStatus(
+            names.length ? `inputs: ${names.join(', ')}` : 'no MIDI inputs — plug in a controller',
+          );
+        });
+        engine.onCc(handleCc);
+        midiPanel.setStatus('requesting MIDI access…');
+        engine.init().catch((e: unknown) => {
+          midiPanel.setStatus(e instanceof Error ? e.message : String(e));
+        });
+      },
+      onLearn: (controlId) => midiMap.learn(controlId),
+      onUnbind: (controlId) => {
+        midiMap.unbind(controlId);
+        midiStore.save(midiMap.all);
+        midiPanel.refreshBindings(bindingChips());
+      },
+    },
+  );
+  midiPanel.setStatus(
+    MidiEngine.supported ? 'press connect to use a controller' : 'Web MIDI not supported here',
+  );
+  midiPanel.refreshBindings(bindingChips());
+}
 
 // --- Source picker --------------------------------------------------------
 // The render loop runs from boot — visuals are always live, they just sit

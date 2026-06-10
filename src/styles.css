@@ -236,6 +236,12 @@ input[type='range'] {
   color: var(--ink);
 }
 
+.midi-status {
+  font-size: 10px;
+  color: var(--ink-dim);
+  margin: 8px 0;
+}
+
 .meters {
   display: flex;
   flex-direction: column;
