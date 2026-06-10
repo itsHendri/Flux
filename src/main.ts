@@ -292,6 +292,75 @@ presetPanel.refresh(presetStore.list());
   midiPanel.refreshBindings(bindingChips());
 }
 
+// --- Output -----------------------------------------------------------------
+// Performance output: fullscreen on the current display, or a Picture-in-
+// Picture window (captureStream → hidden <video> → requestPictureInPicture)
+// that can be dragged onto a second display while the controls stay here.
+{
+  const outSection = document.createElement('div');
+  outSection.className = 'section';
+  outSection.innerHTML = '<h2>Output</h2>';
+  const outRow = document.createElement('div');
+  outRow.className = 'btn-row';
+
+  const fsBtn = document.createElement('button');
+  fsBtn.textContent = 'fullscreen';
+  fsBtn.addEventListener('click', () => {
+    canvas.requestFullscreen().catch((e: unknown) => reportError('output', e));
+  });
+
+  const pipBtn = document.createElement('button');
+  pipBtn.textContent = 'pip window';
+  let pipVideo: HTMLVideoElement | null = null;
+  const teardownPip = () => {
+    if (!pipVideo) return;
+    const stream = pipVideo.srcObject as MediaStream | null;
+    stream?.getTracks().forEach((t) => t.stop());
+    pipVideo.remove();
+    pipVideo = null;
+    pipBtn.classList.remove('active');
+    pipBtn.textContent = 'pip window';
+  };
+  pipBtn.addEventListener('click', () => {
+    void (async () => {
+      try {
+        if (document.pictureInPictureElement) {
+          await document.exitPictureInPicture();
+          return; // leavepictureinpicture handles teardown
+        }
+        if (!document.pictureInPictureEnabled) {
+          reportError('output', 'Picture-in-Picture is not available in this browser.');
+          return;
+        }
+        teardownPip(); // a previous request may still be pending — never stack videos
+        const video = document.createElement('video');
+        video.muted = true;
+        video.playsInline = true;
+        video.style.display = 'none';
+        video.srcObject = canvas.captureStream(60);
+        document.body.appendChild(video);
+        pipVideo = video;
+        video.addEventListener('leavepictureinpicture', teardownPip);
+        await video.play();
+        await video.requestPictureInPicture();
+        pipBtn.classList.add('active');
+        pipBtn.textContent = 'close pip';
+      } catch (e) {
+        teardownPip();
+        reportError('output', e);
+      }
+    })();
+  });
+
+  const hint = document.createElement('div');
+  hint.className = 'midi-status';
+  hint.textContent = 'drag the PiP window to a second display for output';
+
+  outRow.append(fsBtn, pipBtn);
+  outSection.append(outRow, hint);
+  panel.appendChild(outSection);
+}
+
 // --- Source picker --------------------------------------------------------
 // The render loop runs from boot — visuals are always live, they just sit
 // still until a source is feeding the analyser.

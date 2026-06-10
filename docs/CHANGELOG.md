@@ -5,6 +5,28 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2e — Performance output (real-browser verify pending)
+
+An **Output** panel section for performing:
+
+- **fullscreen** — `canvas.requestFullscreen()` on the stage canvas.
+- **pip window** — `canvas.captureStream(60)` → hidden muted `<video>` →
+  `requestPictureInPicture()`; the floating window can be dragged onto a
+  second display while the control panel stays put. Click again to close;
+  teardown stops the capture tracks and removes the video (and a fresh
+  request never stacks videos if a previous one is still pending).
+- Unsupported/denied paths surface in the error overlay.
+
+Verified: build clean, 40/40 tests; Preview confirms the section renders and
+the handlers fire with failures surfaced cleanly — the embedded Preview
+browser **denies fullscreen/PiP at the permission level** ("Permissions check
+failed"), so the visible-output half is split into a real-browser
+verification task in the roadmap, like the MIDI hardware check. (Also noted:
+the preview viewport had collapsed to 0×0 mid-session — an environment
+quirk, fixed by a resize, unrelated to the app.)
+
+---
+
 ## Phase 2d — Web MIDI engine + learn UI (hardware verify pending)
 
 Hardware knobs/faders can drive the visuals: `src/audio/midi.ts` provides a

@@ -147,9 +147,16 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 
 ### 2e — Output
 
-- [ ] **Performance output.** Fullscreen, second-display, and Picture-in-Picture
-  (`captureStream` → hidden `<video>` → `requestPictureInPicture`). *Done:* the
-  visual shows fullscreen and in a PiP window; build clean.
+- [x] **Performance output — implementation.** Output panel section:
+  fullscreen (`canvas.requestFullscreen`) and PiP (`captureStream` → hidden
+  `<video>` → `requestPictureInPicture`, teardown on leave, never stacks
+  videos); failures surface in the error overlay. *Done:* handlers verified
+  firing with errors surfaced cleanly (the embedded Preview browser denies
+  fullscreen/PiP at the permission level); build + tests clean.
+- [ ] **Performance output — real-browser verification (needs the user).**
+  In desktop Chrome/Edge: fullscreen engages on the canvas, the PiP window
+  shows the live visual and can be dragged to a second display. *Done:*
+  verified by the user; any fixes committed.
 - [ ] **Deploy track (gated).** Produce a self-hostable static `dist/` and
   document hosting options. **Do not** push to any third-party host without
   explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
