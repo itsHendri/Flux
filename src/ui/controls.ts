@@ -205,13 +205,14 @@ export const CONTROLS: ControlDef[] = [
     pass: 'quantize',
   },
   {
+    // 0 = no bright-pass (fully energy-conserving mip bloom); >0 = soft knee.
     id: 'bloomThreshold',
     name: 'Bloom Threshold',
     glslName: 'uBloomThreshold',
     min: 0,
     max: 1,
     step: 0.01,
-    default: 0.55,
+    default: 0,
     pass: 'bloom',
   },
   {
@@ -221,7 +222,17 @@ export const CONTROLS: ControlDef[] = [
     min: 0,
     max: 3,
     step: 0.01,
-    default: 1.1,
+    default: 0.8,
+    pass: 'bloom',
+  },
+  {
+    id: 'bloomRadius',
+    name: 'Bloom Radius',
+    glslName: 'uBloomRadius',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.35,
     pass: 'bloom',
   },
   {

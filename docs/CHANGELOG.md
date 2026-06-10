@@ -5,6 +5,41 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2a — Mip-chain / energy-conserving bloom
+
+Replaced the fixed-resolution separable Gaussian bloom with the Jimenez 2014
+(SIGGRAPH, "Next Generation Post Processing in Call of Duty: Advanced Warfare")
+downsample→upsample pyramid — the wide, stable, resolution-independent glow
+modern engines use, fed by the new HDR buffers.
+
+- **`src/render/BloomPipeline.ts`** — a half-res FBO pyramid (≤6 levels, ≥8 px):
+  progressive 13-tap downsample (Karis luma-weighted on the first mip to kill
+  fireflies), progressive 3×3 tent upsample accumulated with additive blending,
+  full-res composite. The pyramid allocates lazily (no VRAM while bloom is off)
+  and resizes itself. The Renderer special-cases the pass named `bloom` to this
+  pipeline — a pyramid genuinely doesn't fit the full-res ping-pong stage model
+  — while the registry keeps the toggle, chain order, controls and `.frag` HMR.
+- **Shaders** — `bloom-down/up/composite.frag` replace `bloom-h/v.frag`. Stage-
+  private uniforms (`uFirstMip`) are declared in the `.frag` body, a documented
+  seam under the shared header.
+- **Controls** — `Bloom Threshold` default **0** with new semantics (0 = no
+  bright-pass, fully energy-conserving; >0 = soft knee), per review decision.
+  New `Bloom Radius` (tent footprint). `Bloom Intensity` retuned to 0.8 against
+  the pyramid's internal 0.3 normalisation.
+- **Tests** — `computeMipSizes` is pure and covered (17 tests total now).
+
+Sources: [Jimenez 2014 slides](https://www.iryoku.com/next-generation-post-processing-in-call-of-duty-advanced-warfare/),
+[LearnOpenGL: Phys. Based Bloom](https://learnopengl.com/Guest-Articles/2022/Phys.-Based-Bloom),
+[Froyok: UE custom bloom](https://www.froyok.fr/blog/2021-12-ue4-custom-bloom/).
+
+Verified: build clean, 17/17 tests; Preview on raymarch shows the wide soft
+halo + ambient bleed; glow stays proportional at 640×400 vs. desktop
+(resolution-independent — the old Gaussian's radius was fixed in texels);
+toggle off restores the base image; error overlay empty, console clean on a
+fresh server.
+
+---
+
 ## Phase 2a — HDR float-FBO pipeline
 
 All five off-screen render targets (scene, ping, pong, history, passInput) are

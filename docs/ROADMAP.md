@@ -99,7 +99,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   `OES_texture_half_float_linear`, with a clean RGBA8 fallback if unsupported.
   Unclamps bloom/trails accumulation. *Done:* trails/bloom visibly accumulate
   past 1.0 on supported hardware; RGBA8 path still works; build + Preview clean.
-- [ ] **Mip-chain / energy-conserving bloom.** Replace the fixed-res separable
+- [x] **Mip-chain / energy-conserving bloom.** Replace the fixed-res separable
   Gaussian with a downsample→upsample pyramid (Jimenez 2014) for a
   resolution-independent wide glow; drop the hard threshold for an
   energy-conserving bright-pass. Depends on the HDR FBOs. *Done:* glow is wide

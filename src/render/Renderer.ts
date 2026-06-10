@@ -9,6 +9,7 @@ import {
   type Fbo,
   type FboFormat,
 } from './Framebuffer.ts';
+import { BloomPipeline } from './BloomPipeline.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
 import commonSource from '../shaders/common.glsl?raw';
 import presentSource from '../shaders/present.frag?raw';
@@ -38,7 +39,7 @@ export interface ShaderError {
   log: string;
 }
 
-interface CompiledProgram {
+export interface CompiledProgram {
   name: string;
   program: WebGLProgram;
   uniforms: Map<string, WebGLUniformLocation | null>;
@@ -99,6 +100,11 @@ export class Renderer {
   // registry — it always runs, and never appears in the Effects panel.
   private present: CompiledProgram | null = null;
 
+  // The 'bloom' pass runs on a half-res mip pyramid, which doesn't fit the
+  // full-res ping-pong stage model — registerPass and the chain loop route it
+  // here instead (it still toggles/orders/HMRs like any pass).
+  private bloom: BloomPipeline | null = null;
+
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
 
@@ -121,6 +127,9 @@ export class Renderer {
     }
     this.gl = gl;
     this.fboFormat = detectFboFormat(gl);
+    this.bloom = new BloomPipeline(gl, (name, body) =>
+      this.compile(name, this.composePass(body), PASS_SAMPLERS),
+    );
 
     const vao = gl.createVertexArray();
     if (!vao) throw new Error('Failed to create vertex array object.');
@@ -244,6 +253,15 @@ export class Renderer {
     if (sources.length === 0) {
       this.errorCb({ mode: pass.name, log: `Pass "${pass.name}" has no stages.` });
       return false;
+    }
+
+    // 'bloom' compiles into the mip-pyramid pipeline, not the generic stage
+    // chain. Same contract: keep-previous-on-failure, keep chain position.
+    if (pass.name === 'bloom' && this.bloom) {
+      if (!this.bloom.register(sources)) return false;
+      if (!this.passOrder.includes(pass.name)) this.passOrder.push(pass.name);
+      this.successCb(pass.name);
+      return true;
     }
 
     const stages: CompiledProgram[] = [];
@@ -389,6 +407,19 @@ export class Renderer {
     const prevTex = (this.historyValid ? this.history! : this.scene).texture;
 
     for (const name of chain) {
+      // 'bloom' executes on its mip pyramid (see BloomPipeline); it consumes
+      // and advances the ping-pong like a single generic stage.
+      if (name === 'bloom') {
+        if (this.bloom?.ready) {
+          this.bloom.run(readFbo.texture, writeFbo, w, h, this.fboFormat, (p) =>
+            this.uploadFrameUniforms(p, state),
+          );
+          readFbo = writeFbo;
+          writeFbo = readFbo === this.ping ? this.pong! : this.ping!;
+        }
+        continue;
+      }
+
       const pass = this.passes.get(name);
       if (!pass) continue;
 
@@ -457,6 +488,8 @@ export class Renderer {
     for (const p of this.passes.values()) for (const s of p.stages) gl.deleteProgram(s.program);
     if (this.present) gl.deleteProgram(this.present.program);
     this.present = null;
+    this.bloom?.dispose();
+    this.bloom = null;
     this.modes.clear();
     this.passes.clear();
     if (this.scene) deleteFbo(gl, this.scene);

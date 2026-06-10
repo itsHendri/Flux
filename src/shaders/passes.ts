@@ -1,7 +1,8 @@
 import type { PostPass } from '../render/Renderer.ts';
 import trails from './passes/trails.frag?raw';
-import bloomH from './passes/bloom-h.frag?raw';
-import bloomV from './passes/bloom-v.frag?raw';
+import bloomDown from './passes/bloom-down.frag?raw';
+import bloomUp from './passes/bloom-up.frag?raw';
+import bloomComposite from './passes/bloom-composite.frag?raw';
 import dither from './passes/dither.frag?raw';
 import quantize from './passes/quantize.frag?raw';
 import chroma from './passes/chroma.frag?raw';
@@ -19,8 +20,9 @@ export const PASSES: PostPass[] = [
   { name: 'trails', fragSource: trails },
   { name: 'dither', fragSource: dither },
   { name: 'quantize', fragSource: quantize },
-  // Multi-stage: separable Gaussian (horizontal then vertical) + composite.
-  { name: 'bloom', stages: [bloomH, bloomV] },
+  // Mip-chain bloom (Jimenez 2014): the Renderer routes this name to
+  // BloomPipeline; stage order is [downsample, upsample, composite].
+  { name: 'bloom', stages: [bloomDown, bloomUp, bloomComposite] },
   { name: 'chroma', fragSource: chroma },
   { name: 'kaleido', fragSource: kaleido },
   { name: 'scanline', fragSource: scanline },
