@@ -5,6 +5,17 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 2a COMPLETE — checkpoint (run ended on context hygiene)
+
+All three §2a rendering-quality upgrades landed as verified atomic commits:
+HDR RGBA16F FBOs + tonemapped present pass, the Jimenez 2014 mip-chain
+energy-conserving bloom, and the Bayer/IGN/blue-noise dither options. All
+three Phase 1 audit debts in this area are resolved. The run stopped here per
+the loop protocol (several tasks completed; fresh context resumes seamlessly).
+**Next unchecked task: §2b beat/onset detection via spectral flux.**
+
+---
+
 ## Phase 2a — Dither quality options (IGN + blue noise)
 
 The dither pass gains a **Dither Noise** select alongside the Bayer matrices,
