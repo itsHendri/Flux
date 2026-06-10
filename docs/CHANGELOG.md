@@ -5,6 +5,31 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2c — Pass toggles unified into the control system
+
+Resolved the Phase 1 "parallel toggle mechanisms" tech debt: pass-enable state
+now lives in the same typed, serialisable store as every other control —
+the prerequisite for presets.
+
+- **`passToggleDefs` / `passToggleUniform`** (`src/core/state.ts`, pure +
+  tested) generate one `toggle` ControlDef per pass (`uFxTrails`, `uFxBloom`,
+  …). They're handed to the Renderer (declared like any control uniform) and
+  seeded **widgetless** into the ControlPanel value store — the existing
+  Effects button row stays the UI, writing through new
+  `ControlPanel.setValue`/`getValue`.
+- **Renderer** — the private `enabled` Set and `setPassEnabled`/`isPassEnabled`
+  API are gone; the chain is derived per frame from `FrameState.controls`
+  (`uFx* >= 0.5`). Pass-enable state has exactly one home.
+- `ControlPanel.getValues()` (→ `FrameState.controls`) is now the complete
+  serialisable snapshot of live state apart from the mode name.
+
+Verified: build clean, 27/27 tests; Preview behaviour unchanged — Effects
+buttons toggle bloom/trails on (raymarch renders the full chain, scoped
+controls appear) and off (controls disappear, base render returns); error
+overlay empty, console clean on a fresh server.
+
+---
+
 ## Phase 2b — Beat / onset detection (spectral flux)
 
 FLUX now *fires on hits* instead of only tracking continuous energy. Two new

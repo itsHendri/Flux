@@ -10,6 +10,7 @@ import {
   requestAudioPermission,
 } from './audio/devices.ts';
 import { CONTROLS } from './ui/controls.ts';
+import { passToggleDefs, passToggleUniform } from './core/state.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
@@ -46,9 +47,14 @@ panelToggle.addEventListener('click', () => panel.classList.toggle('collapsed'))
 document.body.appendChild(panelToggle);
 
 // --- Renderer -------------------------------------------------------------
+// Pass-enable state is typed controls like everything else (uFx* toggles):
+// declared as uniforms, stored alongside the other control values, read by the
+// Renderer to build the chain. One serialisable home for all live state.
+const passToggles = passToggleDefs(PASSES.map((p) => p.name));
+
 let renderer: Renderer;
 try {
-  renderer = new Renderer(canvas, CONTROLS);
+  renderer = new Renderer(canvas, [...CONTROLS, ...passToggles]);
 } catch (e) {
   reportError('renderer', e);
   throw e;
@@ -64,8 +70,13 @@ for (const pass of PASSES) renderer.registerPass(pass);
 const audio = new AudioEngine({ fftSize: 2048 });
 
 // --- UI -------------------------------------------------------------------
-const controlPanel = new ControlPanel(panel, CONTROLS);
+// The pass toggles are widgetless here — the Effects button row below is
+// their UI, writing through setValue into the same store.
+const controlPanel = new ControlPanel(panel, CONTROLS, passToggles);
 const meters = new Meters(panel);
+
+const isPassEnabled = (name: string): boolean =>
+  controlPanel.getValue(passToggleUniform(name)) >= 0.5;
 
 const app = new App(audio, renderer, controlPanel, meters);
 
@@ -88,7 +99,7 @@ panel.appendChild(modeSection);
 
 /** Refresh which controls the panel shows for the current mode + enabled passes. */
 function refreshControls(): void {
-  controlPanel.update(app.getMode(), (n) => renderer.isPassEnabled(n));
+  controlPanel.update(app.getMode(), isPassEnabled);
 }
 
 function selectMode(name: string): void {
@@ -102,9 +113,10 @@ function selectMode(name: string): void {
 // Highlight a default mode up front so the chip shows as selected on load.
 if (MODES.length > 0) selectMode(MODES[0].name);
 
-// Post-pass effect toggles. Each registered pass is a toggle button that drives
-// renderer.setPassEnabled; effects start off, so the pipeline is a no-op until
-// one is switched on. (Until typed toggle controls land, this is the seam.)
+// Post-pass effect toggles. Each registered pass is a toggle button writing
+// its uFx* control value — the single home for pass-enable state, which the
+// Renderer reads per frame. Effects start off (toggle default false), so the
+// pipeline is a no-op until one is switched on.
 if (renderer.passNames.length > 0) {
   const fxSection = document.createElement('div');
   fxSection.className = 'section';
@@ -115,8 +127,8 @@ if (renderer.passNames.length > 0) {
     const btn = document.createElement('button');
     btn.textContent = name;
     btn.addEventListener('click', () => {
-      const on = !renderer.isPassEnabled(name);
-      renderer.setPassEnabled(name, on);
+      const on = !isPassEnabled(name);
+      controlPanel.setValue(passToggleUniform(name), on ? 1 : 0);
       btn.classList.toggle('active', on);
       refreshControls();
     });

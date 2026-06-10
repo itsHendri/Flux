@@ -84,3 +84,26 @@ export interface ControlDef {
 export function isColor(def: ControlDef): boolean {
   return def.type === 'color';
 }
+
+/** Uniform name carrying a pass's enable state, e.g. "trails" → "uFxTrails". */
+export function passToggleUniform(passName: string): string {
+  return `uFx${passName.charAt(0).toUpperCase()}${passName.slice(1)}`;
+}
+
+/**
+ * Typed toggle controls carrying pass-enable state — one per registered pass.
+ * These live in the same value store as every other control, so FrameState.
+ * controls is the complete serialisable snapshot (mode aside): the Renderer
+ * derives its active chain from these values each frame, and presets get pass
+ * state for free. They render as the compact Effects button row, not as
+ * Controls-section widgets. Passes start disabled (no-op pipeline).
+ */
+export function passToggleDefs(passNames: string[]): ControlDef[] {
+  return passNames.map((name) => ({
+    id: `fx-${name}`,
+    name,
+    glslName: passToggleUniform(name),
+    type: 'toggle' as const,
+    default: false,
+  }));
+}

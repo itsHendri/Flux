@@ -120,7 +120,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 
 ### 2c — State / UX
 
-- [ ] **Unify pass toggles into the control system.** Replace the ad-hoc Effects
+- [x] **Unify pass toggles into the control system.** Replace the ad-hoc Effects
   buttons in `src/main.ts` with the typed-control/state path so pass-enable state
   is part of the serializable schema (prerequisite for clean presets; resolves
   the parallel-toggle tech debt). *Done:* effects toggle through the unified

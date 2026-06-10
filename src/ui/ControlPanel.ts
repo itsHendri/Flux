@@ -27,7 +27,24 @@ export class ControlPanel {
   private readonly items: { def: ControlDef; wrap: HTMLElement }[] = [];
   private readonly section: HTMLElement;
 
-  constructor(parent: HTMLElement, controls: ControlDef[]) {
+  /**
+   * @param controls rendered as widgets in the Controls section.
+   * @param widgetless seeded into the value store with no widget here — their
+   *   UI lives elsewhere (e.g. the pass toggles behind the Effects button row,
+   *   driven via setValue/getValue). Same store, so getValues() serialises
+   *   everything.
+   */
+  constructor(parent: HTMLElement, controls: ControlDef[], widgetless: ControlDef[] = []) {
+    for (const def of widgetless) {
+      this.values[def.glslName] =
+        typeof def.default === 'number'
+          ? def.default
+          : Array.isArray(def.default)
+            ? def.default.slice()
+            : def.default
+              ? 1
+              : 0;
+    }
     const section = document.createElement('div');
     section.className = 'section';
     section.innerHTML = '<h2>Controls</h2>';
@@ -169,5 +186,16 @@ export class ControlPanel {
   /** Current control values keyed by glslName. */
   getValues(): Record<string, number | number[]> {
     return this.values;
+  }
+
+  /** Read one scalar value (0 if unset/non-scalar). */
+  getValue(glslName: string): number {
+    const v = this.values[glslName];
+    return typeof v === 'number' ? v : 0;
+  }
+
+  /** Write one scalar value — the path external widgets (Effects row) use. */
+  setValue(glslName: string, value: number): void {
+    this.values[glslName] = value;
   }
 }

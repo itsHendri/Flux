@@ -1,5 +1,5 @@
 import type { ControlDef, FrameState } from '../core/state.ts';
-import { isColor } from '../core/state.ts';
+import { isColor, passToggleUniform } from '../core/state.ts';
 import { buildProgram } from './shaderProgram.ts';
 import {
   createFbo,
@@ -93,10 +93,11 @@ export class Renderer {
   private current: CompiledProgram | null = null;
 
   // Post-pass registry — mirrors the mode registry. `passOrder` is the fixed
-  // chain order; `enabled` selects which run this frame.
+  // chain order; which passes run this frame is read from FrameState.controls
+  // (the `uFx*` pass-toggle values — see passToggleDefs), so enable state has
+  // exactly one home: the serialisable control store.
   private readonly passes = new Map<string, CompiledPass>();
   private readonly passOrder: string[] = [];
-  private readonly enabled = new Set<string>();
 
   // Render targets. `scene` holds the mode output; `ping`/`pong` are the
   // post-chain ping-pong pair; `history` keeps last frame's final output so
@@ -344,16 +345,6 @@ export class Renderer {
     return true;
   }
 
-  /** Enable or disable a registered pass in the chain. */
-  setPassEnabled(name: string, on: boolean): void {
-    if (on) this.enabled.add(name);
-    else this.enabled.delete(name);
-  }
-
-  isPassEnabled(name: string): boolean {
-    return this.enabled.has(name);
-  }
-
   /** Registered passes in chain order. */
   get passNames(): string[] {
     return [...this.passOrder];
@@ -465,8 +456,12 @@ export class Renderer {
     this.uploadFrameUniforms(mode, state);
     this.drawFullscreen();
 
-    // 2. Ordered, toggleable post-pass chain across the ping-pong pair.
-    const chain = this.passOrder.filter((n) => this.enabled.has(n));
+    // 2. Ordered, toggleable post-pass chain across the ping-pong pair. Enable
+    // state comes from the control store (uFx* toggle values).
+    const chain = this.passOrder.filter((n) => {
+      const v = state.controls[passToggleUniform(n)];
+      return typeof v === 'number' && v >= 0.5;
+    });
     let readFbo = this.scene;
     let writeFbo = this.ping!;
 
