@@ -157,7 +157,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   In desktop Chrome/Edge: fullscreen engages on the canvas, the PiP window
   shows the live visual and can be dragged to a second display. *Done:*
   verified by the user; any fixes committed.
-- [ ] **Deploy track (gated).** Produce a self-hostable static `dist/` and
+- [x] **Deploy track (gated).** Produce a self-hostable static `dist/` and
   document hosting options. **Do not** push to any third-party host without
   explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
   hosting options documented; no third-party push without approval.

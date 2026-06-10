@@ -5,6 +5,51 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 2 COMPLETE — review
+
+Phase 2 is done: every backlog group (2a–2e) landed as verified atomic
+commits, two items carry explicit user-verification follow-ups. What landed:
+
+- **2a Rendering quality** — HDR RGBA16F FBOs + tonemapped present pass
+  (None/Reinhard/ACES), Jimenez 2014 mip-chain energy-conserving bloom
+  (resolution-independent), dither noise options (Bayer/IGN/blue-noise CC0
+  texture + temporal animation). All three Phase 1 audit debts in this area
+  resolved.
+- **2b Audio** — spectral-flux beat/onset detection; `uBeat`/`uOnset` pulse
+  uniforms in every shader; cells flashes on the kick.
+- **2c State/UX** — pass toggles unified into the serialisable control store
+  (parallel-toggle debt resolved), then presets: save/recall mode + controls
+  + effects to localStorage with stable-id keys.
+- **2d Input** — logo upload (`uLogo` sampler + audio-reactive logo mode) and
+  Web MIDI learn (engine + bindings persisted; **hardware verify on the
+  user's Traktor S2 still unchecked**).
+- **2e Output** — fullscreen + PiP performance output (**real-browser verify
+  still unchecked**; the embedded preview denies both), and the gated deploy
+  track: `dist/` verified standalone, hosting documented in
+  [`DEPLOY.md`](DEPLOY.md), nothing pushed anywhere.
+
+Quality bar held throughout: research-first with citations in commits, one
+atomic commit per task, every commit gated on build + tests (40 now, up from
+12) + Preview screenshot + empty error overlay + clean console. Tech debt
+list from the Phase 1 audit is fully cleared. Open items for the user: the
+two hardware/real-browser verifications above, plus tuning taste passes
+(bloom intensity, beat sensitivity) best done live with music.
+
+---
+
+## Phase 2e — Deploy track (gated)
+
+`dist/` is a fully static, self-hostable bundle — verified standalone: built
+fresh and served via a plain `python3 -m http.server`; `index.html` and all
+three hashed assets (JS, CSS, blue-noise PNG) return 200 with no other
+server features needed. New [`DEPLOY.md`](DEPLOY.md) documents requirements
+(HTTPS/localhost for mic + MIDI + PiP; root-path assumption and the `base`
+option for subpaths) and hosting options: local `vite preview`, python,
+nginx, and **gated** hosted candidates (company GitLab Pages) per the org
+policy — no third-party push without explicit approval, and none was made.
+
+---
+
 ## Phase 2e — Performance output (real-browser verify pending)
 
 An **Output** panel section for performing:
