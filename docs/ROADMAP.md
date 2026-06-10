@@ -135,8 +135,15 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 - [x] **Logo / image upload.** Rasterise an uploaded SVG/PNG → `texImage2D` →
   `uniform sampler2D uLogo`; modes that displace/mask/ripple it on audio.
   *Done:* an uploaded image renders and reacts in at least one mode; build clean.
-- [ ] **Web MIDI.** Map a controller's (Traktor S2) knobs/faders to uniforms
-  (`src/audio/midi.ts`). *Done:* a hardware knob drives a control live; build clean.
+- [ ] **Web MIDI — engine + learn UI.** `src/audio/midi.ts`: Web MIDI access,
+  CC parsing (pure + tested), a MIDI-learn flow (pick control → twist knob →
+  bound), bindings persisted to localStorage, MIDI section in the panel.
+  *Done:* a simulated CC message drives a control (slider moves, uniform
+  updates); graceful no-support/no-device paths; build + tests clean.
+- [ ] **Web MIDI — hardware verification (needs the user's Traktor S2).**
+  Plug in the controller, learn a knob, confirm it drives a control live and
+  the binding survives a reload. *Done:* verified by the user on hardware;
+  any fixes committed.
 
 ### 2e — Output
 
