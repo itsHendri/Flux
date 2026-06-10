@@ -150,6 +150,61 @@ function repaintFxButtons(): void {
   }
 }
 
+// --- Logo upload ------------------------------------------------------------
+// Rasterise an uploaded image (SVG/PNG/JPEG/WebP) to a capped canvas and hand
+// it to the Renderer's uLogo texture; the `logo` mode displaces it on audio.
+{
+  const logoSection = document.createElement('div');
+  logoSection.className = 'section';
+  logoSection.innerHTML = '<h2>Logo</h2>';
+  const fileInput = document.createElement('input');
+  fileInput.type = 'file';
+  fileInput.accept = 'image/png,image/jpeg,image/webp,image/svg+xml';
+  fileInput.style.display = 'none';
+  fileInput.id = 'logo-file';
+  const uploadBtn = document.createElement('button');
+  uploadBtn.className = 'big-btn';
+  uploadBtn.textContent = 'upload image';
+  uploadBtn.addEventListener('click', () => fileInput.click());
+
+  fileInput.addEventListener('change', () => {
+    const file = fileInput.files?.[0];
+    if (!file) return;
+    const url = URL.createObjectURL(file);
+    const img = new Image();
+    // onload rather than decode(): decode() never settles for blob URLs in
+    // some embedded browsers, and onload is just as correct here.
+    img.onload = () => {
+      try {
+        // Rasterise to a capped canvas: uniform path for raster + SVG (SVGs
+        // without intrinsic size fall back to 512); alpha is preserved.
+        const w = img.naturalWidth || 512;
+        const h = img.naturalHeight || 512;
+        const scale = Math.min(1, 1024 / Math.max(w, h));
+        const cnv = document.createElement('canvas');
+        cnv.width = Math.max(1, Math.round(w * scale));
+        cnv.height = Math.max(1, Math.round(h * scale));
+        cnv.getContext('2d')?.drawImage(img, 0, 0, cnv.width, cnv.height);
+        renderer.setLogo(cnv);
+        uploadBtn.textContent = file.name;
+        selectMode('logo'); // make the upload instantly visible
+      } catch (e) {
+        reportError('logo', e);
+      } finally {
+        URL.revokeObjectURL(url);
+      }
+    };
+    img.onerror = () => {
+      URL.revokeObjectURL(url);
+      reportError('logo', `Could not decode "${file.name}" as an image.`);
+    };
+    img.src = url;
+  });
+
+  logoSection.append(uploadBtn, fileInput);
+  panel.appendChild(logoSection);
+}
+
 // --- Presets ----------------------------------------------------------------
 // Snapshot/recall of mode + all control values (pass toggles included) in
 // localStorage, keyed by stable ControlDef ids.

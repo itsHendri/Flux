@@ -2,7 +2,7 @@ import type { ControlDef } from '../core/state.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells'];
+const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells', 'logo'];
 
 /**
  * THE uniform schema — single source of truth.
@@ -132,6 +132,16 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.5,
     modes: ['cells'],
+  },
+  {
+    id: 'logoRipple',
+    name: 'Ripple',
+    glslName: 'uLogoRipple',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['logo'],
   },
 
   // --- Post-pass controls (shown only while their pass is enabled) ---------

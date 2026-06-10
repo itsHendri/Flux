@@ -63,16 +63,25 @@ const BUILTIN_UNIFORMS = [
   // uOnset = full spectrum. 1.0 on a hit, exponential decay after.
   'uBeat',
   'uOnset',
+  // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
+  'uLogoAspect',
 ];
+
+/**
+ * Samplers every mode declares. `uLogo` is the uploaded image (Logo section),
+ * bound on unit 4 for modes and passes alike — transparent black until set.
+ */
+const MODE_SAMPLERS = ['uLogo'];
 /**
  * Sampler uniforms only post-passes declare. `uSource` = previous stage,
  * `uPrevFrame` = last frame (feedback), `uScene` = this pass's own input
  * (fixed across a multi-stage pass, so a final stage can composite onto it),
  * `uBlueNoise` = a tileable 128×128 blue-noise threshold texture (Christoph
  * Peters, momentsingraphics.de, CC0), bound for every pass like the others —
- * unused declarations cost nothing, matching the controls convention.
+ * unused declarations cost nothing, matching the controls convention. Passes
+ * additionally get the MODE_SAMPLERS (the uploaded logo).
  */
-const PASS_SAMPLERS = ['uSource', 'uPrevFrame', 'uScene', 'uBlueNoise'];
+const PASS_SAMPLERS = ['uSource', 'uPrevFrame', 'uScene', 'uBlueNoise', ...MODE_SAMPLERS];
 
 /**
  * WebGL2 renderer with a multi-pass pipeline. The active mode renders into an
@@ -125,6 +134,10 @@ export class Renderer {
   // so the option degrades gracefully until the async PNG decode lands.
   private blueNoise: WebGLTexture | null = null;
 
+  // Uploaded logo (uLogo, unit 4): 1×1 transparent black until setLogo.
+  private logo: WebGLTexture | null = null;
+  private logoAspect = 0;
+
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
 
@@ -151,6 +164,7 @@ export class Renderer {
       this.compile(name, this.composePass(body), PASS_SAMPLERS),
     );
     this.blueNoise = this.createBlueNoiseTexture();
+    this.logo = this.createLogoTexture();
 
     const vao = gl.createVertexArray();
     if (!vao) throw new Error('Failed to create vertex array object.');
@@ -206,6 +220,47 @@ export class Renderer {
     return tex;
   }
 
+  /** 1×1 transparent-black placeholder for the uploaded logo. */
+  private createLogoTexture(): WebGLTexture | null {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    if (!tex) return null;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.RGBA8,
+      1,
+      1,
+      0,
+      gl.RGBA,
+      gl.UNSIGNED_BYTE,
+      new Uint8Array([0, 0, 0, 0]),
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return tex;
+  }
+
+  /**
+   * Upload a rasterised logo (caller decodes/rasterises — see main.ts). The
+   * texture flips vertically on upload so shader UVs (origin bottom-left)
+   * read it upright; uLogoAspect goes non-zero, which modes use as "loaded".
+   */
+  setLogo(source: HTMLCanvasElement | HTMLImageElement | ImageBitmap): void {
+    const gl = this.gl;
+    if (!this.logo) return;
+    gl.bindTexture(gl.TEXTURE_2D, this.logo);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, true);
+    gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA8, gl.RGBA, gl.UNSIGNED_BYTE, source);
+    gl.pixelStorei(gl.UNPACK_FLIP_Y_WEBGL, false);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    this.logoAspect = source.width / Math.max(1, source.height);
+  }
+
   /** Drawing-buffer size in device pixels. */
   get resolution(): [number, number] {
     return [this.canvas.width, this.canvas.height];
@@ -242,6 +297,7 @@ export class Renderer {
       ...BUILTIN_UNIFORMS.map((n) =>
         n === 'uResolution' ? `uniform vec2 ${n};` : `uniform float ${n};`,
       ),
+      ...MODE_SAMPLERS.map((n) => `uniform sampler2D ${n};`),
       this.controlDecls(),
       commonSource,
     ].join('\n');
@@ -287,7 +343,7 @@ export class Renderer {
    * compiled version of this mode is kept, so the app stays running.
    */
   registerMode(mode: ShaderMode): boolean {
-    const compiled = this.compile(mode.name, this.composeMode(mode.fragSource), []);
+    const compiled = this.compile(mode.name, this.composeMode(mode.fragSource), MODE_SAMPLERS);
     if (!compiled) return false;
 
     const previous = this.modes.get(mode.name);
@@ -392,6 +448,7 @@ export class Renderer {
     gl.uniform1f(u.get('uLevel') ?? null, state.audio.level);
     gl.uniform1f(u.get('uBeat') ?? null, state.audio.beat);
     gl.uniform1f(u.get('uOnset') ?? null, state.audio.onset);
+    gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     for (const c of this.controls) {
       const loc = u.get(c.glslName) ?? null;
       const v = state.controls[c.glslName];
@@ -450,10 +507,13 @@ export class Renderer {
     gl.bindVertexArray(this.vao);
     gl.viewport(0, 0, w, h);
 
-    // 1. Mode → scene FBO.
+    // 1. Mode → scene FBO. The logo sampler rides on unit 4 (same as passes).
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene.framebuffer);
     gl.useProgram(mode.program);
     this.uploadFrameUniforms(mode, state);
+    gl.activeTexture(gl.TEXTURE4);
+    gl.bindTexture(gl.TEXTURE_2D, this.logo);
+    gl.uniform1i(mode.uniforms.get('uLogo') ?? null, 4);
     this.drawFullscreen();
 
     // 2. Ordered, toggleable post-pass chain across the ping-pong pair. Enable
@@ -510,6 +570,9 @@ export class Renderer {
         gl.activeTexture(gl.TEXTURE3);
         gl.bindTexture(gl.TEXTURE_2D, this.blueNoise);
         gl.uniform1i(stage.uniforms.get('uBlueNoise') ?? null, 3);
+        gl.activeTexture(gl.TEXTURE4);
+        gl.bindTexture(gl.TEXTURE_2D, this.logo);
+        gl.uniform1i(stage.uniforms.get('uLogo') ?? null, 4);
         this.drawFullscreen();
 
         readFbo = writeFbo;
@@ -556,6 +619,8 @@ export class Renderer {
     this.bloom = null;
     if (this.blueNoise) gl.deleteTexture(this.blueNoise);
     this.blueNoise = null;
+    if (this.logo) gl.deleteTexture(this.logo);
+    this.logo = null;
     this.modes.clear();
     this.passes.clear();
     if (this.scene) deleteFbo(gl, this.scene);

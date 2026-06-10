@@ -132,7 +132,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 
 ### 2d — Input
 
-- [ ] **Logo / image upload.** Rasterise an uploaded SVG/PNG → `texImage2D` →
+- [x] **Logo / image upload.** Rasterise an uploaded SVG/PNG → `texImage2D` →
   `uniform sampler2D uLogo`; modes that displace/mask/ripple it on audio.
   *Done:* an uploaded image renders and reacts in at least one mode; build clean.
 - [ ] **Web MIDI.** Map a controller's (Traktor S2) knobs/faders to uniforms

@@ -5,6 +5,35 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2d — Logo / image upload
+
+FLUX can now perform around a brand mark: a **Logo** panel section uploads an
+SVG/PNG/JPEG/WebP, rasterised to a capped 1024px canvas and pushed into a new
+**`uLogo`** sampler (texture unit 4, available to every mode *and* pass), with
+**`uLogoAspect`** as a builtin (0 = nothing uploaded yet).
+
+- **Renderer** — `setLogo(canvas|image|bitmap)` uploads with a vertical flip
+  (shader UVs are bottom-left), LINEAR/CLAMP, placeholder 1×1 transparent
+  black; `MODE_SAMPLERS` joins the compose path so modes get samplers for the
+  first time.
+- **New `logo` mode** — aspect-fit display with a bass-driven radial ripple,
+  scale pop on `uBeat`, per-channel shimmer on highs, over a slow hue-drifting
+  glow field; a breathing placeholder ring shows before any upload. Scoped
+  controls: Scale (shared) + Ripple.
+- **main.ts** — upload button → object URL → `img.onload` → capped canvas →
+  `setLogo`, then auto-switches to the logo mode. Decode failures surface in
+  the error overlay. (`img.decode()` was rejected after testing: it never
+  settles for blob URLs in some embedded browsers; `onload` is equivalent and
+  reliable.)
+
+Verified: build clean, 32/32 tests; Preview end-to-end through the real file
+input (a generated PNG injected via DataTransfer): logo mode auto-activates,
+the image renders upright/aspect-correct with Scale + Ripple controls, button
+shows the filename; error overlay empty, console clean. Audio reaction rides
+uBass/uBeat/uHigh, the same uniforms proven live in the Phase 2b check.
+
+---
+
 ## Phase 2c — Presets (localStorage save / recall)
 
 Live state is now capturable: a **Presets** panel section saves the active
