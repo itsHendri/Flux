@@ -5,6 +5,43 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2b — Beat / onset detection (spectral flux)
+
+FLUX now *fires on hits* instead of only tracking continuous energy. Two new
+builtin uniforms: **`uBeat`** (bass-band transient — the kick) and **`uOnset`**
+(full-spectrum transient), each a 0..1 pulse that snaps to 1 on a hit and
+decays exponentially (~6/s), so shaders get a usable flash envelope for free.
+
+- **`src/audio/OnsetDetector.ts`** — pure, testable: half-rectified spectral
+  flux (sum of per-bin rises, normalised), adaptive threshold = trailing-mean
+  of recent flux × 1.5, plus a 120 ms refractory gap and a noise floor.
+  Adapted for causal/live use from the offline reference (mean window ×1.5,
+  peak picking) in Keavon/Web-Onset, after the badlogic onset tutorial — live
+  detection has no lookahead, so trailing window + refractory replaces peak
+  picking. Band-limitable: `beat` uses 20–250 Hz (matches `bands.ts` bass),
+  `onset` the full spectrum.
+- **AudioEngine** — two detectors run in `tick()` off the existing analyser
+  data (no extra FFT); reset on source change. Also fixed the stale "file,
+  test tone" monitoring comment (logged Phase 1 debt).
+- **Renderer** — `uBeat`/`uOnset` added to `BUILTIN_UNIFORMS`, uploaded from
+  the frame; declared in every mode and pass header.
+- **cells mode** reacts: borders flash white and brightness pops on `uBeat`.
+- **Tests** — 8 OnsetDetector cases (silence, steady tone, jump→pulse=1,
+  exponential decay, refractory block + re-arm, band isolation, reset);
+  25 total.
+
+Sources: [Keavon/Web-Onset](https://github.com/Keavon/Web-Onset) (flux +
+mean-window threshold, verified against its source),
+[badlogic onset-detection tutorial](https://github.com/badlogic/onset-detection),
+[audiojs/beat-detection](https://github.com/audiojs/beat-detection).
+
+Verified: build clean, 25/25 tests; Preview on cells with a session-only
+synthetic uBeat pulse (reverted, like the Phase 2a RGBA8 check) shows the
+border flash + brightness pop clearly between peak and trough frames; error
+overlay empty, console clean. Live-mic behaviour rides the same tested path.
+
+---
+
 ## PHASE 2a COMPLETE — checkpoint (run ended on context hygiene)
 
 All three §2a rendering-quality upgrades landed as verified atomic commits:

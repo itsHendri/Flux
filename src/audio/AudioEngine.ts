@@ -1,6 +1,7 @@
 import { AudioFrame, SILENT_FRAME } from '../core/state.ts';
 import { EnvelopeFollower } from './EnvelopeFollower.ts';
 import { analyseBands } from './bands.ts';
+import { OnsetDetector } from './OnsetDetector.ts';
 import type { AudioSource } from './sources.ts';
 
 export interface AudioEngineOptions {
@@ -22,6 +23,11 @@ export class AudioEngine {
   private readonly envMid = new EnvelopeFollower();
   private readonly envHigh = new EnvelopeFollower();
   private readonly envLevel = new EnvelopeFollower();
+
+  // Spectral-flux transient detectors: beat = bass band (kick), onset = full
+  // spectrum. Both emit decaying 0..1 pulses (see OnsetDetector).
+  private readonly beatDetector = new OnsetDetector({ loHz: 20, hiHz: 250 });
+  private readonly onsetDetector = new OnsetDetector();
 
   private source: AudioSource | null = null;
   private frame: AudioFrame = SILENT_FRAME;
@@ -60,14 +66,16 @@ export class AudioEngine {
 
     this.source = source;
     source.node.connect(this.analyser);
-    // Monitored sources (file, test tone) also go to the speakers; live mic
-    // does not, to avoid acoustic feedback.
+    // A monitored source would also go to the speakers; the live mic (the only
+    // source today) does not, to avoid acoustic feedback.
     if (source.monitor) this.analyser.connect(this.ctx.destination);
 
     this.envBass.reset();
     this.envMid.reset();
     this.envHigh.reset();
     this.envLevel.reset();
+    this.beatDetector.reset();
+    this.onsetDetector.reset();
   }
 
   /** Read the analyser, advance envelopes by `dt` seconds, snapshot the frame. */
@@ -90,6 +98,13 @@ export class AudioEngine {
       mid: this.envMid.update(raw.mid, dt),
       high: this.envHigh.update(raw.high, dt),
       level: this.envLevel.update(raw.level, dt),
+      beat: this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize),
+      onset: this.onsetDetector.update(
+        this.freqData,
+        dt,
+        this.ctx.sampleRate,
+        this.analyser.fftSize,
+      ),
     };
     return this.frame;
   }

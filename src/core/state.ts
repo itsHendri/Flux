@@ -1,12 +1,19 @@
-/** A snapshot of analysed audio for one frame. All bands are 0..1, smoothed. */
+/**
+ * A snapshot of analysed audio for one frame. The bands are 0..1, smoothed;
+ * `beat`/`onset` are 0..1 decaying pulses from the spectral-flux detectors —
+ * 1.0 at a hit (beat = bass-band transient, onset = any transient), decaying
+ * exponentially after, rather than continuously tracking energy.
+ */
 export interface AudioFrame {
   bass: number;
   mid: number;
   high: number;
   level: number;
+  beat: number;
+  onset: number;
 }
 
-export const SILENT_FRAME: AudioFrame = { bass: 0, mid: 0, high: 0, level: 0 };
+export const SILENT_FRAME: AudioFrame = { bass: 0, mid: 0, high: 0, level: 0, beat: 0, onset: 0 };
 
 /**
  * Immutable per-frame state handed from the App orchestrator to the Renderer.

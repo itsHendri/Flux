@@ -52,7 +52,18 @@ interface CompiledPass {
   stages: CompiledProgram[];
 }
 
-const BUILTIN_UNIFORMS = ['uTime', 'uResolution', 'uBass', 'uMid', 'uHigh', 'uLevel'];
+const BUILTIN_UNIFORMS = [
+  'uTime',
+  'uResolution',
+  'uBass',
+  'uMid',
+  'uHigh',
+  'uLevel',
+  // Decaying 0..1 transient pulses (spectral flux): uBeat = bass band (kick),
+  // uOnset = full spectrum. 1.0 on a hit, exponential decay after.
+  'uBeat',
+  'uOnset',
+];
 /**
  * Sampler uniforms only post-passes declare. `uSource` = previous stage,
  * `uPrevFrame` = last frame (feedback), `uScene` = this pass's own input
@@ -388,6 +399,8 @@ export class Renderer {
     gl.uniform1f(u.get('uMid') ?? null, state.audio.mid);
     gl.uniform1f(u.get('uHigh') ?? null, state.audio.high);
     gl.uniform1f(u.get('uLevel') ?? null, state.audio.level);
+    gl.uniform1f(u.get('uBeat') ?? null, state.audio.beat);
+    gl.uniform1f(u.get('uOnset') ?? null, state.audio.onset);
     for (const c of this.controls) {
       const loc = u.get(c.glslName) ?? null;
       const v = state.controls[c.glslName];

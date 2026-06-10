@@ -111,7 +111,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
 
 ### 2b — Audio
 
-- [ ] **Beat / onset detection** via spectral flux (`src/audio/`). Store the
+- [x] **Beat / onset detection** via spectral flux (`src/audio/`). Store the
   previous spectrum, sum half-rectified bin diffs in `AudioEngine.tick()`,
   adaptive-threshold to a beat/onset signal, reusing the existing analyser.
   Add `beat`/`onset` to `AudioFrame` (`src/core/state.ts`) and `uBeat`/`uOnset`

@@ -10,7 +10,8 @@
 //
 // Steering: uScale = cell density, uWarp = point orbit radius, uGain =
 // brightness. Bass speeds the motion, mid drives edge glow, high adds core
-// sparkle, level lifts brightness.
+// sparkle, level lifts brightness — and uBeat (the spectral-flux kick pulse)
+// flashes the borders and pops overall brightness on each hit.
 
 vec2 hash2(vec2 p) {
   p = vec2(dot(p, vec2(127.1, 311.7)), dot(p, vec2(269.5, 183.3)));
@@ -69,15 +70,15 @@ vec3 render(vec2 uv) {
   float cellDist = sqrt(md);
   vec3 col = cellCol * (0.25 + 0.75 * cellDist);
 
-  // Glowing borders — steerable Edge Glow plus mid drive.
+  // Glowing borders — steerable Edge Glow plus mid drive, flashing on uBeat.
   float edge = smoothstep(0.07, 0.0, border);
-  col += vec3(0.8, 0.95, 1.0) * edge * (0.2 + uCellEdge * 1.5 + uMid * 0.7);
+  col += vec3(0.8, 0.95, 1.0) * edge * (0.2 + uCellEdge * 1.5 + uMid * 0.7 + uBeat * 1.4);
 
   // Cell-core sparkle on high.
   float core = smoothstep(0.18, 0.0, cellDist);
   col += palette(nearestId + 0.4) * core * uHigh * 1.5;
 
-  col *= (0.7 + uLevel * 0.9);
+  col *= (0.7 + uLevel * 0.9 + uBeat * 0.3);
   col *= mix(0.7, 1.6, uGain);
   return col;
 }
