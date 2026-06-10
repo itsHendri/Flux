@@ -30,6 +30,11 @@ plays. Next is the Phase 2+ backlog (beat detection, presets, logo upload, MIDI,
 performance output, gated deploy) — **paused here for review** per the loop
 protocol; the backlog is not started.
 
+**Session review:** see [`PHASE-1-REVIEW.md`](PHASE-1-REVIEW.md) for the code
+audit (no critical bugs), technique re-validation against current best practice,
+logged tech debt, and the refined/prioritized Phase 2 backlog in
+[`ROADMAP.md`](ROADMAP.md).
+
 ---
 
 ## Phase 1 — Per-mode controls + live-steering polish

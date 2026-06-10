@@ -87,20 +87,81 @@ sources in the commit + CHANGELOG, then implement.
 
 ## Phase 2+ — Backlog (after Phase 1)
 
-- [ ] **Beat / onset detection** via spectral flux (`src/audio/`). Expose event
-  uniforms (e.g. `uBeat`, `uOnset`) so visuals trigger on hits, not just react
-  continuously.
+Refined and prioritized at the Phase 1 review (see
+[`PHASE-1-REVIEW.md`](PHASE-1-REVIEW.md)). Grouped into a recommended order;
+later groups can be reordered freely. Each task keeps a **Done:** criterion.
+
+### 2a — Rendering quality (validated upgrades)
+
+- [ ] **HDR float-FBO pipeline.** Switch the off-screen targets in
+  `src/render/Framebuffer.ts` from `RGBA8` to `RGBA16F`, gated on
+  `EXT_color_buffer_float` (fallback `EXT_color_buffer_half_float`) +
+  `OES_texture_half_float_linear`, with a clean RGBA8 fallback if unsupported.
+  Unclamps bloom/trails accumulation. *Done:* trails/bloom visibly accumulate
+  past 1.0 on supported hardware; RGBA8 path still works; build + Preview clean.
+- [ ] **Mip-chain / energy-conserving bloom.** Replace the fixed-res separable
+  Gaussian with a downsample→upsample pyramid (Jimenez 2014) for a
+  resolution-independent wide glow; drop the hard threshold for an
+  energy-conserving bright-pass. Depends on the HDR FBOs. *Done:* glow is wide
+  and stable across output sizes; intensity control still works; build clean.
+- [ ] **Dither quality options.** Add interleaved gradient noise (IGN,
+  procedural) and/or a blue-noise texture as alternatives to Bayer in
+  `dither.frag`, selectable via a control; keep Bayer (best temporal stability).
+  *Done:* the dither pattern visibly changes between options; build clean.
+
+### 2b — Audio
+
+- [ ] **Beat / onset detection** via spectral flux (`src/audio/`). Store the
+  previous spectrum, sum half-rectified bin diffs in `AudioEngine.tick()`,
+  adaptive-threshold to a beat/onset signal, reusing the existing analyser.
+  Add `beat`/`onset` to `AudioFrame` (`src/core/state.ts`) and `uBeat`/`uOnset`
+  to `BUILTIN_UNIFORMS` (`src/render/Renderer.ts`). *Done:* a uniform fires on
+  hits (not just continuous reaction); a mode/pass triggers on it; build clean.
+
+### 2c — State / UX
+
+- [ ] **Unify pass toggles into the control system.** Replace the ad-hoc Effects
+  buttons in `src/main.ts` with the typed-control/state path so pass-enable state
+  is part of the serializable schema (prerequisite for clean presets; resolves
+  the parallel-toggle tech debt). *Done:* effects toggle through the unified
+  state; behaviour unchanged; build + tests clean.
 - [ ] **Presets.** Save/recall control + mode + pass state to localStorage
-  (`src/presets/`). `ControlDef.id` already exists for stable keys.
+  (`src/presets/`). `ControlDef.id` already gives stable keys; do this after the
+  toggle unification so pass state serializes too. *Done:* a preset round-trips
+  mode + controls + enabled passes; build clean.
+
+### 2d — Input
+
 - [ ] **Logo / image upload.** Rasterise an uploaded SVG/PNG → `texImage2D` →
   `uniform sampler2D uLogo`; modes that displace/mask/ripple it on audio.
+  *Done:* an uploaded image renders and reacts in at least one mode; build clean.
 - [ ] **Web MIDI.** Map a controller's (Traktor S2) knobs/faders to uniforms
-  (`src/audio/midi.ts`).
+  (`src/audio/midi.ts`). *Done:* a hardware knob drives a control live; build clean.
+
+### 2e — Output
+
 - [ ] **Performance output.** Fullscreen, second-display, and Picture-in-Picture
-  (`captureStream` → hidden `<video>` → `requestPictureInPicture`).
+  (`captureStream` → hidden `<video>` → `requestPictureInPicture`). *Done:* the
+  visual shows fullscreen and in a PiP window; build clean.
 - [ ] **Deploy track (gated).** Produce a self-hostable static `dist/` and
   document hosting options. **Do not** push to any third-party host without
-  explicit user approval (org tooling policy).
+  explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
+  hosting options documented; no third-party push without approval.
+
+### Known tech debt / limitations (from the Phase 1 audit)
+
+- **Parallel toggle mechanisms** — pass on/off (ad-hoc buttons,
+  `src/main.ts:108`) vs. the typed `'toggle'` control; pass state isn't
+  serializable. Resolved by task **2c**.
+- **RGBA8 FBOs** (`src/render/Framebuffer.ts:24`) clamp bloom/trails at 1.0.
+  Resolved by task **2a**.
+- **Bloom radius is resolution-dependent** (fixed-res Gaussian). Resolved by **2a**.
+- **Bayer dither** shows structured lines in static frames. Mitigated by **2a**
+  dither options.
+- **Minor:** stale "file, test tone" monitoring comment at
+  `src/audio/AudioEngine.ts:63` (sources are mic-only now).
+- **Perf:** no low-end fallback — a per-mode quality/step control (e.g. raymarch
+  step count) would help weak GPUs.
 
 ---
 
