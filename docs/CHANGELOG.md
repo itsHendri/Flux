@@ -5,6 +5,17 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 2e — Performance output verified in a real browser
+
+User verification (2026-06-11, desktop Chrome): **fullscreen** engages on the
+canvas, the **PiP window** appears with the live visual, and **mic audio**
+drives the visuals — the parts the embedded Preview browser couldn't exercise.
+No fixes were needed; the roadmap task is ticked. The only remaining
+user-gated item in Phase 2 is the **Web MIDI hardware check** (Traktor S2),
+deferred until the user has the controller at hand.
+
+---
+
 ## PHASE 2 COMPLETE — review
 
 Phase 2 is done: every backlog group (2a–2e) landed as verified atomic

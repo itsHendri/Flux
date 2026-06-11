@@ -153,10 +153,12 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   videos); failures surface in the error overlay. *Done:* handlers verified
   firing with errors surfaced cleanly (the embedded Preview browser denies
   fullscreen/PiP at the permission level); build + tests clean.
-- [ ] **Performance output — real-browser verification (needs the user).**
+- [x] **Performance output — real-browser verification (needs the user).**
   In desktop Chrome/Edge: fullscreen engages on the canvas, the PiP window
   shows the live visual and can be dragged to a second display. *Done:*
-  verified by the user; any fixes committed.
+  verified by the user; any fixes committed. (Verified 2026-06-11 in desktop
+  Chrome: fullscreen, PiP window, and live mic audio all confirmed working;
+  no fixes needed.)
 - [x] **Deploy track (gated).** Produce a self-hostable static `dist/` and
   document hosting options. **Do not** push to any third-party host without
   explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
