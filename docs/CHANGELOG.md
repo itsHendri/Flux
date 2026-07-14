@@ -5,6 +5,29 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 4 COMPLETE — review
+
+True 3D landed in three verified commits, dependency-free as decided:
+
+1. **Spike** (`spikes/curl-noise-3d.html`) — proved the raw-WebGL2 path;
+   decision gate recorded and user-confirmed (no Three.js).
+2. **Custom-draw mode seam** — `CustomMode` draw callbacks into the scene
+   FBO (optional depth), `math3d.ts` camera helpers (tested), standard
+   uniform preamble for custom fragments. Fragment modes untouched.
+3. **`trails3d`** — the target visual: a GPGPU curl-noise particle swarm
+   (16k–262k), audio-reactive (bass→flow, kick→radial burst, highs→sparkle),
+   composited through HDR bloom/trails/tonemap.
+
+FLUX now has 8 modes; the stack remains vanilla TS + raw WebGL2 with zero
+runtime dependencies (~89 kB bundle). **For the user, live in Chrome with
+music:** enable bloom + trails on `trails3d`, confirm it flows smoothly at
+your resolution (drop Particles to 16k if not), feel the kick bursts, and
+tune Flow/Turbulence to taste. Earlier open items still standing: the MIDI
+hardware check (Traktor S2) and the Phase 3 group (file playback, theme
+hotkeys, floating performance bar), which is now the natural next phase.
+
+---
+
 ## Phase 4 — trails3d: the curl-noise particle mode (the target visual)
 
 The mode the user always wanted: **`trails3d`** is now a real GPGPU
