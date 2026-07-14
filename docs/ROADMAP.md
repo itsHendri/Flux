@@ -164,6 +164,36 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
   hosting options documented; no third-party push without approval.
 
+## Phase 3 — Performance UI & theming (from the user's waveform-visualizer design)
+
+Design reference: the user's earlier vanilla-JS/WebGL visualizer at
+`waveform-visualizer-framer.vercel.app` (no Framer/React despite the name —
+same stack as FLUX; what carries over is the UI language, not tech). Liked
+elements: the floating centered control pill, upload + mic, and the numbered
+theme palettes. Adapted for FLUX, in build order:
+
+- [ ] **Audio file playback source.** Reintroduce a file source next to the
+  mic through the existing `AudioSource` seam (`src/audio/sources.ts`):
+  upload button + drop-anywhere on the stage, decoded via an
+  `HTMLAudioElement`/`MediaElementAudioSourceNode` with play/pause (Space)
+  and a seek scrubber + time readout. Mic stays the default live input.
+  *Done:* a dropped file plays, drives the visuals, scrubs, and can be
+  swapped back to mic; build + Preview clean.
+- [ ] **Global theme palettes + hotkeys.** A small set (~5) of named color
+  themes as a typed control (serialises into presets), driving a global
+  palette uniform trio that modes blend into their cosine palettes; keyboard
+  shortcuts `1`–`5` switch themes, and a general hotkey seam lands with it
+  (Space is taken by transport). *Done:* switching themes visibly re-tints
+  ≥3 modes; hotkeys work; theme round-trips through a preset; build clean.
+- [ ] **Floating performance bar.** A bottom-center floating pill
+  (translucent dark + `backdrop-filter` blur, fully rounded) hosting the
+  live essentials: mic/file source toggle, transport (when file), theme
+  swatches, mode cycler, fullscreen + PiP. Auto-hides after idle mouse
+  seconds (reappears on move); the right dock panel stays for deep editing
+  and can be collapsed independently. *Done:* the bar floats centered over
+  the visual, auto-hides on idle, and every control on it works; build +
+  Preview clean.
+
 ### Known tech debt / limitations (from the Phase 1 audit)
 
 - **Parallel toggle mechanisms** — pass on/off (ad-hoc buttons,

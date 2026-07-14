@@ -5,6 +5,22 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Planning — Phase 3 backlog: performance UI & theming
+
+Reviewed the user's earlier visualizer
+(`waveform-visualizer-framer.vercel.app`) as a design reference. Tech
+finding: it's a single vanilla-JS + WebGL canvas page (no Framer or React
+despite the name) — the same stack FLUX uses, so only the UI language carries
+over. Three liked elements adapted into a new **Phase 3** roadmap group with
+Done criteria: an audio **file playback source** (drop-anywhere + transport +
+scrubber, via the existing `AudioSource` seam), **global theme palettes with
+1–5 hotkeys** (typed control, preset-serialisable, re-tinting mode palettes),
+and a **floating bottom-center performance pill bar** (translucent blur,
+auto-hide on idle) complementing the editing dock. Planning change only —
+no implementation yet.
+
+---
+
 ## Phase 2e — Performance output verified in a real browser
 
 User verification (2026-06-11, desktop Chrome): **fullscreen** engages on the
