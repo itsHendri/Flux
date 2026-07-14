@@ -5,6 +5,20 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Docs — consolidated research log + README refresh
+
+Session-closing documentation pass: new [`REFERENCES.md`](REFERENCES.md)
+consolidates every reference review (the user's waveform visualizer,
+melt.graphics, fieldtone, rapidflow/Sphere V3, p5.js), the browser-VJ
+landscape sweep, the GPGPU curl-noise technique sources feeding Phase 4, and
+the settled **stack posture** (vanilla TS + raw WebGL2, zero runtime deps; no
+React, no Framer, no p5; Three.js deferred to the Phase 4 decision gate).
+README updated from its Phase 1 snapshot to the current feature set and
+architecture (HDR pipeline, beat detection, presets, MIDI, logo, output) and
+now indexes all docs. No code changes.
+
+---
+
 ## Planning — Phase 4 backlog: true 3D mode + research-source expansion
 
 Landscape research pass over the user's references and the wider category.

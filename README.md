@@ -25,25 +25,53 @@ npm test         # run the unit tests (vitest)
 > Localhost matters: `file://` blocks microphone access. Always use the dev
 > server.
 
+## What it has (Phase 2)
+
+- **7 modes** — bars, pulse, plasma, raymarched SDF, domain-warp flow, Voronoi
+  cells, and an uploaded-logo mode (image rides a bass ripple, pops on the
+  beat). **7 toggleable post-effects** — feedback trails, dither
+  (Bayer/IGN/blue-noise), palette quantize, mip-chain bloom, chromatic
+  aberration, kaleidoscope, scanline/VHS.
+- **HDR pipeline** — all off-screen targets are RGBA16F where the hardware
+  allows (RGBA8 fallback), so bloom and trails accumulate real energy past
+  1.0; a final present pass tonemaps (None / Reinhard / ACES).
+- **Beat detection** — spectral-flux onset detectors feed `uBeat` (kick) and
+  `uOnset` (any transient) pulses to every shader, beyond the smoothed
+  bass/mid/high/level bands.
+- **Presets** — mode + every control + effect state saved/recalled from
+  localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,
+  persisted. **Output** — fullscreen and a draggable Picture-in-Picture
+  window for a second display. See [`docs/DEPLOY.md`](docs/DEPLOY.md) to host
+  the static build.
+
 ## How it works
 
 - **AudioEngine** (`src/audio/`) — one `AudioContext` + `AnalyserNode`. The FFT
-  is split into bass / mid / high bands (`bands.ts`) and smoothed with an
+  is split into bass / mid / high bands (`bands.ts`), smoothed with an
   asymmetric **fast-attack / slow-release** envelope follower
-  (`EnvelopeFollower.ts`) — this asymmetry is what makes motion feel musical.
-  Source-agnostic: any device from the picker feeds the same analyser.
-- **Renderer** (`src/render/Renderer.ts`) — WebGL2, a single fullscreen
-  triangle; the active mode's fragment shader does all the visuals. Audio bands
-  and control values are pushed in as uniforms every frame.
+  (`EnvelopeFollower.ts`), and watched by two spectral-flux **onset
+  detectors** (`OnsetDetector.ts`) for beat/onset pulses. Source-agnostic:
+  any device from the picker feeds the same analyser.
+- **Renderer** (`src/render/Renderer.ts`) — WebGL2. The active mode renders
+  into an off-screen FBO (RGBA16F where renderable — `Framebuffer.ts`), an
+  ordered, toggleable post-pass chain runs across a ping-pong pair (with
+  history feedback and a `uScene` snapshot for multi-stage passes), and a
+  present pass tonemaps to screen. Bloom is a special-cased mip pyramid
+  (`BloomPipeline.ts`). Audio bands, pulses, and control values are pushed in
+  as uniforms every frame.
 - **App** (`src/App.ts`) — owns the single `requestAnimationFrame` loop: ticks
   the audio, assembles an immutable `FrameState`, hands it to the renderer.
-- **Shaders** (`src/shaders/`) — each mode is a `vec3 render(vec2 uv)` function
-  in its own `.frag` file. `common.glsl` holds shared helpers; the Renderer
-  prepends the version header + uniform block + common code before each mode.
-  Editing a `.frag` hot-reloads.
-- **UI** (`src/ui/`) — control panel (sliders generated from a single schema in
-  `controls.ts`), level meters, mode switcher, device picker. Vanilla TS, no
-  framework, so nothing churns at 60fps.
+- **Shaders** (`src/shaders/`) — each mode is a `vec3 render(vec2 uv)` in its
+  own `.frag` (registry: `modes.ts`); each post-effect likewise
+  (`passes.ts`, single- or multi-stage). The Renderer prepends the version
+  header + uniform block + `common.glsl`. Editing a `.frag` hot-reloads.
+- **UI** (`src/ui/`) — control panel generated from a single typed schema
+  (`controls.ts`: slider/toggle/select/color, scoped per mode/pass — pass
+  toggles live in the same serialisable store), level meters, mode switcher,
+  device picker, presets, MIDI learn, logo upload, output controls. Vanilla
+  TS, no framework, so nothing churns at 60fps.
+- **State** (`src/core/state.ts`, `src/presets/`) — `FrameState.controls` is
+  the complete serialisable snapshot; presets round-trip it by stable ids.
 - **Errors** (`src/core/errors.ts`) — every failure surfaces on-screen; nothing
   fails silently.
 
@@ -57,6 +85,13 @@ continuously through a phase before pausing for review.
 - **`docs/AGENT_LOOP.md`** — the protocol an autonomous agent follows each
   iteration (research → implement → verify → commit → log).
 - **`docs/CHANGELOG.md`** — plain-English log of every completed task.
+- **`docs/REFERENCES.md`** — consolidated reference reviews, landscape
+  research, and the settled stack posture (no React/Framer/p5; Three.js is a
+  Phase 4 decision gate).
+- **`docs/PHASE-1-REVIEW.md`** — the Phase 1 audit/handoff; the Phase 2
+  review lives in the changelog.
+- **`docs/DEPLOY.md`** — hosting the static build (gated: no third-party
+  deploys without approval).
 
 ## Conventions
 
