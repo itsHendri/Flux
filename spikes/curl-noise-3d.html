@@ -1,0 +1,343 @@
+<!doctype html>
+<!--
+  PHASE 4 SPIKE — GPGPU curl-noise particle trails in RAW WebGL2.
+  Self-contained, zero dependencies, no build step: open via the dev server at
+  /spikes/curl-noise-3d.html. Proves the melt.graphics-style flowing-trails
+  look on FLUX's existing stack posture (no Three.js): position ping-pong in
+  float textures (the same technique the Renderer's post chain uses), points
+  drawn from gl_VertexID with a hand-rolled perspective camera, trail
+  persistence via a translucent fade quad.
+
+  Technique sources (see docs/REFERENCES.md): Barradeau "FBO particles";
+  Bridson et al. 2007 "Curl-Noise for Procedural Fluid Flow"; simplex noise
+  adapted from Ashima Arts / stegu webgl-noise (MIT); curl construction after
+  cabbibo/glsl-curl-noise.
+-->
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<title>FLUX spike — curl-noise 3D trails (raw WebGL2)</title>
+<style>
+  html, body { margin: 0; height: 100%; background: #05060a; overflow: hidden; }
+  canvas { display: block; width: 100vw; height: 100vh; }
+  #err { position: fixed; top: 12px; left: 12px; color: #ff7373;
+         font: 12px/1.5 ui-monospace, monospace; white-space: pre-wrap; }
+  #tag { position: fixed; bottom: 10px; left: 12px; color: #56607a;
+         font: 11px ui-monospace, monospace; letter-spacing: 0.08em; }
+</style>
+</head>
+<body>
+<canvas id="c"></canvas>
+<div id="err"></div>
+<div id="tag">FLUX PHASE-4 SPIKE · raw WebGL2 · 65,536 particles · curl-noise flow</div>
+<script type="module">
+const err = (m) => { document.getElementById('err').textContent += m + '\n'; };
+
+const canvas = document.getElementById('c');
+// preserveDrawingBuffer: trails accumulate in the default framebuffer and are
+// faded by a translucent quad each frame (spike-grade; the real mode will
+// accumulate in the Renderer's HDR FBOs instead).
+const gl = canvas.getContext('webgl2', { antialias: false, preserveDrawingBuffer: true });
+if (!gl) { err('WebGL2 unavailable'); throw new Error('webgl2'); }
+if (!gl.getExtension('EXT_color_buffer_float')) {
+  err('EXT_color_buffer_float unavailable — spike needs float render targets');
+  throw new Error('float');
+}
+
+const N = 256; // N*N particles
+const LIFE = 6.0;
+
+// ---------------------------------------------------------------- shaders --
+const FS_TRI = `#version 300 es
+void main() {
+  const vec2 p[3] = vec2[3](vec2(-1.,-1.), vec2(3.,-1.), vec2(-1.,3.));
+  gl_Position = vec4(p[gl_VertexID], 0., 1.);
+}`;
+
+// Simplex noise (Ashima Arts / Stefan Gustavson, MIT) + curl construction.
+const NOISE = `
+vec3 mod289(vec3 x){return x - floor(x * (1.0/289.0)) * 289.0;}
+vec4 mod289(vec4 x){return x - floor(x * (1.0/289.0)) * 289.0;}
+vec4 permute(vec4 x){return mod289(((x*34.0)+1.0)*x);}
+vec4 taylorInvSqrt(vec4 r){return 1.79284291400159 - 0.85373472095314 * r;}
+float snoise(vec3 v){
+  const vec2 C = vec2(1.0/6.0, 1.0/3.0);
+  const vec4 D = vec4(0.0, 0.5, 1.0, 2.0);
+  vec3 i = floor(v + dot(v, C.yyy));
+  vec3 x0 = v - i + dot(i, C.xxx);
+  vec3 g = step(x0.yzx, x0.xyz);
+  vec3 l = 1.0 - g;
+  vec3 i1 = min(g.xyz, l.zxy);
+  vec3 i2 = max(g.xyz, l.zxy);
+  vec3 x1 = x0 - i1 + C.xxx;
+  vec3 x2 = x0 - i2 + C.yyy;
+  vec3 x3 = x0 - D.yyy;
+  i = mod289(i);
+  vec4 p = permute(permute(permute(i.z + vec4(0.0, i1.z, i2.z, 1.0))
+        + i.y + vec4(0.0, i1.y, i2.y, 1.0)) + i.x + vec4(0.0, i1.x, i2.x, 1.0));
+  float n_ = 0.142857142857;
+  vec3 ns = n_ * D.wyz - D.xzx;
+  vec4 j = p - 49.0 * floor(p * ns.z * ns.z);
+  vec4 x_ = floor(j * ns.z);
+  vec4 y_ = floor(j - 7.0 * x_);
+  vec4 x = x_ * ns.x + ns.yyyy;
+  vec4 y = y_ * ns.x + ns.yyyy;
+  vec4 h = 1.0 - abs(x) - abs(y);
+  vec4 b0 = vec4(x.xy, y.xy);
+  vec4 b1 = vec4(x.zw, y.zw);
+  vec4 s0 = floor(b0)*2.0 + 1.0;
+  vec4 s1 = floor(b1)*2.0 + 1.0;
+  vec4 sh = -step(h, vec4(0.0));
+  vec4 a0 = b0.xzyw + s0.xzyw*sh.xxyy;
+  vec4 a1 = b1.xzyw + s1.xzyw*sh.zzww;
+  vec3 p0 = vec3(a0.xy, h.x);
+  vec3 p1 = vec3(a0.zw, h.y);
+  vec3 p2 = vec3(a1.xy, h.z);
+  vec3 p3 = vec3(a1.zw, h.w);
+  vec4 norm = taylorInvSqrt(vec4(dot(p0,p0), dot(p1,p1), dot(p2,p2), dot(p3,p3)));
+  p0 *= norm.x; p1 *= norm.y; p2 *= norm.z; p3 *= norm.w;
+  vec4 m = max(0.6 - vec4(dot(x0,x0), dot(x1,x1), dot(x2,x2), dot(x3,x3)), 0.0);
+  m = m * m;
+  return 42.0 * dot(m*m, vec4(dot(p0,x0), dot(p1,x1), dot(p2,x2), dot(p3,x3)));
+}
+// Three decorrelated scalar fields -> potential; curl(potential) is
+// divergence-free (Bridson 2007), which is what reads as "fluid".
+float fx(vec3 p){ return snoise(p); }
+float fy(vec3 p){ return snoise(p + vec3(31.341, -47.853, 12.679)); }
+float fz(vec3 p){ return snoise(p + vec3(-233.145, 5.921, 471.027)); }
+vec3 curl(vec3 p){
+  const float e = 0.1;
+  vec3 dx = vec3(e, 0.0, 0.0), dy = vec3(0.0, e, 0.0), dz = vec3(0.0, 0.0, e);
+  float cx = (fz(p+dy)-fz(p-dy) - fy(p+dz)+fy(p-dz));
+  float cy = (fx(p+dz)-fx(p-dz) - fz(p+dx)+fz(p-dx));
+  float cz = (fy(p+dx)-fy(p-dx) - fx(p+dy)+fx(p-dy));
+  return vec3(cx, cy, cz) / (2.0 * e);
+}
+float hash(vec2 p){ p = fract(p*vec2(123.34, 456.21)); p += dot(p, p+45.32); return fract(p.x*p.y); }
+// Uniform-ish point on a sphere from a 2D seed.
+vec3 spherePoint(vec2 seed){
+  float u = hash(seed) * 2.0 - 1.0;
+  float a = hash(seed + 17.17) * 6.28318530718;
+  float r = sqrt(max(0.0, 1.0 - u*u));
+  return vec3(r*cos(a), u, r*sin(a));
+}`;
+
+const FS_INIT = `#version 300 es
+precision highp float;
+out vec4 o;
+${NOISE}
+void main(){
+  vec2 tc = gl_FragCoord.xy;
+  // Staggered ages so respawns are spread out from frame one.
+  o = vec4(spherePoint(tc), hash(tc + 3.7) * ${LIFE.toFixed(1)});
+}`;
+
+const FS_UPDATE = `#version 300 es
+precision highp float;
+uniform sampler2D uPos;
+uniform float uDt, uTime;
+out vec4 o;
+${NOISE}
+void main(){
+  ivec2 tc = ivec2(gl_FragCoord.xy);
+  vec4 p = texelFetch(uPos, tc, 0);
+  vec3 pos = p.xyz;
+  float age = p.w + uDt;
+  // Flow field: curl noise over a slowly drifting domain...
+  vec3 v = curl(pos * 1.4 + vec3(0.0, uTime * 0.06, 0.0));
+  // ...plus a soft spring toward the unit-sphere host surface, so the swarm
+  // stays a recognisable form instead of dispersing (the "surface flow" look).
+  v += normalize(pos + 1e-5) * (1.0 - length(pos)) * 1.4;
+  pos += v * 0.22 * uDt * 60.0 * 0.016; // stable across frame rates
+  if (age > ${LIFE.toFixed(1)}) {
+    pos = spherePoint(vec2(tc) + fract(uTime) * 61.7);
+    age = 0.0;
+  }
+  o = vec4(pos, age);
+}`;
+
+const VS_POINTS = `#version 300 es
+uniform sampler2D uPos;
+uniform mat4 uProj, uView;
+out float vAge;
+void main(){
+  ivec2 tc = ivec2(gl_VertexID % ${N}, gl_VertexID / ${N});
+  vec4 p = texelFetch(uPos, tc, 0);
+  vAge = p.w;
+  vec4 vp = uView * vec4(p.xyz, 1.0);
+  gl_Position = uProj * vp;
+  gl_PointSize = clamp(4.5 / max(0.1, -vp.z), 0.75, 3.0);
+}`;
+
+const FS_POINTS = `#version 300 es
+precision highp float;
+in float vAge;
+out vec4 o;
+void main(){
+  float m = smoothstep(0.5, 0.1, length(gl_PointCoord - 0.5));
+  float fade = smoothstep(0.0, 0.6, vAge) * smoothstep(${LIFE.toFixed(1)}, ${(LIFE - 1.2).toFixed(1)}, vAge);
+  // Cool head -> violet tail, in the spirit of the reference.
+  vec3 col = mix(vec3(0.62, 0.78, 1.0), vec3(0.82, 0.62, 1.0), smoothstep(0.0, 3.0, vAge));
+  o = vec4(col * m * fade * 0.5, 1.0);
+}`;
+
+const FS_FADE = `#version 300 es
+precision highp float;
+uniform float uFade;
+out vec4 o;
+void main(){ o = vec4(vec3(0.02, 0.023, 0.04) * 0.4, uFade); }`;
+
+// ------------------------------------------------------------------ glue --
+function compile(type, src) {
+  const s = gl.createShader(type);
+  gl.shaderSource(s, src);
+  gl.compileShader(s);
+  if (!gl.getShaderParameter(s, gl.COMPILE_STATUS)) {
+    err(gl.getShaderInfoLog(s));
+    throw new Error('compile');
+  }
+  return s;
+}
+function program(vs, fs) {
+  const p = gl.createProgram();
+  gl.attachShader(p, compile(gl.VERTEX_SHADER, vs));
+  gl.attachShader(p, compile(gl.FRAGMENT_SHADER, fs));
+  gl.linkProgram(p);
+  if (!gl.getProgramParameter(p, gl.LINK_STATUS)) {
+    err(gl.getProgramInfoLog(p));
+    throw new Error('link');
+  }
+  return p;
+}
+const progInit = program(FS_TRI, FS_INIT);
+const progUpdate = program(FS_TRI, FS_UPDATE);
+const progPoints = program(VS_POINTS, FS_POINTS);
+const progFade = program(FS_TRI, FS_FADE);
+
+const vao = gl.createVertexArray();
+gl.bindVertexArray(vao);
+
+function posTarget() {
+  const t = gl.createTexture();
+  gl.bindTexture(gl.TEXTURE_2D, t);
+  gl.texImage2D(gl.TEXTURE_2D, 0, gl.RGBA32F, N, N, 0, gl.RGBA, gl.FLOAT, null);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+  gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+  const f = gl.createFramebuffer();
+  gl.bindFramebuffer(gl.FRAMEBUFFER, f);
+  gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, t, 0);
+  if (gl.checkFramebufferStatus(gl.FRAMEBUFFER) !== gl.FRAMEBUFFER_COMPLETE) {
+    err('RGBA32F framebuffer incomplete');
+    throw new Error('fbo');
+  }
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  return { t, f };
+}
+let read = posTarget();
+let write = posTarget();
+
+// Seed initial positions on the GPU.
+gl.bindFramebuffer(gl.FRAMEBUFFER, read.f);
+gl.viewport(0, 0, N, N);
+gl.useProgram(progInit);
+gl.drawArrays(gl.TRIANGLES, 0, 3);
+gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+
+// Minimal mat4 helpers (column-major, WebGL layout).
+function perspective(fovY, aspect, near, far) {
+  const f = 1 / Math.tan(fovY / 2), nf = 1 / (near - far);
+  return new Float32Array([
+    f / aspect, 0, 0, 0,
+    0, f, 0, 0,
+    0, 0, (far + near) * nf, -1,
+    0, 0, 2 * far * near * nf, 0,
+  ]);
+}
+function lookAt(eye, target) {
+  const sub = (a, b) => [a[0]-b[0], a[1]-b[1], a[2]-b[2]];
+  const norm = (v) => { const l = Math.hypot(...v); return [v[0]/l, v[1]/l, v[2]/l]; };
+  const cross = (a, b) => [a[1]*b[2]-a[2]*b[1], a[2]*b[0]-a[0]*b[2], a[0]*b[1]-a[1]*b[0]];
+  const dot = (a, b) => a[0]*b[0]+a[1]*b[1]+a[2]*b[2];
+  const z = norm(sub(eye, target));
+  const x = norm(cross([0, 1, 0], z));
+  const y = cross(z, x);
+  return new Float32Array([
+    x[0], y[0], z[0], 0,
+    x[1], y[1], z[1], 0,
+    x[2], y[2], z[2], 0,
+    -dot(x, eye), -dot(y, eye), -dot(z, eye), 1,
+  ]);
+}
+
+const uUpdate = {
+  pos: gl.getUniformLocation(progUpdate, 'uPos'),
+  dt: gl.getUniformLocation(progUpdate, 'uDt'),
+  time: gl.getUniformLocation(progUpdate, 'uTime'),
+};
+const uPoints = {
+  pos: gl.getUniformLocation(progPoints, 'uPos'),
+  proj: gl.getUniformLocation(progPoints, 'uProj'),
+  view: gl.getUniformLocation(progPoints, 'uView'),
+};
+const uFade = { fade: gl.getUniformLocation(progFade, 'uFade') };
+
+function resize() {
+  const dpr = Math.min(window.devicePixelRatio || 1, 2);
+  canvas.width = Math.round(canvas.clientWidth * dpr);
+  canvas.height = Math.round(canvas.clientHeight * dpr);
+}
+window.addEventListener('resize', resize);
+resize();
+
+let last = performance.now();
+let cleared = false;
+window.__spikeFrames = 0; // perf probes, readable from devtools
+window.__fps = 0;
+function frame(now) {
+  window.__spikeFrames++;
+  const dt = Math.min((now - last) / 1000, 0.05);
+  last = now;
+  if (dt > 0) window.__fps = Math.round(0.9 * window.__fps + 0.1 / dt);
+  const t = now / 1000;
+
+  // 1. Advance particles (ping-pong).
+  gl.disable(gl.BLEND);
+  gl.bindFramebuffer(gl.FRAMEBUFFER, write.f);
+  gl.viewport(0, 0, N, N);
+  gl.useProgram(progUpdate);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, read.t);
+  gl.uniform1i(uUpdate.pos, 0);
+  gl.uniform1f(uUpdate.dt, dt);
+  gl.uniform1f(uUpdate.time, t);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+  [read, write] = [write, read];
+
+  // 2. Fade previous frame slightly (trail persistence), then add points.
+  gl.bindFramebuffer(gl.FRAMEBUFFER, null);
+  gl.viewport(0, 0, canvas.width, canvas.height);
+  if (!cleared) { gl.clearColor(0.02, 0.023, 0.04, 1); gl.clear(gl.COLOR_BUFFER_BIT); cleared = true; }
+  gl.enable(gl.BLEND);
+  gl.blendFunc(gl.SRC_ALPHA, gl.ONE_MINUS_SRC_ALPHA);
+  gl.useProgram(progFade);
+  gl.uniform1f(uFade.fade, 0.055);
+  gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+  gl.blendFunc(gl.ONE, gl.ONE);
+  gl.useProgram(progPoints);
+  gl.activeTexture(gl.TEXTURE0);
+  gl.bindTexture(gl.TEXTURE_2D, read.t);
+  gl.uniform1i(uPoints.pos, 0);
+  const eye = [Math.sin(t * 0.12) * 2.7, 0.7 + Math.sin(t * 0.07) * 0.4, Math.cos(t * 0.12) * 2.7];
+  gl.uniformMatrix4fv(uPoints.proj, false, perspective(0.9, canvas.width / canvas.height, 0.1, 20));
+  gl.uniformMatrix4fv(uPoints.view, false, lookAt(eye, [0, 0, 0]));
+  gl.drawArrays(gl.POINTS, 0, N * N);
+
+  requestAnimationFrame(frame);
+}
+requestAnimationFrame(frame);
+</script>
+</body>
+</html>

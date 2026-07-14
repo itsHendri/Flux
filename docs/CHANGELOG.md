@@ -5,6 +5,45 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## NEEDS DECISION — Phase 4 3D layer: raw WebGL2 (recommended) vs Three.js
+
+The Phase 4 tech spike is done and working:
+[`spikes/curl-noise-3d.html`](../spikes/curl-noise-3d.html) — a
+self-contained, zero-dependency **raw WebGL2** GPGPU prototype (~340 lines,
+no build step, served at `/spikes/curl-noise-3d.html`): 65,536 particles
+advected by divergence-free curl noise (Ashima simplex, MIT; Bridson 2007
+curl construction) over a sphere host with a soft spring, position ping-pong
+in RGBA32F textures, points drawn from `gl_VertexID` through a hand-rolled
+perspective/orbit camera, trail persistence via a fade quad. The
+melt.graphics-style flowing-surface look is clearly present.
+
+**Recommendation: raw WebGL2.** Rationale:
+- The spike proves the target look needs only ~340 dependency-free lines —
+  FLUX already owns the hard parts (float-FBO ping-pong, GLSL composition).
+- The real mode reuses FLUX seams directly: `Framebuffer.ts` for the data
+  textures, the HDR post chain for bloom/trails/tonemap, the control schema
+  for steering. Three.js would introduce a second GL-state owner fighting
+  the Renderer for context state, render targets, and texture units.
+- Keeps the settled zero-runtime-dependency posture (~76 kB total today;
+  Three.js core alone is ~150 kB min+gzip).
+- What Three.js would buy — camera/controls, `GPUComputationRenderer`,
+  mesh loading — is either already written (camera: ~40 lines in the spike)
+  or not needed for the planned mode (parametric hosts are generated in
+  GLSL, not loaded).
+
+Verified: spike renders and animates in the Preview pane (screenshots),
+console clean; main build + 40/40 tests untouched (spike excluded from the
+bundle). Caveat: the embedded pane only pumps rAF during screenshot capture,
+so **sustained FPS could not be measured here** — check it in desktop Chrome
+(open `/spikes/curl-noise-3d.html`, read `__fps` in devtools); the real mode
+carries a particle-count control as its perf story regardless.
+
+**Question for the user:** confirm raw WebGL2 for the Phase 4 3D layer
+(recommended), or direct the switch to Three.js. Tasks 4-2 (custom-draw mode
+seam) and 4-3 (the trails mode) proceed on the chosen path.
+
+---
+
 ## Docs — consolidated research log + README refresh
 
 Session-closing documentation pass: new [`REFERENCES.md`](REFERENCES.md)

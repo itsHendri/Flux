@@ -208,7 +208,7 @@ open-source), Codrops' audio-reactive particles tutorials. The existing
 scene-FBO + HDR post chain (bloom, trails, tonemap) is mode-agnostic and
 will composite a 3D mode for free.
 
-- [ ] **Tech decision spike: raw WebGL2 vs Three.js for the 3D layer.**
+- [x] **Tech decision spike: raw WebGL2 vs Three.js for the 3D layer.**
   Weigh: FLUX stays zero-dependency and already owns FBO ping-pong + GLSL
   (raw path: ~camera matrix + instanced points, no library) vs Three.js
   (~150 kB min+gzip core; buys camera/controls, GPUComputationRenderer, and
