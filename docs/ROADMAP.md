@@ -217,7 +217,7 @@ will composite a 3D mode for free.
   under NEEDS DECISION in CHANGELOG.md and stop for user confirmation** —
   this sets the project's dependency posture. *Done:* working spike +
   recorded decision.
-- [ ] **Custom-draw mode seam.** Extend the Renderer so a mode can be a
+- [x] **Custom-draw mode seam.** Extend the Renderer so a mode can be a
   draw callback into the scene FBO (with optional depth attachment) instead
   of a fullscreen fragment — mirroring how BloomPipeline is special-cased.
   Existing fullscreen modes unchanged. *Done:* a trivial 3D demo mode

@@ -5,7 +5,42 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 4 — Custom-draw mode seam (true 3D unlocked)
+
+The Renderer can now host modes that *draw*, not just shade: a **`CustomMode`**
+(`src/render/CustomMode.ts`) receives the GL context at registration and a
+draw callback per frame with the scene FBO bound — geometry, GPGPU passes,
+points — while the mode switcher, control scoping, and the entire HDR post
+chain keep working unchanged. Mirrors the BloomPipeline special-case pattern.
+
+- **Renderer** — `registerCustomMode` / dispatch in `setMode` and the render
+  loop; `composeCustomFragment` gives custom fragments the standard uniform
+  preamble (builtins, controls, `common.glsl`) with their own ins/outs/main;
+  `compile` accepts custom vertex sources; mode-private uniforms follow the
+  established body-declared pattern. Context services: `buildModeProgram`,
+  `uploadFrameUniforms`, `rebindScene`, the HDR `fboFormat`.
+- **`Framebuffer.ts`** — optional `DEPTH_COMPONENT24` renderbuffer on an Fbo;
+  the scene FBO gains depth only when a registered mode asks (none yet — the
+  planned trails mode is additive).
+- **`src/render/math3d.ts`** — the whole "camera library" the raw path needs:
+  `perspective` + `lookAt`, pure and unit-tested (43 tests total).
+- **Demo mode `trails3d`** (`src/modes3d/Trails3DMode.ts`) — task 4-2 proof:
+  an attribute-less audio-breathing point sphere (positions from
+  `gl_VertexID`), slow-orbit perspective camera, additive points, Scale
+  control scoped in. Task 4-3 replaces its internals with the spike's GPGPU
+  curl-noise advection.
+
+Verified: build clean, 43/43 tests; Preview shows trails3d rendering through
+the post chain (bloom composites the point sphere; scoped controls appear),
+fragment modes unchanged (cells spot-check), error overlay empty, console
+clean.
+
+---
+
 ## NEEDS DECISION — Phase 4 3D layer: raw WebGL2 (recommended) vs Three.js
+
+> **RESOLVED (2026-06-11): user confirmed raw WebGL2.** Tasks 4-2/4-3
+> proceed dependency-free on the existing stack.
 
 The Phase 4 tech spike is done and working:
 [`spikes/curl-noise-3d.html`](../spikes/curl-noise-3d.html) — a

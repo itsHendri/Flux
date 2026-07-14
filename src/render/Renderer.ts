@@ -10,6 +10,7 @@ import {
   type FboFormat,
 } from './Framebuffer.ts';
 import { BloomPipeline } from './BloomPipeline.ts';
+import type { CustomMode, CustomModeContext } from './CustomMode.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
 import commonSource from '../shaders/common.glsl?raw';
 import presentSource from '../shaders/present.frag?raw';
@@ -100,6 +101,13 @@ export class Renderer {
 
   private readonly modes = new Map<string, CompiledProgram>();
   private current: CompiledProgram | null = null;
+
+  // Custom-draw modes (true 3D): draw callbacks into the scene FBO instead
+  // of fullscreen fragments — see CustomMode.ts. At most one of `current` /
+  // `currentCustom` is active.
+  private readonly customModes = new Map<string, CustomMode>();
+  private currentCustom: CustomMode | null = null;
+  private sceneNeedsDepth = false;
 
   // Post-pass registry — mirrors the mode registry. `passOrder` is the fixed
   // chain order; which passes run this frame is read from FrameState.controls
@@ -325,8 +333,29 @@ export class Renderer {
     return `${header}\n#line 1\n${passSource}\nvoid main() {\n  outColor = vec4(render(vUv), 1.0);\n}\n`;
   }
 
-  private compile(name: string, fragSource: string, samplers: string[]): CompiledProgram | null {
-    const result = buildProgram(this.gl, vertSource, fragSource);
+  /** Standard uniform preamble + a verbatim body that supplies its own
+   *  ins/outs and main() — for custom-mode fragments (points, meshes). */
+  private composeCustomFragment(src: string): string {
+    const header = [
+      '#version 300 es',
+      'precision highp float;',
+      ...BUILTIN_UNIFORMS.map((n) =>
+        n === 'uResolution' ? `uniform vec2 ${n};` : `uniform float ${n};`,
+      ),
+      ...MODE_SAMPLERS.map((n) => `uniform sampler2D ${n};`),
+      this.controlDecls(),
+      commonSource,
+    ].join('\n');
+    return `${header}\n#line 1\n${src}`;
+  }
+
+  private compile(
+    name: string,
+    fragSource: string,
+    samplers: string[],
+    vert: string = vertSource,
+  ): CompiledProgram | null {
+    const result = buildProgram(this.gl, vert, fragSource);
     if (!result.ok) {
       this.errorCb({ mode: name, log: result.log });
       return null;
@@ -355,12 +384,61 @@ export class Renderer {
   }
 
   setMode(name: string): void {
+    const custom = this.customModes.get(name);
+    if (custom) {
+      this.currentCustom = custom;
+      this.current = null;
+      return;
+    }
     const mode = this.modes.get(name);
     if (!mode) {
       this.errorCb({ mode: name, log: `Mode "${name}" is not registered.` });
       return;
     }
     this.current = mode;
+    this.currentCustom = null;
+  }
+
+  /** The GL services a CustomMode gets at init — see CustomMode.ts. */
+  private customModeContext(): CustomModeContext {
+    return {
+      gl: this.gl,
+      fboFormat: this.fboFormat,
+      buildModeProgram: (name, vertSrc, fragBody) =>
+        this.compile(name, this.composeCustomFragment(fragBody), MODE_SAMPLERS, vertSrc),
+      uploadFrameUniforms: (prog, state) => this.uploadFrameUniforms(prog, state),
+      rebindScene: () => {
+        const gl = this.gl;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene ? this.scene.framebuffer : null);
+        gl.viewport(0, 0, this.canvas.width, this.canvas.height);
+      },
+    };
+  }
+
+  /**
+   * Register a custom-draw (3D) mode. Mirrors registerMode's contract:
+   * failures are reported and leave any previous registration usable. If the
+   * mode needs depth and the scene FBO already exists without one, the scene
+   * is recreated in place.
+   */
+  registerCustomMode(mode: CustomMode): boolean {
+    try {
+      if (!mode.init(this.customModeContext())) return false;
+    } catch (e) {
+      this.errorCb({ mode: mode.name, log: e instanceof Error ? e.message : String(e) });
+      return false;
+    }
+    this.customModes.set(mode.name, mode);
+    if (mode.needsDepth && !this.sceneNeedsDepth) {
+      this.sceneNeedsDepth = true;
+      if (this.scene) {
+        const { width, height } = this.scene;
+        deleteFbo(this.gl, this.scene);
+        this.scene = createFbo(this.gl, width, height, this.fboFormat, true);
+      }
+    }
+    this.successCb(mode.name);
+    return true;
   }
 
   /**
@@ -421,7 +499,7 @@ export class Renderer {
   private ensureTargets(w: number, h: number): void {
     const gl = this.gl;
     if (!this.scene) {
-      this.scene = createFbo(gl, w, h, this.fboFormat);
+      this.scene = createFbo(gl, w, h, this.fboFormat, this.sceneNeedsDepth);
       this.ping = createFbo(gl, w, h, this.fboFormat);
       this.pong = createFbo(gl, w, h, this.fboFormat);
       this.history = createFbo(gl, w, h, this.fboFormat);
@@ -496,7 +574,7 @@ export class Renderer {
     const h = this.canvas.height;
 
     const mode = this.current;
-    if (!mode || !this.scene) {
+    if ((!mode && !this.currentCustom) || !this.scene) {
       gl.bindFramebuffer(gl.FRAMEBUFFER, null);
       gl.viewport(0, 0, w, h);
       gl.clearColor(0.04, 0.045, 0.05, 1);
@@ -507,14 +585,23 @@ export class Renderer {
     gl.bindVertexArray(this.vao);
     gl.viewport(0, 0, w, h);
 
-    // 1. Mode → scene FBO. The logo sampler rides on unit 4 (same as passes).
+    // 1. Mode → scene FBO. Custom (3D) modes draw for themselves (and own
+    // clearing); fragment modes are a fullscreen draw. The logo sampler
+    // rides on unit 4 (same as passes).
     gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene.framebuffer);
-    gl.useProgram(mode.program);
-    this.uploadFrameUniforms(mode, state);
-    gl.activeTexture(gl.TEXTURE4);
-    gl.bindTexture(gl.TEXTURE_2D, this.logo);
-    gl.uniform1i(mode.uniforms.get('uLogo') ?? null, 4);
-    this.drawFullscreen();
+    if (this.currentCustom) {
+      this.currentCustom.draw(state, w, h);
+      // The mode may have bound its own VAO / left an FBO bound internally.
+      gl.bindVertexArray(this.vao);
+      gl.viewport(0, 0, w, h);
+    } else if (mode) {
+      gl.useProgram(mode.program);
+      this.uploadFrameUniforms(mode, state);
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, this.logo);
+      gl.uniform1i(mode.uniforms.get('uLogo') ?? null, 4);
+      this.drawFullscreen();
+    }
 
     // 2. Ordered, toggleable post-pass chain across the ping-pong pair. Enable
     // state comes from the control store (uFx* toggle values).
@@ -612,6 +699,9 @@ export class Renderer {
   dispose(): void {
     const gl = this.gl;
     for (const m of this.modes.values()) gl.deleteProgram(m.program);
+    for (const m of this.customModes.values()) m.dispose();
+    this.customModes.clear();
+    this.currentCustom = null;
     for (const p of this.passes.values()) for (const s of p.stages) gl.deleteProgram(s.program);
     if (this.present) gl.deleteProgram(this.present.program);
     this.present = null;

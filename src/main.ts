@@ -13,6 +13,7 @@ import { CONTROLS } from './ui/controls.ts';
 import { passToggleDefs, passToggleUniform } from './core/state.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
+import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -69,6 +70,9 @@ renderer.onError((e) => reportError(`shader:${e.mode}`, e.log));
 renderer.onCompileSuccess((mode) => clearErrors(`shader:${mode}`));
 
 for (const mode of MODES) renderer.registerMode(mode);
+// Custom-draw (true 3D) modes — same switcher, same controls, same post chain.
+const MODES_3D = [new Trails3DMode()];
+for (const mode of MODES_3D) renderer.registerCustomMode(mode);
 for (const pass of PASSES) renderer.registerPass(pass);
 
 // --- Audio ----------------------------------------------------------------
@@ -92,11 +96,11 @@ modeSection.innerHTML = '<h2>Mode</h2>';
 const modeRow = document.createElement('div');
 modeRow.className = 'btn-row';
 const modeButtons: Record<string, HTMLButtonElement> = {};
-for (const mode of MODES) {
+for (const name of [...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)]) {
   const btn = document.createElement('button');
-  btn.textContent = mode.name;
-  btn.addEventListener('click', () => selectMode(mode.name));
-  modeButtons[mode.name] = btn;
+  btn.textContent = name;
+  btn.addEventListener('click', () => selectMode(name));
+  modeButtons[name] = btn;
   modeRow.appendChild(btn);
 }
 modeSection.appendChild(modeRow);

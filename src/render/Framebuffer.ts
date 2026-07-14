@@ -19,6 +19,8 @@ export interface Fbo {
   width: number;
   height: number;
   fmt: FboFormat;
+  /** Optional depth renderbuffer — only 3D custom modes ask for one. */
+  depth: WebGLRenderbuffer | null;
 }
 
 /**
@@ -49,7 +51,13 @@ export function detectFboFormat(gl: WebGL2RenderingContext): FboFormat {
 }
 
 /** Allocate an Fbo sized w×h. Throws on GL allocation failure (caller reports). */
-export function createFbo(gl: WebGL2RenderingContext, w: number, h: number, fmt: FboFormat): Fbo {
+export function createFbo(
+  gl: WebGL2RenderingContext,
+  w: number,
+  h: number,
+  fmt: FboFormat,
+  withDepth = false,
+): Fbo {
   const texture = gl.createTexture();
   const framebuffer = gl.createFramebuffer();
   if (!texture || !framebuffer) {
@@ -66,19 +74,34 @@ export function createFbo(gl: WebGL2RenderingContext, w: number, h: number, fmt:
   gl.bindFramebuffer(gl.FRAMEBUFFER, framebuffer);
   gl.framebufferTexture2D(gl.FRAMEBUFFER, gl.COLOR_ATTACHMENT0, gl.TEXTURE_2D, texture, 0);
 
+  let depth: WebGLRenderbuffer | null = null;
+  if (withDepth) {
+    depth = gl.createRenderbuffer();
+    if (!depth) throw new Error('Failed to allocate depth renderbuffer.');
+    gl.bindRenderbuffer(gl.RENDERBUFFER, depth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.framebufferRenderbuffer(gl.FRAMEBUFFER, gl.DEPTH_ATTACHMENT, gl.RENDERBUFFER, depth);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  }
+
   gl.bindTexture(gl.TEXTURE_2D, null);
   gl.bindFramebuffer(gl.FRAMEBUFFER, null);
 
-  return { framebuffer, texture, width: w, height: h, fmt };
+  return { framebuffer, texture, width: w, height: h, fmt, depth };
 }
 
-/** Reallocate the colour texture if the target size changed. No-op otherwise. */
+/** Reallocate the colour texture (and depth, if any) if the size changed. */
 export function resizeFbo(gl: WebGL2RenderingContext, fbo: Fbo, w: number, h: number): void {
   if (fbo.width === w && fbo.height === h) return;
   const { internalFormat, format, type } = fbo.fmt;
   gl.bindTexture(gl.TEXTURE_2D, fbo.texture);
   gl.texImage2D(gl.TEXTURE_2D, 0, internalFormat, w, h, 0, format, type, null);
   gl.bindTexture(gl.TEXTURE_2D, null);
+  if (fbo.depth) {
+    gl.bindRenderbuffer(gl.RENDERBUFFER, fbo.depth);
+    gl.renderbufferStorage(gl.RENDERBUFFER, gl.DEPTH_COMPONENT24, w, h);
+    gl.bindRenderbuffer(gl.RENDERBUFFER, null);
+  }
   fbo.width = w;
   fbo.height = h;
 }
@@ -86,4 +109,5 @@ export function resizeFbo(gl: WebGL2RenderingContext, fbo: Fbo, w: number, h: nu
 export function deleteFbo(gl: WebGL2RenderingContext, fbo: Fbo): void {
   gl.deleteFramebuffer(fbo.framebuffer);
   gl.deleteTexture(fbo.texture);
+  if (fbo.depth) gl.deleteRenderbuffer(fbo.depth);
 }

@@ -2,7 +2,7 @@ import type { ControlDef } from '../core/state.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells', 'logo'];
+const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
 
 /**
  * THE uniform schema — single source of truth.
