@@ -5,6 +5,29 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Planning — Phase 4 backlog: true 3D mode + research-source expansion
+
+Landscape research pass over the user's references and the wider category.
+Findings: the browser VJ/visualizer space (Hydra, cables.gl, Butterchurn/
+MilkDrop, Shadertoy; commercial: Resolume, TouchDesigner, Synesthesia) runs
+on the same WebGL foundations FLUX uses — no stack change indicated. The
+melt.graphics look the user wants (flowing 3D trails) is the documented
+**GPGPU curl-noise particle** technique (Barradeau FBO particles, cabbibo
+glsl-curl-noise, Codrops audio-reactive particle tutorials — open source).
+
+- New **Phase 4 — True 3D mode** roadmap group: tech-decision spike (raw
+  WebGL2 vs adopting Three.js — gated on user confirmation), a custom-draw
+  mode seam in the Renderer, then a curl-noise particle-trails mode
+  composited through the existing HDR post chain.
+- `AGENT_LOOP.md` research sources expanded per user request: p5.js
+  showcase + OpenProcessing (port ideas as native GLSL, never adopt the
+  library), Codrops, three.js forum showcases.
+- The melt.graphics HUD *styling* direction was reviewed and **rejected by
+  the user** — Phase 3's floating bar keeps the user's own waveform-
+  visualizer design language instead.
+
+---
+
 ## Planning — Phase 3 backlog: performance UI & theming
 
 Reviewed the user's earlier visualizer

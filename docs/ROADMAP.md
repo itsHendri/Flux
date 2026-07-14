@@ -194,6 +194,43 @@ theme palettes. Adapted for FLUX, in build order:
   the visual, auto-hides on idle, and every control on it works; build +
   Preview clean.
 
+## Phase 4 — True 3D mode (the user's priority visual)
+
+The one visual FLUX hasn't gotten right yet (user: "this was always my
+intention"). Target look: flowing 3D structure in the spirit of
+melt.graphics' surface-flow trails — real geometry/particles with a camera,
+not another fullscreen-shader field. Key research (2026-06-11): the look is
+**GPGPU curl-noise particle trails** — ping-pong position/velocity data
+textures (a technique FLUX's pipeline already uses for post-FX) + point/line
+rendering; canonical references: Barradeau's FBO-particles article,
+aadebdeb/imokya curl-noise examples, cabbibo's glsl-curl-noise (all
+open-source), Codrops' audio-reactive particles tutorials. The existing
+scene-FBO + HDR post chain (bloom, trails, tonemap) is mode-agnostic and
+will composite a 3D mode for free.
+
+- [ ] **Tech decision spike: raw WebGL2 vs Three.js for the 3D layer.**
+  Weigh: FLUX stays zero-dependency and already owns FBO ping-pong + GLSL
+  (raw path: ~camera matrix + instanced points, no library) vs Three.js
+  (~150 kB min+gzip core; buys camera/controls, GPUComputationRenderer, and
+  direct portability of the reference examples). Prototype the smallest
+  curl-noise trail demo on the preferred path. **Record the recommendation
+  under NEEDS DECISION in CHANGELOG.md and stop for user confirmation** —
+  this sets the project's dependency posture. *Done:* working spike +
+  recorded decision.
+- [ ] **Custom-draw mode seam.** Extend the Renderer so a mode can be a
+  draw callback into the scene FBO (with optional depth attachment) instead
+  of a fullscreen fragment — mirroring how BloomPipeline is special-cased.
+  Existing fullscreen modes unchanged. *Done:* a trivial 3D demo mode
+  renders through the full post chain; all existing modes pixel-identical;
+  build + tests clean.
+- [ ] **3D mode: curl-noise particle trails.** GPGPU position/velocity
+  ping-pong, curl-noise flow field over a parametric host shape, additive
+  HDR points/trails; audio: bass → flow speed, uBeat → burst/impulse,
+  high → sparkle; steering: particle count / flow scale / trail length;
+  camera slow-orbits. *Done:* renders + reacts live, composites through
+  bloom/trails, ≥3 meaningful controls, resolution-independent perf story
+  (count control), build + Preview clean.
+
 ### Known tech debt / limitations (from the Phase 1 audit)
 
 - **Parallel toggle mechanisms** — pass on/off (ad-hoc buttons,

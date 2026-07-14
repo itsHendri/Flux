@@ -42,7 +42,10 @@ in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
 ### 2. Research first (mandatory for any visual/aesthetic task)
 - Web-search the technique. Study open-source and reference implementations:
   Shadertoy, Inigo Quilez (iquilezles.org), the dithering tutorials in
-  `docs/sprint-2-research.md`, awesome-audio-visualization, etc.
+  `docs/sprint-2-research.md`, awesome-audio-visualization, the p5.js
+  showcase + OpenProcessing (rich pool of small readable audio-reactive
+  sketches — port ideas as native GLSL, never adopt the library), Codrops
+  tutorials, and the three.js forum showcases (for 3D/particle techniques).
 - Note what's currently trending / considered good for music visualization.
 - Prefer adapting proven, well-licensed open-source approaches over inventing
   from scratch. **Record the sources** — cite them in the commit and CHANGELOG.
