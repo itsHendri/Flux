@@ -70,9 +70,10 @@ renderer.onError((e) => reportError(`shader:${e.mode}`, e.log));
 renderer.onCompileSuccess((mode) => clearErrors(`shader:${mode}`));
 
 for (const mode of MODES) renderer.registerMode(mode);
-// Custom-draw (true 3D) modes — same switcher, same controls, same post chain.
-const MODES_3D = [new Trails3DMode()];
-for (const mode of MODES_3D) renderer.registerCustomMode(mode);
+// Custom-draw (true 3D) modes — same switcher, same controls, same post
+// chain. Only successfully registered ones get switcher buttons (a mode can
+// refuse, e.g. trails3d without float render targets).
+const MODES_3D = [new Trails3DMode()].filter((m) => renderer.registerCustomMode(m));
 for (const pass of PASSES) renderer.registerPass(pass);
 
 // --- Audio ----------------------------------------------------------------

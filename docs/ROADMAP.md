@@ -223,7 +223,7 @@ will composite a 3D mode for free.
   Existing fullscreen modes unchanged. *Done:* a trivial 3D demo mode
   renders through the full post chain; all existing modes pixel-identical;
   build + tests clean.
-- [ ] **3D mode: curl-noise particle trails.** GPGPU position/velocity
+- [x] **3D mode: curl-noise particle trails.** GPGPU position/velocity
   ping-pong, curl-noise flow field over a parametric host shape, additive
   HDR points/trails; audio: bass → flow speed, uBeat → burst/impulse,
   high → sparkle; steering: particle count / flow scale / trail length;

@@ -134,6 +134,41 @@ export const CONTROLS: ControlDef[] = [
     modes: ['cells'],
   },
   {
+    // Particle texture size: count = value². The mode's perf story — drop it
+    // on weak GPUs, raise it for density.
+    id: 'particles',
+    name: 'Particles',
+    glslName: 'uParticles',
+    type: 'select',
+    options: [
+      { label: '16k', value: 128 },
+      { label: '65k', value: 256 },
+      { label: '262k', value: 512 },
+    ],
+    default: 256,
+    modes: ['trails3d'],
+  },
+  {
+    id: 'flowSpeed',
+    name: 'Flow',
+    glslName: 'uFlowSpeed',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['trails3d'],
+  },
+  {
+    id: 'trailTurb',
+    name: 'Turbulence',
+    glslName: 'uTrailTurb',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+    modes: ['trails3d'],
+  },
+  {
     id: 'logoRipple',
     name: 'Ripple',
     glslName: 'uLogoRipple',

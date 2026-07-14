@@ -5,6 +5,46 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 4 — trails3d: the curl-noise particle mode (the target visual)
+
+The mode the user always wanted: **`trails3d`** is now a real GPGPU
+curl-noise particle swarm — the spike's technique productionised through the
+custom-draw seam, composited by the HDR post chain (enable **bloom** and
+**trails** for the full flowing-comet look).
+
+- **Simulation** (`src/shaders/modes3d/`) — positions + ages ping-pong in
+  float textures (RGBA32F, 16F fallback, probed); a sim pass advects every
+  particle through divergence-free curl noise (shared `curl.glsl`: Ashima
+  simplex MIT + Bridson 2007 construction) with a soft spring to the host
+  sphere; staggered respawns.
+- **Audio** — bass deepens the flow speed, **uBeat fires a radial burst**
+  (squared pulse = sharp kick attack), highs sparkle the points, level lifts
+  luminance. Heads render cool-blue shading to violet tails by age.
+- **Controls** — Particles (16k / 65k / 262k — texture size, the perf story
+  for weak GPUs), Flow, Turbulence, plus shared Scale (host size) and Gain.
+  Count changes reallocate + reseed lazily, like the bloom pyramid.
+- **Bug found the hard way**: `createFbo`'s LINEAR default makes an RGBA32F
+  texture *sampling-incomplete* (32F isn't filterable without
+  `OES_texture_float_linear`) — every `texelFetch` silently returned
+  `(0,0,0,1)` and the swarm collapsed to the origin. Data textures now get
+  NEAREST explicitly; diagnosed by manually re-running the seed/sim passes
+  and reading pixels back through a temporary debug handle (removed).
+
+Sources: as the spike — Barradeau FBO particles, Bridson 2007, Ashima/stegu
+webgl-noise (MIT), cabbibo/glsl-curl-noise, Codrops audio-reactive particles
+(see REFERENCES.md).
+
+Verified: build clean, 43/43 tests; Preview shows the 65k swarm flowing
+around the host with bloom + trails enabled and evolving between frames;
+sim texture read-back confirms healthy state (positions spread 0.65–1.19
+around the host radius, ages staggered 0.75–5.4); mode switch to cells and
+back is clean; error overlay empty, console clean. Audio reaction rides the
+same uniforms proven live in Phase 2b; **sustained FPS and the by-ear taste
+pass need the user's Chrome + music** (embedded pane pumps rAF only during
+capture).
+
+---
+
 ## Phase 4 — Custom-draw mode seam (true 3D unlocked)
 
 The Renderer can now host modes that *draw*, not just shade: a **`CustomMode`**
