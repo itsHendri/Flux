@@ -100,3 +100,7 @@ continuously through a phase before pausing for review.
 - Clean module seams — shaders are iterated in isolation.
 - Visual/aesthetic work is research-first: study open-source and reference
   shaders (Shadertoy, Inigo Quilez, etc.) before implementing, and cite sources.
+
+## License
+
+[MIT](LICENSE).
