@@ -39,15 +39,36 @@ server {
 }
 ```
 
-## Hosted options (gated — approval required)
+## Hosted: GitHub Pages (live)
 
-Per company tooling policy, **do not deploy to third-party services where
-there is no company account** (Netlify, Vercel, etc.) and do not publish
-without explicit approval. Candidates to evaluate *with* approval:
+The site deploys to **https://itshendri.github.io/Flux/** on every push to
+`main`, via [`.github/workflows/deploy.yml`](../.github/workflows/deploy.yml):
+`npm ci` → `npm test` → `npm run build` → upload `dist/` → publish. A failing
+test fails the deploy, so `main` cannot publish a broken bundle. Pages serves
+HTTPS, so the mic, Web MIDI, and PiP all work.
 
-- **GitLab Pages on the company GitLab** — the natural fit: CI builds
-  `dist/`, Pages serves it over HTTPS on an internal URL.
-- An internal static bucket/CDN already operated by the company.
+### The `base` path
 
-Nothing in this repository pushes anywhere; deployment is a deliberate,
-human-approved step.
+A project repo is served from a subpath (`/Flux/`), not root, so the bundle
+needs that prefix baked in. `vite.config.ts` reads it from the environment:
+
+```ts
+const base = process.env.PAGES_BASE ?? '/';
+```
+
+Dev, `vite preview`, and any root-served host therefore stay at `/` with no
+config; only the Pages workflow sets `PAGES_BASE=/Flux/`.
+
+### Moving to a custom domain
+
+A custom domain serves at **root**, so the switch is:
+
+1. Add a `CNAME` record at the DNS provider: `flux` → `itshendri.github.io`.
+2. Set the domain on the repo (Settings → Pages → Custom domain), which
+   commits a `CNAME` file and provisions a free TLS certificate.
+3. Delete the `env: PAGES_BASE` block from the build step in `deploy.yml`.
+
+Step 3 is the only code change — that is what the env-driven `base` buys.
+
+Deploys are automatic on `main` only. Nothing else in this repository pushes
+anywhere.
