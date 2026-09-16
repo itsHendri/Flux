@@ -5,6 +5,15 @@ export interface TransportCallbacks {
   onFile(file: File): void;
 }
 
+/** What the transport looks like right now — for a second view of it. */
+export interface TransportState {
+  loaded: boolean;
+  playing: boolean;
+  /** Formatted `m:ss / m:ss`. */
+  readout: string;
+  name: string;
+}
+
 /**
  * Transport for the file source: load, play/pause, scrub, time readout.
  *
@@ -20,9 +29,13 @@ export class Transport {
   private readonly seek: HTMLInputElement;
   private readonly readout: HTMLElement;
   private readonly loadBtn: HTMLButtonElement;
+  private readonly fileInput: HTMLInputElement;
   private media: HTMLAudioElement | null = null;
   /** Listeners registered on the current element, dropped on detach. */
   private unbind: (() => void)[] = [];
+  /** Mirrors of this transport elsewhere (the performance bar). */
+  private readonly watchers: ((s: TransportState) => void)[] = [];
+  private name = '';
 
   constructor(parent: HTMLElement, cb: TransportCallbacks) {
     this.section = document.createElement('div');
@@ -40,6 +53,7 @@ export class Transport {
       if (file) cb.onFile(file);
     });
 
+    this.fileInput = fileInput;
     this.loadBtn = document.createElement('button');
     this.loadBtn.className = 'big-btn';
     this.loadBtn.textContent = 'load audio file';
@@ -87,10 +101,35 @@ export class Transport {
     return this.media !== null;
   }
 
+  /**
+   * Watch the transport. The performance bar shows the same play state as the
+   * panel does, from one source of truth: the element.
+   */
+  watch(cb: (s: TransportState) => void): void {
+    this.watchers.push(cb);
+    cb(this.state());
+  }
+
+  private state(): TransportState {
+    const media = this.media;
+    return {
+      loaded: media !== null,
+      playing: media !== null && !media.paused,
+      readout: this.readout.textContent ?? '0:00 / 0:00',
+      name: this.name,
+    };
+  }
+
+  /** Open the system file picker — the performance bar's file button. */
+  openFilePicker(): void {
+    this.fileInput.click();
+  }
+
   /** Point the transport at a freshly created file source's element. */
   attach(media: HTMLAudioElement, name: string): void {
     this.detach();
     this.media = media;
+    this.name = name;
     this.loadBtn.textContent = name;
     this.transport.style.display = '';
 
@@ -115,8 +154,10 @@ export class Transport {
     for (const off of this.unbind) off();
     this.unbind = [];
     this.media = null;
+    this.name = '';
     this.transport.style.display = 'none';
     this.loadBtn.textContent = 'load audio file';
+    this.publish();
   }
 
   /** Play/pause — the button and the Space hotkey both land here. */
@@ -139,5 +180,11 @@ export class Transport {
     this.readout.textContent = `${formatTime(media.currentTime)} / ${formatTime(duration)}`;
     this.playBtn.textContent = media.paused ? '▶' : '❚❚';
     this.playBtn.classList.toggle('active', !media.paused);
+    this.publish();
+  }
+
+  private publish(): void {
+    const s = this.state();
+    for (const cb of this.watchers) cb(s);
   }
 }

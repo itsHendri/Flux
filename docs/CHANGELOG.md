@@ -5,6 +5,65 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 3 COMPLETE — review
+
+Phase 3 landed in three verified commits, and FLUX now has a performance
+surface rather than only a workbench:
+
+1. **File playback** — drop a track on the stage, transport in the panel,
+   Space to play/pause; mic and file share the one input dropdown.
+2. **Global themes** — five palettes on the `1`-`5` keys that all eight modes
+   bend toward, keeping each mode's own brightness so nothing goes muddy.
+3. **The floating bar** — the mid-set controls over the visual, fading out
+   when the mouse goes still.
+
+**For the user, live in Chrome with music:** drop a real track, hit
+fullscreen from the bar, and walk the five themes on `1`-`5` across your
+favourite modes — the Tint slider in the panel decides how far each mode is
+pulled toward the theme, and 0.85 is only a starting guess at your taste.
+The two things only you can check are still open: the **Traktor S2 MIDI
+verification** and, from Phase 4, the sustained-FPS and by-ear pass on
+`trails3d` with bloom + trails enabled.
+
+---
+
+## Phase 3 — The floating performance bar
+
+A pill over the visual holding the handful of controls you actually reach for
+mid-set: source (mic / file), the file transport, the five theme swatches, a
+mode cycler, fullscreen and PiP. It fades out after ~2.6 s of a still mouse —
+the picture is the point — and comes back on the first movement. Hovering
+pins it open, and while faded it stops taking clicks, so nothing can be hit
+blind.
+
+The rule the whole thing is built on: **every control is a second view, never
+a second source of truth.** The swatches write the same `uTheme` control the
+panel's selector does; the play button calls the same `Transport`; the mode
+cycler goes through `selectMode`; fullscreen and PiP call the same two
+functions the Output section calls, and both repaint from one `pipPainters`
+list, so the PiP state can't read differently in two places. New seams that
+made that possible: `Transport.watch()` (mirror the element's state),
+`SourcePicker.selectFirstDevice()`, `Transport.openFilePicker()`, and the
+`ControlPanel.onChange` hook from the theme task. The dock panel is unchanged
+and still collapses on its own.
+
+`stepIndex` is the one bit of logic worth pinning down and is unit-tested:
+JS `%` keeps the sign of the left operand, so walking off the front of the
+mode list needs the double-modulo or it lands on -1.
+
+Verified: build clean, 64/64 tests. In the Preview browser: the bar renders
+centred with all five groups; the cycler walks all 8 modes and wraps both
+ways (bars → trails3d → bars) with the panel's mode buttons following; a bar
+swatch sets the panel's theme and a `1`-`5` hotkey moves the bar's ring, both
+ways; dropping a file grows the transport group, and play/pause stays in sync
+whichever of the two buttons is pressed; the bar goes `idle` (opacity 0,
+pointer-events none) after 3 s untouched, returns on pointermove, and stays
+put while hovered. PiP and mic from the bar hit the shared paths and surfaced
+the Preview browser's own refusals visibly, leaving no orphaned `<video>` and
+no stale button label. Error overlay empty, no new console errors.
+
+---
+
 ## Phase 3 — Global theme palettes + hotkeys
 
 FLUX looked like eight instruments: every mode invented its own colour, so

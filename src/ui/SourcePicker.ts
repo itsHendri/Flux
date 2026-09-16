@@ -95,6 +95,12 @@ export class SourcePicker {
     this.rebuildOptions();
   }
 
+  /** Point the dropdown back at a live input — the bar's mic button. */
+  selectFirstDevice(): void {
+    const first = this.devices[0];
+    if (first) this.select.value = `${DEVICE_PREFIX}${first.deviceId}`;
+  }
+
   /** Make the file the active choice — called right after one is loaded. */
   selectFile(): void {
     if (this.fileName) this.select.value = FILE_VALUE;

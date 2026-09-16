@@ -411,3 +411,118 @@ input[type='range'] {
 #drop-hint.visible {
   opacity: 1;
 }
+
+/* --- Performance bar ------------------------------------------------------
+   A floating pill over the visual: the few controls you reach for mid-set.
+   It fades out when the mouse goes still (the picture is the point) and
+   returns on the first movement. The dock panel is the deep-editing surface
+   and collapses independently. */
+#perf-bar {
+  position: fixed;
+  left: 50%;
+  bottom: 22px;
+  transform: translateX(-50%);
+  z-index: 60;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 7px 10px;
+  border-radius: 999px;
+  background: rgba(14, 16, 20, 0.72);
+  border: 1px solid rgba(199, 204, 214, 0.14);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+  transition: opacity 0.35s ease, transform 0.35s ease;
+}
+
+/* Idle: out of the way, and not clickable while invisible. */
+#perf-bar.idle {
+  opacity: 0;
+  pointer-events: none;
+  transform: translateX(-50%) translateY(8px);
+}
+
+.perf-group {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  padding: 0 8px;
+  border-right: 1px solid rgba(199, 204, 214, 0.12);
+}
+
+.perf-group:last-child {
+  border-right: none;
+  padding-right: 2px;
+}
+
+.perf-group:first-child {
+  padding-left: 2px;
+}
+
+.perf-btn {
+  min-width: 30px;
+  height: 28px;
+  padding: 0 9px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  color: var(--ink-dim);
+  font-size: 11px;
+  letter-spacing: 0.08em;
+}
+
+.perf-btn:hover {
+  color: var(--ink);
+  border-color: rgba(199, 204, 214, 0.22);
+}
+
+.perf-btn.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: #06120f;
+}
+
+.perf-time {
+  font-size: 10px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+  white-space: nowrap;
+  padding: 0 2px;
+}
+
+.perf-mode {
+  min-width: 74px;
+  white-space: nowrap;
+  text-align: center;
+  font-size: 11px;
+  letter-spacing: 0.1em;
+  color: var(--ink);
+}
+
+/* Theme swatches carry their own three stops, so the choice is visible. */
+.perf-swatch {
+  width: 20px;
+  height: 20px;
+  padding: 0;
+  border-radius: 50%;
+  border: 1px solid rgba(199, 204, 214, 0.22);
+  cursor: pointer;
+}
+
+.perf-swatch:hover {
+  border-color: var(--ink);
+}
+
+.perf-swatch.active {
+  border-color: var(--ink);
+  box-shadow: 0 0 0 2px rgba(10, 11, 13, 0.9), 0 0 0 3px var(--accent);
+}
+
+/* The error log is bottom-left; keep it clear of the centred bar. */
+#errors {
+  max-width: calc(50% - 220px);
+}

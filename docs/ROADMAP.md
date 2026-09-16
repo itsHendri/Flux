@@ -185,7 +185,7 @@ theme palettes. Adapted for FLUX, in build order:
   shortcuts `1`–`5` switch themes, and a general hotkey seam lands with it
   (Space is taken by transport). *Done:* switching themes visibly re-tints
   ≥3 modes; hotkeys work; theme round-trips through a preset; build clean.
-- [ ] **Floating performance bar.** A bottom-center floating pill
+- [x] **Floating performance bar.** A bottom-center floating pill
   (translucent dark + `backdrop-filter` blur, fully rounded) hosting the
   live essentials: mic/file source toggle, transport (when file), theme
   swatches, mode cycler, fullscreen + PiP. Auto-hides after idle mouse

@@ -41,6 +41,11 @@ npm test         # run the unit tests (vitest)
 - **Beat detection** — spectral-flux onset detectors feed `uBeat` (kick) and
   `uOnset` (any transient) pulses to every shader, beyond the smoothed
   bass/mid/high/level bands.
+- **Performance bar** — a floating pill over the visual with the mid-set
+  essentials (source, transport, theme swatches, mode cycler, fullscreen,
+  PiP); it fades out when the mouse goes still. Every control on it is a
+  second view of something the dock panel owns, never a second source of
+  truth.
 - **Themes** — five global palettes (keys `1`-`5`) that every mode bends its
   own colour toward, keeping the mode's brightness so contrast survives; a
   Tint control sets how far. **Hotkeys** — Space plays/pauses a loaded file.

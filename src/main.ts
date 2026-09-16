@@ -26,6 +26,7 @@ import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
 import { Transport } from './ui/Transport.ts';
+import { PerformanceBar, stepIndex } from './ui/PerformanceBar.ts';
 import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
@@ -39,6 +40,9 @@ if (!canvas || !panel) {
   reportError('boot', 'Missing #stage canvas or #panel element in index.html.');
   throw new Error('boot: missing DOM elements');
 }
+// Non-null alias: the guard above narrows `canvas` here, but not inside the
+// functions declared below, which run long after this line.
+const stage: HTMLCanvasElement = canvas;
 
 // Panel header.
 const title = document.createElement('div');
@@ -127,11 +131,18 @@ function refreshControls(): void {
   controlPanel.update(app.getMode(), isPassEnabled);
 }
 
+// Every mode in switcher order — the performance bar's cycler walks this.
+const MODE_NAMES = [...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)];
+
+// Assigned below; selectMode runs once before the bar exists.
+let perfBar: PerformanceBar | null = null;
+
 function selectMode(name: string): void {
   app.setMode(name);
   for (const [n, btn] of Object.entries(modeButtons)) {
     btn.classList.toggle('active', n === name);
   }
+  perfBar?.setMode(name);
   refreshControls();
 }
 
@@ -146,7 +157,9 @@ if (MODES.length > 0) selectMode(MODES[0].name);
 const hotkeys = new Hotkeys();
 
 controlPanel.onChange('uTheme', (v) => {
-  if (typeof v === 'number') controlPanel.applyValues(themeValues(v));
+  if (typeof v !== 'number') return;
+  controlPanel.applyValues(themeValues(v));
+  perfBar?.setTheme(v);
 });
 
 THEMES.forEach((theme, i) => {
@@ -333,6 +346,57 @@ presetPanel.refresh(presetStore.list());
 // Performance output: fullscreen on the current display, or a Picture-in-
 // Picture window (captureStream → hidden <video> → requestPictureInPicture)
 // that can be dragged onto a second display while the controls stay here.
+// The two actions are shared: the panel buttons and the performance bar both
+// call them, and both repaint from the same `pipPainters` list, so the PiP
+// state can never read differently in two places.
+const pipPainters: ((on: boolean) => void)[] = [];
+let pipVideo: HTMLVideoElement | null = null;
+
+function paintPip(on: boolean): void {
+  for (const paint of pipPainters) paint(on);
+}
+
+function goFullscreen(): void {
+  stage.requestFullscreen().catch((e: unknown) => reportError('output', e));
+}
+
+function teardownPip(): void {
+  if (!pipVideo) return;
+  const stream = pipVideo.srcObject as MediaStream | null;
+  stream?.getTracks().forEach((t) => t.stop());
+  pipVideo.remove();
+  pipVideo = null;
+  paintPip(false);
+}
+
+async function togglePip(): Promise<void> {
+  try {
+    if (document.pictureInPictureElement) {
+      await document.exitPictureInPicture();
+      return; // leavepictureinpicture handles teardown
+    }
+    if (!document.pictureInPictureEnabled) {
+      reportError('output', 'Picture-in-Picture is not available in this browser.');
+      return;
+    }
+    teardownPip(); // a previous request may still be pending — never stack videos
+    const video = document.createElement('video');
+    video.muted = true;
+    video.playsInline = true;
+    video.style.display = 'none';
+    video.srcObject = stage.captureStream(60);
+    document.body.appendChild(video);
+    pipVideo = video;
+    video.addEventListener('leavepictureinpicture', () => teardownPip());
+    await video.play();
+    await video.requestPictureInPicture();
+    paintPip(true);
+  } catch (e) {
+    teardownPip();
+    reportError('output', e);
+  }
+}
+
 {
   const outSection = document.createElement('div');
   outSection.className = 'section';
@@ -342,51 +406,14 @@ presetPanel.refresh(presetStore.list());
 
   const fsBtn = document.createElement('button');
   fsBtn.textContent = 'fullscreen';
-  fsBtn.addEventListener('click', () => {
-    canvas.requestFullscreen().catch((e: unknown) => reportError('output', e));
-  });
+  fsBtn.addEventListener('click', () => goFullscreen());
 
   const pipBtn = document.createElement('button');
   pipBtn.textContent = 'pip window';
-  let pipVideo: HTMLVideoElement | null = null;
-  const teardownPip = () => {
-    if (!pipVideo) return;
-    const stream = pipVideo.srcObject as MediaStream | null;
-    stream?.getTracks().forEach((t) => t.stop());
-    pipVideo.remove();
-    pipVideo = null;
-    pipBtn.classList.remove('active');
-    pipBtn.textContent = 'pip window';
-  };
-  pipBtn.addEventListener('click', () => {
-    void (async () => {
-      try {
-        if (document.pictureInPictureElement) {
-          await document.exitPictureInPicture();
-          return; // leavepictureinpicture handles teardown
-        }
-        if (!document.pictureInPictureEnabled) {
-          reportError('output', 'Picture-in-Picture is not available in this browser.');
-          return;
-        }
-        teardownPip(); // a previous request may still be pending — never stack videos
-        const video = document.createElement('video');
-        video.muted = true;
-        video.playsInline = true;
-        video.style.display = 'none';
-        video.srcObject = canvas.captureStream(60);
-        document.body.appendChild(video);
-        pipVideo = video;
-        video.addEventListener('leavepictureinpicture', teardownPip);
-        await video.play();
-        await video.requestPictureInPicture();
-        pipBtn.classList.add('active');
-        pipBtn.textContent = 'close pip';
-      } catch (e) {
-        teardownPip();
-        reportError('output', e);
-      }
-    })();
+  pipBtn.addEventListener('click', () => void togglePip());
+  pipPainters.push((on) => {
+    pipBtn.classList.toggle('active', on);
+    pipBtn.textContent = on ? 'close pip' : 'pip window';
   });
 
   const hint = document.createElement('div');
@@ -425,6 +452,7 @@ async function activateSelected(): Promise<void> {
     transport.detach(); // the outgoing file element is about to be disposed
     audio.setSource(source);
     picker.setStatus(`reacting to ${source.label}`);
+    perfBar?.setSource('mic');
   } catch (e) {
     reportError(`source:device`, e);
     picker.setStatus(e instanceof Error ? e.message : String(e));
@@ -449,6 +477,7 @@ async function playFile(file: File): Promise<void> {
     transport.attach(source.media, file.name);
     await source.media.play();
     picker.setStatus(`playing ${file.name}`);
+    perfBar?.setSource('file');
   } catch (e) {
     reportError('source:file', e);
     picker.setStatus(e instanceof Error ? e.message : String(e));
@@ -537,6 +566,37 @@ const transport = new Transport(panel, {
 // Space = play/pause the loaded file (the hotkey seam stands down for
 // whatever is focused — see isTypingTarget).
 hotkeys.bind('Space', 'Play / pause the loaded file', () => transport.toggle());
+
+// --- Performance bar --------------------------------------------------------
+// The handful of controls you actually touch mid-set, floating over the visual
+// and fading out when the mouse goes still. Every one of them is a second view
+// of something the dock panel already owns — never a second source of truth.
+perfBar = new PerformanceBar(document.body, THEMES, {
+  onMic: () => {
+    if (!audioEnabled) {
+      void enableAudio();
+      return;
+    }
+    picker.selectFirstDevice();
+    void activateSelected();
+  },
+  onFile: () => {
+    if (loadedFile) void playFile(loadedFile);
+    else transport.openFilePicker();
+  },
+  onPlayPause: () => transport.toggle(),
+  onTheme: (i) => controlPanel.applyValues({ uTheme: i }),
+  onCycleMode: (step) => {
+    const next = stepIndex(MODE_NAMES.indexOf(app.getMode()), step, MODE_NAMES.length);
+    selectMode(MODE_NAMES[next]);
+  },
+  onFullscreen: () => goFullscreen(),
+  onPip: () => void togglePip(),
+});
+perfBar.setMode(app.getMode());
+perfBar.setTheme(controlPanel.getValue('uTheme'));
+transport.watch((s) => perfBar?.setTransport(s));
+pipPainters.push((on) => perfBar?.setPip(on));
 
 // Keep the device list fresh as hardware comes and goes (controller plugged
 // in, BlackHole installed/removed) — no manual rescan needed.
