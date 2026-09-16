@@ -5,6 +5,32 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## NEEDS DECISION — two modes' futures (research round, 2026-09-16)
+
+The iTunes/MilkDrop research is logged in
+[`REFERENCES.md`](REFERENCES.md) and the work it implies is planned as
+**Phase 5** in [`ROADMAP.md`](ROADMAP.md). Two of those tasks delete or
+replace something the user already has, so they wait for his call:
+
+1. **`pulse`** — "not my favourite kind of visually". The proposal is to
+   replace it with a **waveform mode**: the time-domain line, mirrored and
+   glowing, which is the one thing every visualizer in this lineage does and
+   FLUX cannot do at all. Alternative: keep `pulse` and add waveform as a
+   ninth mode.
+2. **`plasma` vs `flow`** — "they're kind of doing the same thing for me,
+   I prefer flow". Both are domain-warped fbm, so the overlap is real, not
+   imagined. Options: (a) retire `plasma`; (b) re-cast it as Gray-Scott
+   **reaction-diffusion** — a genuine simulation with organic growth, which
+   is structurally unlike anything else in the set.
+
+Everything else in Phase 5 is additive and needs no decision: the audio
+texture (real spectrum + waveform, Shadertoy's 512×2 layout), honest bars,
+the MilkDrop warp-feedback pass, a magnetosphere particle mode, and a set of
+curated built-in looks (the user's own open question: which effect combos are
+worth using).
+
+---
+
 ## PHASE 3 COMPLETE — review
 
 Phase 3 landed in three verified commits, and FLUX now has a performance

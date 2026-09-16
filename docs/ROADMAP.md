@@ -231,6 +231,71 @@ will composite a 3D mode for free.
   bloom/trails, ≥3 meaningful controls, resolution-independent perf story
   (count control), build + Preview clean.
 
+## Phase 5 — The iTunes/MilkDrop lineage (research: REFERENCES.md, 2026-09-16)
+
+From the user's steer: study iTunes' visualizers and their open-source
+clones, and act on his read of the current modes — `pulse` isn't a favourite,
+`plasma` and `flow` do the same thing for him (he prefers `flow`), and
+`kaleido` is his favourite effect. The research found one borrowable codebase
+(butterchurn, MIT) and, more usefully, three techniques FLUX can build
+natively. Ordered by leverage: the first task unblocks most of the rest.
+
+- [ ] **Audio texture: the real spectrum and the waveform.** Upload the
+  analyser's FFT and time-domain buffers as a 512×2 R8 texture each frame,
+  **using Shadertoy's layout** (row 0 = spectrum, row 1 = waveform, bytes
+  normalised 0..1) so reference shaders port with a uniform rename. New
+  `uAudio` sampler in `BUILTIN_UNIFORMS` + helpers in `common.glsl`
+  (`spectrum(x)`, `wave(x)`). The six scalars stay — they're the musical
+  smoothing, and this is the raw material. *Done:* a shader reads
+  bin-accurate spectrum and a drawable waveform; existing modes unchanged;
+  build + tests clean.
+
+- [ ] **Bars stops faking it.** `barHeight()` currently spreads three band
+  values across the columns with Gaussian weights plus noise. Replace with a
+  real per-column spectrum read (log-frequency bucketed, so the low end
+  isn't crushed into two columns), keeping the envelope smoothing per bar so
+  it stays musical rather than jittery. *Done:* a swept sine walks the bars
+  left to right; build + Preview clean.
+
+- [ ] **Warp-feedback post-pass — MilkDrop's signature.** A pass that samples
+  `uPrevFrame` through a displaced UV field, with Geiss's vocabulary as
+  controls: zoom, rot, warp, dx/dy, cx/cy, decay (defaults per the authoring
+  guide: zoom 1.0, warp 1.0, decay 0.98). Per pixel rather than MilkDrop's
+  coarse vertex mesh. Audio drives zoom/rot; `uBeat` kicks the warp.
+  *Done:* enabling it produces tunnels/spirals that hold structure over
+  frames, composes with kaleidoscope, and is a no-op when off; build clean.
+
+- [ ] **New mode: waveform — the classic iTunes read.** *(Replaces `pulse`,
+  pending the user's call — see NEEDS DECISION.)* The time-domain waveform
+  drawn as a glowing line with mirror symmetry, a radial/Lissajous option,
+  and history offsets so the line leaves a ribbon. Depends on the audio
+  texture. *Done:* the drawn line visibly tracks the waveform (a sine reads
+  as a sine); ≥3 controls; build + Preview clean.
+
+- [ ] **`plasma`'s future.** *(Pending the user's call — see NEEDS
+  DECISION.)* Either retire it (it and `flow` are both domain-warped fbm)
+  or re-cast it as **Gray-Scott reaction-diffusion**: a real ping-pong
+  simulation, organic growth rather than a noise field, feed/kill rates
+  driven by bands. *Done:* per the decision; if re-cast, the pattern grows
+  and reacts, and mode-switching in and out reseeds cleanly.
+
+- [ ] **New 3D mode: magnetosphere.** Hodgin's charged-particle physics on
+  the existing `trails3d` GPGPU rig: per-particle charge, attractors and
+  repulsors, and **per-particle frequency assignment** from the audio
+  texture so each particle answers to its own bin. Additive HDR points, no
+  depth sort. *Done:* the swarm forms and breaks up on the music with ≥3
+  controls; composites through bloom/trails; build + Preview clean.
+
+- [ ] **Built-in looks — curated combos.** The user's open question is which
+  effect combinations are worth using; answer it in the product rather than
+  leaving him to hunt. Ship ~6 named built-in presets (mode + pass chain +
+  control values + theme), kaleidoscope-forward, loaded alongside the user's
+  own in the Presets section and cyclable from the performance bar.
+  *Done:* each built-in look loads and looks distinct; user presets are
+  untouched; build + tests clean.
+
+---
+
 ### Known tech debt / limitations (from the Phase 1 audit)
 
 - **Parallel toggle mechanisms** — pass on/off (ad-hoc buttons,

@@ -7,6 +7,109 @@ cross-cutting picture. Newest first.
 
 ---
 
+## The iTunes-visualizer lineage (sweep 2026-09-16)
+
+Prompted by the user: "have a look at iTunes and the iTunes visualizers, see
+if there's any open source clones". Four generations, what each one actually
+did, and what is legally and practically borrowable.
+
+### The lineage
+
+- **The Classic Visualizer (2001–)** — iTunes 1.0 was SoundJam MP, bought by
+  Apple in 2000; the visualizer came with it (Jeff Robbin, Bill Kincaid, Dave
+  Heller), itself in the Winamp tradition. The look: the **time-domain
+  waveform** drawn as glowing lines, mirrored into symmetric patterns over a
+  feedback field. Closed source.
+- **G-Force / WhiteCap / Jelly (SoundSpectrum)** — the plug-ins people
+  installed on top of iTunes. Closed source and, unusually, *undocumented*:
+  a deliberate sweep found no public description of the internals, only
+  marketing pages. Nothing to copy, but the shape of the thing is legible
+  from the output — waveform geometry, screen-space feedback transforms, and
+  a scriptable preset format.
+- **Magnetosphere → the iTunes 8 Visualizer (2007–08)** — Robert Hodgin's
+  Processing sketch, ported to C++ by Andrew Bell at The Barbarian Group and
+  adopted by Apple as the default. **This one is documented by its author**
+  (see below), and it's the closest to what FLUX can already do.
+- **MilkDrop (Winamp, Ryan Geiss)** — not iTunes, but the parent of the whole
+  genre, and the only one with a first-class open-source reimplementation.
+
+### What's actually open source
+
+| Project | Licence | Use to us |
+| --- | --- | --- |
+| [butterchurn](https://github.com/jberg/butterchurn) | **MIT** | MilkDrop 2 in WebGL2, driven from a Web Audio node. Same stack as FLUX, permissive licence — the one codebase we can read *and* borrow from with attribution. |
+| [projectM](https://github.com/projectM-visualizer/projectm) | LGPL | The C++ MilkDrop reimplementation. **Study only** — LGPL would infect FLUX's MIT posture if code were lifted. Techniques are fine; source is not. |
+| [Fountain Music](https://github.com/BinaryMinded/Fountain-Music) | BSD-3 | Brian Moore's iTunes particle-fountain visualizer. Obsolete Carbon/OpenGL, but a readable reference for audio-driven particle emission. |
+| [VizKit](https://www.imagomat.de/vizkit/) | open | A samplework for *writing* iTunes visualizer plug-ins — the host-integration plumbing, not the visuals. Not useful to a browser app. |
+| MilkDrop presets | mixed/CC | Thousands of them, and they are readable equation text. A rich idea mine even without running them. |
+
+**No open-source clone of Magnetosphere or G-Force exists.** The honest
+answer to "are there clones we can implement?" is: MilkDrop yes (butterchurn,
+MIT), the iTunes ones no — but both are documented well enough to rebuild the
+*techniques* natively, which is what FLUX does anyway.
+
+### The three techniques worth taking
+
+**1. The audio texture — the foundation FLUX is missing.**
+Shadertoy's convention is a **512×2 single-channel texture: row 0 = FFT
+spectrum, row 1 = the time-domain waveform**, each byte-normalised to 0..1
+([Shadertoy "Input - Sound"](https://www.shadertoy.com/view/Xds3Rr),
+[soulthreads' notes on the exact normalisation](https://gist.github.com/soulthreads/2efe50da4be1fb5f7ab60ff14ca434b8)).
+
+FLUX today hands its shaders **six scalars** (bass/mid/high/level/beat/onset)
+and nothing else. That is why `bars` fakes its spectrum — `barHeight()`
+spreads three band values across the columns with Gaussian weights and adds
+noise "so neighbours dance independently". It looks alive, but it isn't
+reading the music; it's reading three numbers. Every visualizer in this
+lineage draws the **waveform**, and FLUX cannot draw one at all.
+
+Adopting the Shadertoy layout verbatim has a second payoff: **any
+audio-reactive Shadertoy shader becomes portable to FLUX** with a uniform
+rename, which turns the largest library of reference material in this space
+into something we can actually use.
+
+**2. MilkDrop's warp feedback — the signature move of the genre.**
+Each frame samples the *previous* frame through a displaced UV field. Geiss's
+[preset authoring guide](https://www.geisswerks.com/milkdrop/milkdrop_preset_authoring.html)
+gives the exact vocabulary: `zoom` (1.0 = still, 0.9 out, 1.1 in), `rot`,
+`warp` (0 none / 1 normal / 2 major), `dx`/`dy` translation, `sx`/`sy`
+stretch, `cx`/`cy` as the centre of rotation and stretch, and `decay` (~0.98
+recommended; 0.9 is a strong fade). MilkDrop interpolates these across a
+coarse vertex mesh; in a fragment shader we can evaluate them **per pixel**,
+which is strictly better and costs nothing extra.
+
+FLUX already has the hard part — a `history` FBO bound as `uPrevFrame` — and
+uses it only for a straight decay trail. Warp feedback is the same buffer
+with a real transform in front of it, and it composes with kaleidoscope
+(the user's favourite) into the tunnels and spirals this genre is known for.
+
+**3. Magnetosphere's charged particles — a second use for the GPGPU rig.**
+Hodgin describes it as "a physics system which plays opposing forces against
+each other. Some elements in the scene have an attractive force, others have
+a repulsive force" — each particle carries a **charge**, and crucially each
+particle is "assigned a specific frequency to pay attention to", so the FFT
+drives per-particle charge and force strength rather than one global level.
+Rendering is additive blending, chosen partly to sidestep depth sorting
+([roberthodgin.com/project/magnetosphere](https://roberthodgin.com/project/magnetosphere)).
+
+FLUX's `trails3d` already runs position/velocity ping-pong over 16k–262k
+particles with additive HDR points. Swapping curl-noise advection for
+charge-based attraction/repulsion — with the per-particle frequency lookup
+that the audio texture above makes possible — is a new mode on an existing
+rig, not a new engine.
+
+### Also noted
+
+- **Reaction-diffusion (Gray-Scott)** is the strongest candidate for a mode
+  that is *structurally* unlike the fbm-noise fields FLUX already has: it's
+  a genuine simulation on a ping-pong buffer, all organic growth and
+  coral/fingerprint structure. References: [Karl Sims' tutorial](https://www.karlsims.com/rd.html),
+  [Munafo's parameter atlas](http://www.mrob.com/pub/comp/xmorphia/index.html),
+  [pmneila's WebGL implementation](https://pmneila.github.io/jsexp/grayscott/).
+  Feed rate / kill rate are two knobs that map naturally onto audio bands.
+
+---
+
 ## Stack posture (settled 2026-06-11)
 
 Recurring conclusion across every reference reviewed: **FLUX's stack is
