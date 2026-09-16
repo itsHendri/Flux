@@ -3,6 +3,7 @@ import { EnvelopeFollower } from './EnvelopeFollower.ts';
 import { analyseBands } from './bands.ts';
 import { OnsetDetector } from './OnsetDetector.ts';
 import type { AudioSource } from './sources.ts';
+import { packAudioTexture, silentAudioTexture } from './audioTexture.ts';
 
 export interface AudioEngineOptions {
   fftSize?: number;
@@ -31,6 +32,9 @@ export class AudioEngine {
 
   private source: AudioSource | null = null;
   private frame: AudioFrame = SILENT_FRAME;
+  // The 512x2 spectrum+waveform texture data, refilled in place each tick —
+  // one allocation for the life of the app rather than one per frame.
+  private readonly audioTex = silentAudioTexture();
 
   constructor(opts: AudioEngineOptions = {}) {
     this.ctx = new AudioContext();
@@ -78,6 +82,14 @@ export class AudioEngine {
     this.onsetDetector.reset();
   }
 
+  /**
+   * The raw spectrum + waveform for shaders (512x2, Shadertoy's layout).
+   * Refilled by `tick`; silent until a source is armed.
+   */
+  get textureData(): Uint8Array {
+    return this.audioTex;
+  }
+
   /** Read the analyser, advance envelopes by `dt` seconds, snapshot the frame. */
   tick(dt: number): AudioFrame {
     if (!this.source) {
@@ -86,6 +98,7 @@ export class AudioEngine {
     }
     this.analyser.getByteFrequencyData(this.freqData);
     this.analyser.getByteTimeDomainData(this.timeData);
+    packAudioTexture(this.freqData, this.timeData, this.audioTex);
 
     const raw = analyseBands(
       this.freqData,

@@ -28,6 +28,14 @@ export interface FrameState {
   resolution: [number, number];
   audio: AudioFrame;
   /**
+   * Raw audio for shaders: a 512x2 byte buffer, row 0 the FFT spectrum and
+   * row 1 the waveform (see `audio/audioTexture.ts`). Unlike the rest of
+   * FrameState this is a live buffer the engine refills in place — copying
+   * 1 kB every frame to keep the "immutable snapshot" rule honest would buy
+   * nothing, since the Renderer only ever uploads it.
+   */
+  audioTexture: Uint8Array;
+  /**
    * glslName -> value, derived from the control schema. A number for
    * slider/toggle/select uniforms, an `[r,g,b]` triple for `color` uniforms.
    */

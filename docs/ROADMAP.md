@@ -240,7 +240,7 @@ clones, and act on his read of the current modes — `pulse` isn't a favourite,
 (butterchurn, MIT) and, more usefully, three techniques FLUX can build
 natively. Ordered by leverage: the first task unblocks most of the rest.
 
-- [ ] **Audio texture: the real spectrum and the waveform.** Upload the
+- [x] **Audio texture: the real spectrum and the waveform.** Upload the
   analyser's FFT and time-domain buffers as a 512×2 R8 texture each frame,
   **using Shadertoy's layout** (row 0 = spectrum, row 1 = waveform, bytes
   normalised 0..1) so reference shaders port with a uniform rename. New

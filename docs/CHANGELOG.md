@@ -5,6 +5,56 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — The audio texture: shaders can finally see the sound
+
+Until now a FLUX shader got six numbers — bass, mid, high, level, beat,
+onset — and nothing else. That's why `bars` fakes its spectrum out of three
+band values, and why no mode can draw a waveform, the one thing every
+visualizer in the iTunes/MilkDrop lineage does. Shaders now get the analyser's
+actual output as a texture.
+
+- **`uAudio`** — 512×2, R8, uploaded once per frame (`texSubImage2D` into a
+  texture allocated at boot). **Shadertoy's layout**: row 0 the FFT spectrum,
+  row 1 the time-domain waveform. Copying the convention rather than inventing
+  one means an audio-reactive Shadertoy shader ports to a FLUX mode with a
+  uniform rename — the largest library of reference material in this space
+  becomes usable. LINEAR filtering so a shader can sample between bins and get
+  a curve rather than a staircase; CLAMP so the top of the spectrum can't wrap
+  onto the bottom.
+- **Bound in `uploadFrameUniforms`** (unit 5), the one place every program
+  passes through, so fragment modes, post-passes, custom 3D modes and the
+  present pass all get it without a second thought.
+- **`common.glsl`** gains `spectrum(x)`, `wave(x)` (as -1..1, the useful
+  range) and `spectrumLog(x)`, which spreads the spectrum over a log
+  frequency axis so an octave takes the same width wherever it sits — how
+  music is actually spaced, and how a spectrum wants to be drawn.
+- **The bins are folded, not cropped.** 1024 analyser bins average down to
+  512 texels, so the top octave survives; taking the first 512 bins of a
+  2048-point FFT would have thrown it away.
+- **The waveform window is triggered**, like an oscilloscope: it starts at a
+  rising crossing of the 128 midpoint. Without it the trace slides sideways
+  every frame, because the analyser's window has no relationship to the
+  signal's phase.
+
+The six scalars stay exactly as they were — they're the *musical* reading,
+smoothed and opinionated. This is the raw material next to them.
+
+Verified: build clean, 75/75 tests (the packing, the fold, and the trigger's
+phase alignment are all pure and unit-tested). In the Preview browser, a
+temporary probe shader — installed in `plasma`, reverted before commit —
+drew both rows while a two-tone WAV played, and the result matches the
+arithmetic exactly: a tone at `sampleRate/8` peaked precisely on the 0.25
+ruler (bin 256 → texel 128 of 512) and a 440 Hz tone at x≈0.02, while the
+waveform row showed 5 cycles of 440 Hz across its 11.6 ms window with the
+high tone riding on it. All 8 modes and 7 passes still compile and render;
+overlay empty, no console errors.
+
+Sources: [Shadertoy "Input - Sound"](https://www.shadertoy.com/view/Xds3Rr)
+for the layout; [soulthreads' notes](https://gist.github.com/soulthreads/2efe50da4be1fb5f7ab60ff14ca434b8)
+for the byte normalisation (see REFERENCES.md).
+
+---
+
 ## NEEDS DECISION — two modes' futures (research round, 2026-09-16)
 
 > **RESOLVED (2026-09-16): both as proposed.** `pulse` is replaced by the

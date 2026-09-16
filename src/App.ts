@@ -60,6 +60,7 @@ export class App {
       dt,
       resolution: this.renderer.resolution,
       audio: audioFrame,
+      audioTexture: this.audio.textureData,
       controls: this.controls.getValues(),
       mode: this.mode,
     };

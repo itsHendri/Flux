@@ -65,3 +65,27 @@ vec3 themed(vec3 col, float t) {
   vec3 lit = tint * (luma(col) / max(luma(tint), 0.001));
   return mix(col, lit, uThemeMix);
 }
+
+// --- Audio texture ---------------------------------------------------------
+// uAudio is 512x2 in Shadertoy's layout: row 0 the FFT spectrum, row 1 the
+// time-domain waveform. Sampling the row centres (0.25 / 0.75) keeps LINEAR
+// filtering from bleeding one row into the other.
+
+// Spectrum energy at x in 0..1, low frequencies at 0. Already 0..1.
+float spectrum(float x) {
+  return texture(uAudio, vec2(clamp(x, 0.0, 1.0), 0.25)).r;
+}
+
+// The waveform at x in 0..1, as -1..1 (the texture stores it around 0.5).
+// The window starts at a rising zero crossing, so the trace holds still
+// instead of sliding sideways every frame.
+float wave(float x) {
+  return texture(uAudio, vec2(clamp(x, 0.0, 1.0), 0.75)).r * 2.0 - 1.0;
+}
+
+// Spectrum on a log frequency axis — an octave takes the same width wherever
+// it sits, which is how music is actually spaced and how a spectrum wants to
+// be drawn. x in 0..1 spans about nine octaves of the analysed range.
+float spectrumLog(float x) {
+  return spectrum(pow(2.0, clamp(x, 0.0, 1.0) * 9.0 - 9.0));
+}
