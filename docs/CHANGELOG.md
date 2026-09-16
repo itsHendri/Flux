@@ -5,6 +5,23 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — Theme and Tonemap leave the panel
+
+Theme duplicated the bar's swatches (and keys `1`–`5`), so the panel copy is
+gone. Tonemap goes too: it only does anything once effects push brightness
+past 1.0 — squeezing overbright values back instead of clipping them to white
+— so with nothing heavy on, switching it changed nothing visible. Both stay in
+the control store as widgetless controls: the bar, hotkeys and presets still
+drive Theme, and the looks still set Tonemap, which is where it earns its keep
+(`cathedral`, `coral` and `scope` rely on it to stop bloom whiting out). Tint
+stays on the panel; the bar doesn't have it.
+
+Verified: the panel opens on Gain and Tint; a bar swatch, a number key and a
+look all still change the theme; a saved preset still carries theme and
+tonemap. Overlay empty.
+
+---
+
 ## Phase 6 — echo and shock removed
 
 User's verdict after trying them live: tunnel is cool, echo and shock aren't.

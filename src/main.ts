@@ -104,12 +104,18 @@ for (const pass of PASSES) renderer.registerPass(pass);
 const audio = new AudioEngine({ fftSize: 2048 });
 
 // --- UI -------------------------------------------------------------------
-// The pass toggles are widgetless here — the Effects button row below is
-// their UI, writing through setValue into the same store.
-const controlPanel = new ControlPanel(panel, CONTROLS, [
-  ...passToggles,
-  ...THEME_COLOR_CONTROLS,
-]);
+// Widgetless controls live in the same store with no panel widget: the pass
+// toggles (the Effects row is their UI), the theme colours (written by the
+// Theme listener), Theme itself (the bar's swatches and keys 1-5 own it), and
+// Tonemap. Tonemap only matters once effects push brightness past 1.0, so as a
+// panel control it mostly looked like it did nothing; the looks still set it,
+// which is where it earns its keep (it's what stops bloom clipping to white).
+const PANEL_HIDDEN = new Set(['theme', 'tonemap']);
+const controlPanel = new ControlPanel(
+  panel,
+  CONTROLS.filter((c) => !PANEL_HIDDEN.has(c.id)),
+  [...CONTROLS.filter((c) => PANEL_HIDDEN.has(c.id)), ...passToggles, ...THEME_COLOR_CONTROLS],
+);
 const isPassEnabled = (name: string): boolean =>
   controlPanel.getValue(passToggleUniform(name)) >= 0.5;
 
