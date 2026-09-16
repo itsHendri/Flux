@@ -23,7 +23,10 @@ import drawFrag from '../shaders/modes2d/rd-draw.frag?raw';
  * small steps to move at a watchable rate), then draws the field into the
  * scene FBO for the usual HDR post chain.
  */
-const SIM_HEIGHT = 512;
+/** Detail control default, in simulation rows. */
+const DEFAULT_DETAIL = 720;
+/** The growth rate was tuned at this height; iteration counts scale from it. */
+const REFERENCE_HEIGHT = 512;
 
 export class ReactionMode implements CustomMode {
   readonly name = 'reaction';
@@ -115,15 +118,17 @@ export class ReactionMode implements CustomMode {
   private ensureSim(w: number, h: number, state: FrameState): void {
     const ctx = this.ctx;
     if (!ctx || !this.simFmt || !this.initProg) return;
+    const detail = state.controls['uRdDetail'];
+    const simH = Math.round(typeof detail === 'number' && detail > 0 ? detail : DEFAULT_DETAIL);
     const aspect = w / Math.max(h, 1);
-    const simW = Math.max(256, Math.min(1024, Math.round(SIM_HEIGHT * aspect)));
-    if (this.simW === simW && this.read && this.write) return;
+    const simW = Math.max(256, Math.min(2048, Math.round(simH * aspect)));
+    if (this.simW === simW && this.simH === simH && this.read && this.write) return;
 
     const gl = ctx.gl;
     if (this.read) deleteFbo(gl, this.read);
     if (this.write) deleteFbo(gl, this.write);
-    this.read = createFbo(gl, simW, SIM_HEIGHT, this.simFmt);
-    this.write = createFbo(gl, simW, SIM_HEIGHT, this.simFmt);
+    this.read = createFbo(gl, simW, simH, this.simFmt);
+    this.write = createFbo(gl, simW, simH, this.simFmt);
     // Data textures must be NEAREST — a LINEAR-filtered float texture is
     // sampling-incomplete without OES_texture_float_linear, and every fetch
     // silently returns (0,0,0,1). Learned on trails3d; the same trap here.
@@ -136,7 +141,7 @@ export class ReactionMode implements CustomMode {
     }
     gl.bindTexture(gl.TEXTURE_2D, null);
     this.simW = simW;
-    this.simH = SIM_HEIGHT;
+    this.simH = simH;
     this.seed(state);
   }
 
@@ -176,8 +181,12 @@ export class ReactionMode implements CustomMode {
     // One Euler step barely moves; the pattern needs many per frame to grow at
     // a watchable rate. This is the mode's perf story, like Particles is
     // trails3d's.
+    // More detail means each cell is smaller on screen, so the same number of
+    // steps grows the pattern visibly slower. Scaling iterations by the height
+    // ratio keeps Growth meaning the same thing at every Detail setting.
     const iterControl = state.controls['uRdSpeed'];
-    const iterations = Math.max(1, Math.round(typeof iterControl === 'number' ? iterControl : 10));
+    const growth = typeof iterControl === 'number' ? iterControl : 12;
+    const iterations = Math.max(1, Math.round(growth * (this.simH / REFERENCE_HEIGHT)));
 
     // One spray per kick: latch on the way up, rearm when the pulse decays.
     const beat = state.audio.beat;

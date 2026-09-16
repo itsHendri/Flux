@@ -17,5 +17,13 @@ void main() {
     c.x *= uSimSize.x / uSimSize.y;
     b = max(b, smoothstep(0.045, 0.0, length(p - c)));
   }
+  // Plus a sparse speckle across the whole field, one hash per cell. Slow
+  // regimes (Maze especially) spread from a front, so a dozen blobs leave
+  // most of the screen empty for many seconds; with seeds everywhere the
+  // pattern resolves across the whole frame at once — the way Munafo's
+  // reference images are started. Per-cell means the speckle gets finer with
+  // Detail, matching the lines it grows into.
+  float speckle = step(0.985, hash(gl_FragCoord.xy * 0.731 + uSeed));
+  b = max(b, speckle);
   outState = vec4(1.0, b, 0.0, 1.0);
 }

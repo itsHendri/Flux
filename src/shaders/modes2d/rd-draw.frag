@@ -25,10 +25,21 @@ void main() {
   float edge = clamp(length(vec2(gx, gy)) * 26.0, 0.0, 1.0);
 
   float v = smoothstep(0.05, 0.32, b);
-  vec3 col = themeRamp(0.1 + v * 0.55 + uTime * 0.01) * (0.18 + v * 0.9);
+
+  // Colour needs a second axis, or every cell of the pattern lands on the
+  // same stop — concentration alone mostly reads "in" or "out". A slow,
+  // large-scale noise field drifts regions of the frame along the theme ramp,
+  // so the same structure is one colour here and another over there, and the
+  // chemical A (depleted inside the growth) adds banding within each line.
+  float a = texture(uState, vUv).r;
+  vec2 aspectUv = vUv * vec2(uSimSize.x / uSimSize.y, 1.0);
+  float region = noise(aspectUv * 1.6 + vec2(uTime * 0.04, -uTime * 0.03));
+  float t = region * 0.75 + v * 0.3 + (1.0 - a) * 0.35 + uBass * 0.08;
+
+  vec3 col = themeRamp(t) * (0.16 + v * 0.95);
   col *= 0.45 + lit * 0.85;
-  col += themeRamp(0.62) * edge * (0.35 + uMid * 0.8);   // lit rims
-  col += vec3(0.02, 0.025, 0.035) * (1.0 - v);            // substrate
+  col += themeRamp(t + 0.33) * edge * (0.35 + uMid * 0.8); // rims take the next stop
+  col += vec3(0.02, 0.025, 0.035) * (1.0 - v);              // substrate
 
   col *= mix(0.7, 1.9, uGain) * (0.75 + uLevel * 0.6 + uBeat * 0.25);
   outColor = vec4(col, 1.0);

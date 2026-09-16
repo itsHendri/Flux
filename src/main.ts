@@ -24,6 +24,7 @@ import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
+import { patternValues } from './modes2d/patterns.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
 import { Transport } from './ui/Transport.ts';
@@ -143,6 +144,11 @@ if (MODES.length > 0) selectMode(MODES[0].name);
 // on the control (rather than on the widget) means hotkeys, MIDI and preset
 // recall all land here too — one path, whatever moved the value.
 const hotkeys = new Hotkeys();
+
+// Reaction patterns write Feed/Kill the same way themes write colours.
+controlPanel.onChange('uRdPattern', (v) => {
+  if (typeof v === 'number') controlPanel.applyValues(patternValues(v));
+});
 
 controlPanel.onChange('uTheme', (v) => {
   if (typeof v !== 'number') return;

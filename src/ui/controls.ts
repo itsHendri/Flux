@@ -1,5 +1,6 @@
 import type { ControlDef } from '../core/state.ts';
 import { themeOptions } from './themes.ts';
+import { patternOptions, RD_PATTERNS } from '../modes2d/patterns.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['raymarch', 'flow', 'cells'];
@@ -150,6 +151,34 @@ export const CONTROLS: ControlDef[] = [
     modes: ['waveform'],
   },
   {
+    // Named regimes. Declared before Feed/Kill on purpose: picking one writes
+    // them through an onChange listener, and recalling a preset applies values
+    // in schema order — so the pattern lands first and a preset's hand-tuned
+    // Feed/Kill override it, rather than the other way round.
+    id: 'rdPattern',
+    name: 'Pattern',
+    glslName: 'uRdPattern',
+    type: 'select',
+    options: patternOptions(),
+    default: 0,
+    modes: ['reaction'],
+  },
+  {
+    // Simulation height in cells. Gray-Scott features are a fixed number of
+    // cells wide, so this is literally line thickness: more cells, finer lines.
+    id: 'rdDetail',
+    name: 'Detail',
+    glslName: 'uRdDetail',
+    type: 'select',
+    options: [
+      { label: 'Coarse', value: 384 },
+      { label: 'Fine', value: 720 },
+      { label: 'Ultra', value: 1080 },
+    ],
+    default: 720,
+    modes: ['reaction'],
+  },
+  {
     // Gray-Scott's two parameters. The living region is narrow — outside it
     // the pattern either dies out or floods — so the ranges here are the
     // usable window, not the mathematical one (Pearson/Munafo, REFERENCES.md).
@@ -157,9 +186,9 @@ export const CONTROLS: ControlDef[] = [
     name: 'Feed',
     glslName: 'uRdFeed',
     min: 0.02,
-    max: 0.06,
+    max: 0.07,
     step: 0.0005,
-    default: 0.037,
+    default: RD_PATTERNS[0].feed,
     modes: ['reaction'],
   },
   {
@@ -167,9 +196,9 @@ export const CONTROLS: ControlDef[] = [
     name: 'Kill',
     glslName: 'uRdKill',
     min: 0.05,
-    max: 0.068,
+    max: 0.07,
     step: 0.0005,
-    default: 0.0625,
+    default: RD_PATTERNS[0].kill,
     modes: ['reaction'],
   },
   {
