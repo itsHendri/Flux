@@ -1,5 +1,5 @@
 import { describe, it, expect } from 'vitest';
-import { perspective, lookAt } from '../src/render/math3d.ts';
+import { perspective, lookAt, project } from '../src/render/math3d.ts';
 
 describe('perspective', () => {
   it('builds the standard RH projection', () => {
@@ -31,5 +31,28 @@ describe('lookAt', () => {
     expect(tx).toBeCloseTo(0);
     expect(ty).toBeCloseTo(0);
     expect(tz).toBeCloseTo(-Math.hypot(3, 2, 1)); // straight ahead at eye distance
+  });
+});
+
+
+describe('project', () => {
+  const proj = perspective(0.9, 1.5, 0.1, 30);
+  const view = lookAt([0, 0, 3], [0, 0, 0]);
+
+  it('puts the look-at target at the centre of the screen', () => {
+    const sp = project(proj, view, [0, 0, 0])!;
+    expect(sp.u).toBeCloseTo(0.5, 5);
+    expect(sp.v).toBeCloseTo(0.5, 5);
+    expect(sp.w).toBeCloseTo(3, 5); // w is view depth
+  });
+
+  it('maps right and up in the world to right and up on screen', () => {
+    const sp = project(proj, view, [0.5, 0.5, 0])!;
+    expect(sp.u).toBeGreaterThan(0.5);
+    expect(sp.v).toBeGreaterThan(0.5);
+  });
+
+  it('refuses points behind the camera instead of mirroring them on screen', () => {
+    expect(project(proj, view, [0, 0, 5])).toBeNull();
   });
 });

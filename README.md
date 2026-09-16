@@ -34,8 +34,8 @@ npm test         # run the unit tests (vitest)
   time-domain trace: line, mirrored or radial), reaction (a live Gray-Scott
   reaction-diffusion simulation), raymarched SDF,
   domain-warp flow, Voronoi cells, an uploaded-logo mode, magneto (charged
-  particles in the spirit of the iTunes 8 visualizer, each listening to its
-  own frequency), and trails3d (GPGPU curl-noise particles).
+  particles in the spirit of the iTunes visualizer, each listening to its own
+  frequency, with its nebula clouds and rays), and trails3d (GPGPU curl-noise particles).
 - **7 toggleable post-effects** — MilkDrop-style warp feedback, trails, a
   polar tunnel, dither (Bayer/IGN/blue-noise), mip-chain bloom, kaleidoscope
   and scanline/VHS.

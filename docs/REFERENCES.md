@@ -18,8 +18,8 @@ the visual". The question was what visualizers in this lineage did to the
   the screen, toggled with N and described as iridescent
   ([TidBITS](https://tidbits.com/2015/06/12/funbits-be-a-vj-with-the-itunes-visualizer/),
   [Macworld](https://www.macworld.com/article/192667/itunes8visualizer.html)).
-  The iridescence is what `raymarch` now borrows. Rays and nebula are
-  candidates for `magneto` if it ever needs more.
+  The iridescence is what `raymarch` now borrows, and `magneto` now draws all
+  three (cores, rays, nebula) as a background pass.
 - **MilkDrop's video echo** — a second graphics layer controlled by
   `echo_zoom` (size), `echo_alpha` (0 off / 0.5 half / 1 opaque) and
   `echo_orient` (four orientations)

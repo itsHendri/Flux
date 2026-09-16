@@ -8,7 +8,9 @@ import velFrag from '../shaders/modes3d/magneto-vel.frag?raw';
 import posFrag from '../shaders/modes3d/magneto-pos.frag?raw';
 import pointsVert from '../shaders/modes3d/magneto.vert?raw';
 import pointsFrag from '../shaders/modes3d/magneto-points.frag?raw';
-import { perspective, lookAt, type Vec3 } from '../render/math3d.ts';
+import nebulaFrag from '../shaders/modes3d/magneto-nebula.frag?raw';
+import fullscreenVert from '../shaders/fullscreen.vert?raw';
+import { perspective, lookAt, project, type Vec3 } from '../render/math3d.ts';
 
 /**
  * MAGNETO — the iTunes 8 visualizer's physics, rebuilt on FLUX's own rig.
@@ -35,6 +37,8 @@ import { perspective, lookAt, type Vec3 } from '../render/math3d.ts';
  * nothing to sort.
  */
 const POLE_COUNT = 4;
+/** World radius of a drawn core — it's light, so this sets its apparent size. */
+const CORE_RADIUS = 0.07;
 
 export class MagnetoMode implements CustomMode {
   readonly name = 'magneto';
@@ -44,6 +48,10 @@ export class MagnetoMode implements CustomMode {
   private velProg: CompiledProgram | null = null;
   private posProg: CompiledProgram | null = null;
   private points: CompiledProgram | null = null;
+  private nebula: CompiledProgram | null = null;
+  private uNebCores: WebGLUniformLocation | null = null;
+  private uNebCam: WebGLUniformLocation | null = null;
+  private readonly coreData = new Float32Array(POLE_COUNT * 4);
 
   private uInitSize: WebGLUniformLocation | null = null;
   private uInitIsVel: WebGLUniformLocation | null = null;
@@ -78,8 +86,9 @@ export class MagnetoMode implements CustomMode {
     const velProg = ctx.buildModeProgram(`${this.name}-vel`, simVert, velFrag);
     const posProg = ctx.buildModeProgram(`${this.name}-pos`, simVert, posFrag);
     const points = ctx.buildModeProgram(this.name, pointsVert, pointsFrag);
-    if (!initProg || !velProg || !posProg || !points) {
-      for (const p of [initProg, velProg, posProg, points]) if (p) gl.deleteProgram(p.program);
+    const nebula = ctx.buildModeProgram(`${this.name}-nebula`, fullscreenVert, nebulaFrag);
+    if (!initProg || !velProg || !posProg || !points || !nebula) {
+      for (const p of [initProg, velProg, posProg, points, nebula]) if (p) gl.deleteProgram(p.program);
       return false; // compile errors already on the overlay
     }
     this.disposePrograms();
@@ -88,6 +97,9 @@ export class MagnetoMode implements CustomMode {
     this.velProg = velProg;
     this.posProg = posProg;
     this.points = points;
+    this.nebula = nebula;
+    this.uNebCores = gl.getUniformLocation(nebula.program, 'uCores');
+    this.uNebCam = gl.getUniformLocation(nebula.program, 'uCamAngle');
 
     this.uInitSize = gl.getUniformLocation(initProg.program, 'uStateSize');
     this.uInitIsVel = gl.getUniformLocation(initProg.program, 'uIsVelocity');
@@ -238,20 +250,44 @@ export class MagnetoMode implements CustomMode {
     gl.drawArrays(gl.TRIANGLES, 0, 3);
     [this.posRead, this.posWrite] = [this.posWrite, this.posRead];
 
-    // 3. Points → scene FBO, additive, no depth.
+    const t = state.time;
+    const camAngle = t * 0.09;
+    const eye: Vec3 = [
+      Math.sin(camAngle) * 3.2,
+      0.5 + Math.sin(t * 0.05) * 0.6,
+      Math.cos(camAngle) * 3.2,
+    ];
+    const fovY = 0.9;
+    const proj = perspective(fovY, w / h, 0.1, 30);
+    const view = lookAt(eye, [0, 0, 0]);
+
+    // 3. Background: nebula, rays and cores, in place of a flat clear. The
+    // cores are projected here so the screen-space pass can light the clouds
+    // around them; one behind the camera is flagged off (w = 0) rather than
+    // drawn mirrored.
     ctx.rebindScene();
-    gl.clearColor(0.015, 0.018, 0.03, 1);
-    gl.clear(gl.COLOR_BUFFER_BIT);
+    const f = 1 / Math.tan(fovY / 2);
+    for (let i = 0; i < POLE_COUNT; i++) {
+      const o = i * 4;
+      const sp = project(proj, view, [this.poleData[o], this.poleData[o + 1], this.poleData[o + 2]]);
+      this.coreData[o] = sp ? sp.u : 0;
+      this.coreData[o + 1] = sp ? sp.v : 0;
+      // Apparent radius in screen heights: world radius * focal / depth, halved
+      // because NDC spans two units per screen height.
+      this.coreData[o + 2] = sp ? ((CORE_RADIUS * f) / sp.w) * 0.5 : 0;
+      this.coreData[o + 3] = sp ? this.poleCharge[i] : 0;
+    }
+    gl.useProgram(this.nebula!.program);
+    ctx.uploadFrameUniforms(this.nebula!, state);
+    gl.uniform4fv(this.uNebCores, this.coreData);
+    gl.uniform1f(this.uNebCam, camAngle);
+    gl.drawArrays(gl.TRIANGLES, 0, 3);
+
+    // 4. Points → scene FBO, additive over the background, no depth.
     gl.useProgram(this.points.program);
     ctx.uploadFrameUniforms(this.points, state);
-    const t = state.time;
-    const eye: Vec3 = [
-      Math.sin(t * 0.09) * 3.2,
-      0.5 + Math.sin(t * 0.05) * 0.6,
-      Math.cos(t * 0.09) * 3.2,
-    ];
-    gl.uniformMatrix4fv(this.uPtsProj, false, perspective(0.9, w / h, 0.1, 30));
-    gl.uniformMatrix4fv(this.uPtsView, false, lookAt(eye, [0, 0, 0]));
+    gl.uniformMatrix4fv(this.uPtsProj, false, proj);
+    gl.uniformMatrix4fv(this.uPtsView, false, view);
     gl.uniform1i(this.uPtsTexSize, this.texSize);
     gl.activeTexture(gl.TEXTURE0);
     gl.bindTexture(gl.TEXTURE_2D, this.posRead.texture);
@@ -268,10 +304,10 @@ export class MagnetoMode implements CustomMode {
   private disposePrograms(): void {
     if (!this.ctx) return;
     const gl = this.ctx.gl;
-    for (const p of [this.initProg, this.velProg, this.posProg, this.points]) {
+    for (const p of [this.initProg, this.velProg, this.posProg, this.points, this.nebula]) {
       if (p) gl.deleteProgram(p.program);
     }
-    this.initProg = this.velProg = this.posProg = this.points = null;
+    this.initProg = this.velProg = this.posProg = this.points = this.nebula = null;
   }
 
   dispose(): void {

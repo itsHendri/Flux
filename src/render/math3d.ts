@@ -49,3 +49,29 @@ export function lookAt(eye: Vec3, target: Vec3, up: Vec3 = [0, 1, 0]): Float32Ar
     -dot(x, eye), -dot(y, eye), -dot(z, eye), 1,
   ]);
 }
+
+/** A world point as it lands on screen: uv in 0..1 (origin bottom-left), and w (view depth). */
+export interface ScreenPoint {
+  u: number;
+  v: number;
+  w: number;
+}
+
+/**
+ * Project a world point through `proj * view` to screen uv. Returns null for a
+ * point behind the camera, where the divide by w would flip it back onto the
+ * screen mirrored — a background pass drawing light at that spot would show a
+ * core that isn't there.
+ */
+export function project(proj: Float32Array, view: Float32Array, p: Vec3): ScreenPoint | null {
+  const mul = (m: Float32Array, x: number, y: number, z: number, wIn: number) => [
+    m[0] * x + m[4] * y + m[8] * z + m[12] * wIn,
+    m[1] * x + m[5] * y + m[9] * z + m[13] * wIn,
+    m[2] * x + m[6] * y + m[10] * z + m[14] * wIn,
+    m[3] * x + m[7] * y + m[11] * z + m[15] * wIn,
+  ];
+  const [vx, vy, vz, vw] = mul(view, p[0], p[1], p[2], 1);
+  const [cx, cy, , cw] = mul(proj, vx, vy, vz, vw);
+  if (cw <= 1e-4) return null;
+  return { u: (cx / cw) * 0.5 + 0.5, v: (cy / cw) * 0.5 + 0.5, w: cw };
+}

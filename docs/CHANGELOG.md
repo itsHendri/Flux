@@ -5,6 +5,42 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — magneto gets its nebula, rays and cores
+
+iTunes 10's Magnetosphere had three named parts: "the cores, which are the
+moving spheres; the rays, which flow out of the cores; and the nebula clouds,
+which fill the whole screen" (TidBITS, REFERENCES.md). FLUX's magneto had the
+physics but drew it over a flat dark clear, with its poles as invisible force
+points. A background pass now replaces that clear and draws all three; the
+additive swarm sits in front.
+
+- **Nebula** — domain-warped fbm clouds whose warp field doubles as an
+  iridescence phase, so colour slides through the cloud. Dim on their own,
+  glowing where the cores light them, and scrolling with the camera's orbit so
+  they read as a distant backdrop.
+- **Rays** — spokes of light around each core, from sharpened angular noise
+  scrolling outward along the radius. The noise runs on the unit direction
+  vector, not on `atan()`: atan jumps from +π to −π and would leave a hard seam
+  on one side of every core. Highs brighten them, kicks lengthen them.
+- **Cores** — the rays needed a source, so each pole now shows as a soft body
+  with a hot centre, tinted by its charge. Poles are projected on the CPU
+  (`math3d.project`, tested) and a pole behind the camera is switched off rather
+  than drawn mirrored.
+- Two new controls, **Nebula** and **Rays**.
+
+The first pass was far too hot — with bloom and trails on it went to a white
+sheet — so rays and cores sit well under 1.0: this is a background those two
+effects will both amplify, and the swarm is the subject. Nebula then had the
+opposite problem and vanished behind the swarm below ~0.8, so it defaults to
+0.85.
+
+Verified: build clean, 96/96 tests. In the Preview browser with a track
+playing, the cores and their rays sit behind the swarm; at Nebula 1 the clouds
+read as violet and teal haze with the swarm streaming in arcs between the
+cores; with bloom + trails at defaults nothing whites out. Overlay empty.
+
+---
+
 ## Phase 6 — Theme and Tonemap leave the panel
 
 Theme duplicated the bar's swatches (and keys `1`–`5`), so the panel copy is

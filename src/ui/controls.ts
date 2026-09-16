@@ -311,6 +311,28 @@ export const CONTROLS: ControlDef[] = [
     modes: ['magneto'],
   },
   {
+    // The iTunes 10 Magnetosphere's two backdrop elements.
+    id: 'magNebula',
+    name: 'Nebula',
+    glslName: 'uMagNebula',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    // Clouds are a backdrop; below ~0.8 they vanish behind the swarm entirely.
+    default: 0.85,
+    modes: ['magneto'],
+  },
+  {
+    id: 'magRays',
+    name: 'Rays',
+    glslName: 'uMagRays',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+    modes: ['magneto'],
+  },
+  {
     id: 'flowSpeed',
     name: 'Flow',
     glslName: 'uFlowSpeed',
