@@ -1,9 +1,15 @@
 import './styles.css';
 import { App } from './App.ts';
-import { installGlobalErrorHooks, reportError, clearErrors } from './core/errors.ts';
+import {
+  installGlobalErrorHooks,
+  reportError,
+  reportWarning,
+  clearErrors,
+} from './core/errors.ts';
 import { AudioEngine } from './audio/AudioEngine.ts';
 import { Renderer } from './render/Renderer.ts';
-import { createMicSource } from './audio/sources.ts';
+import { createFileSource, createMicSource } from './audio/sources.ts';
+import { pickAudioFile } from './audio/files.ts';
 import {
   listAudioInputs,
   onDeviceChange,
@@ -17,6 +23,7 @@ import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
+import { Transport } from './ui/Transport.ts';
 import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
@@ -371,9 +378,18 @@ presetPanel.refresh(presetStore.list());
 // still until a source is feeding the analyser.
 let audioEnabled = false;
 
-/** Build and arm the currently selected device. Failures stay visible. */
+// The loaded file is kept so the dropdown can switch back to it after a
+// detour through the mic — the element itself is disposed on every swap
+// (a MediaElementSourceNode is single-use), so the source is rebuilt.
+let loadedFile: File | null = null;
+
+/** Build and arm whatever the dropdown currently points at. Failures stay visible. */
 async function activateSelected(): Promise<void> {
   const sel = picker.selection;
+  if (sel.kind === 'file') {
+    if (loadedFile) await playFile(loadedFile);
+    return;
+  }
   if (sel.kind !== 'device') {
     picker.setStatus('no audio inputs detected');
     return;
@@ -381,10 +397,35 @@ async function activateSelected(): Promise<void> {
   picker.setStatus(`${sel.label}: opening…`);
   try {
     const source = await createMicSource(audio.context, sel.deviceId);
+    transport.detach(); // the outgoing file element is about to be disposed
     audio.setSource(source);
     picker.setStatus(`reacting to ${source.label}`);
   } catch (e) {
     reportError(`source:device`, e);
+    picker.setStatus(e instanceof Error ? e.message : String(e));
+  }
+}
+
+/**
+ * Take a dropped/chosen audio file and make it the live source: decode it,
+ * hand the element to the transport, start playing. No microphone permission
+ * is involved — the click or drop is the gesture that unlocks the context.
+ */
+async function playFile(file: File): Promise<void> {
+  picker.setStatus(`${file.name}: loading…`);
+  try {
+    await audio.resume();
+    const source = await createFileSource(audio.context, file);
+    transport.detach();
+    audio.setSource(source); // disposes the previous source
+    loadedFile = file;
+    picker.setFile(file.name);
+    picker.selectFile();
+    transport.attach(source.media, file.name);
+    await source.media.play();
+    picker.setStatus(`playing ${file.name}`);
+  } catch (e) {
+    reportError('source:file', e);
     picker.setStatus(e instanceof Error ? e.message : String(e));
   }
 }
@@ -418,6 +459,67 @@ const picker = new SourcePicker(panel, {
   onSelectSource: () => {
     void activateSelected();
   },
+});
+
+// --- File playback ----------------------------------------------------------
+// A second way in: play a track instead of listening to the room. Load it from
+// the panel or drop it anywhere on the stage; Space plays/pauses.
+const transport = new Transport(panel, {
+  onFile: (file) => {
+    void playFile(file);
+  },
+});
+
+// Drop anywhere — the whole window is the target, with a hint over the stage.
+{
+  const hint = document.createElement('div');
+  hint.id = 'drop-hint';
+  hint.textContent = 'drop an audio file to play it';
+  document.body.appendChild(hint);
+
+  // dragenter/dragleave fire per element crossed, so count them rather than
+  // trusting a single leave to mean "the pointer left the window".
+  let depth = 0;
+  const hide = (): void => {
+    depth = 0;
+    hint.classList.remove('visible');
+  };
+
+  window.addEventListener('dragenter', (e) => {
+    e.preventDefault();
+    depth++;
+    hint.classList.add('visible');
+  });
+  window.addEventListener('dragover', (e) => e.preventDefault());
+  window.addEventListener('dragleave', (e) => {
+    e.preventDefault();
+    if (--depth <= 0) hide();
+  });
+  window.addEventListener('drop', (e) => {
+    e.preventDefault();
+    hide();
+    const files = Array.from(e.dataTransfer?.files ?? []);
+    if (files.length === 0) return;
+    const audioFile = pickAudioFile(files);
+    if (!audioFile) {
+      reportWarning('source:file', `"${files[0].name}" is not an audio file.`);
+      return;
+    }
+    void playFile(audioFile);
+  });
+}
+
+// Space = play/pause, unless a widget owns the keystroke (a focused button
+// would fire its own click; typing a preset name needs its spaces).
+window.addEventListener('keydown', (e) => {
+  if (e.code !== 'Space' || e.repeat) return;
+  const t = e.target as HTMLElement | null;
+  const tag = t?.tagName;
+  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
+  if (t?.isContentEditable) return;
+  if (!transport.hasMedia) return;
+  e.preventDefault();
+  transport.toggle();
 });
 
 // Keep the device list fresh as hardware comes and goes (controller plugged

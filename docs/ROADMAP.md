@@ -172,7 +172,7 @@ same stack as FLUX; what carries over is the UI language, not tech). Liked
 elements: the floating centered control pill, upload + mic, and the numbered
 theme palettes. Adapted for FLUX, in build order:
 
-- [ ] **Audio file playback source.** Reintroduce a file source next to the
+- [x] **Audio file playback source.** Reintroduce a file source next to the
   mic through the existing `AudioSource` seam (`src/audio/sources.ts`):
   upload button + drop-anywhere on the stage, decoded via an
   `HTMLAudioElement`/`MediaElementAudioSourceNode` with play/pause (Space)

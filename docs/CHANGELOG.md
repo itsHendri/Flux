@@ -5,6 +5,52 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 3 — Audio file playback source
+
+FLUX can now be driven by a track, not just the room. A second `AudioSource`
+sits beside the mic and the dropdown stays the single answer to "what is
+driving the visuals?".
+
+- **`createFileSource`** (`src/audio/sources.ts`) — an `<audio>` element
+  through a `MediaElementAudioSourceNode`, chosen over `decodeAudioData` so
+  seeking, duration and play/pause are the element's job and long files
+  stream instead of sitting decoded in memory. It's the first `monitor: true`
+  source: once an element is captured, the graph is its only route to the
+  speakers. Load failures name the file and the reason (`MediaError` codes);
+  a failure mid-playback warns rather than freezing the visuals silently.
+- **Transport** (`src/ui/Transport.ts`) — a File section with load,
+  play/pause, a seek scrubber and a `m:ss / m:ss` readout, hidden until
+  something is loaded. It repaints off the element's own events
+  (`timeupdate` ≈ 4 Hz), never from the render loop, so it can't cost frames.
+- **Drop anywhere** — the whole window is the target, with a dashed overlay
+  that says so; `dragenter`/`dragleave` are counted rather than trusted.
+  **Space** plays/pauses, standing down for focused inputs, selects and
+  buttons (a focused button fires its own click; preset names need spaces).
+- **Picker** (`src/ui/SourcePicker.ts`) — the loaded file joins the dropdown
+  in its own optgroup above the live inputs, so swapping file ⇄ mic is the
+  same gesture as swapping mic ⇄ mic. The `File` is kept, because a
+  MediaElementSourceNode is single-use: reselecting rebuilds the source.
+- **`src/audio/files.ts`** — the two pure decisions, unit-tested: which file
+  to take from a drop (MIME decides when there is one; extensions only get a
+  say when the browser gave us nothing, and `.mp4`/`.webm` are deliberately
+  not on that list) and how to print a time (`0:00` for an unknown duration,
+  never `NaN:aN`).
+
+No microphone permission is involved — the click or the drop is the gesture
+that unlocks the AudioContext, so a track can be playing seconds after load.
+
+Verified: build clean, 51/51 tests. In the Preview browser, a generated WAV
+dropped on the stage loaded, played, and drove the analyser — a 55 Hz kick
+read bass 41–70% / level 54–99%, and after swapping to a 440 Hz second file
+the same meters read bass 2.4% / mid 10.3%, which is the new file being
+analysed, not a stale one. Scrubbing through the widget moved playback (the
+readout followed), Space toggled play/pause while a focused text field kept
+its spaces, a `.txt` drop was refused with a visible warning, the swap left
+exactly one transport and one source, and bars visibly reacted in the
+screenshot. Error overlay empty on a fresh load, no console errors.
+
+---
+
 ## PHASE 4 COMPLETE — review
 
 True 3D landed in three verified commits, dependency-free as decided:

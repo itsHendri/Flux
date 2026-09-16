@@ -80,3 +80,87 @@ export async function createMicSource(
     },
   };
 }
+
+/** A file source also hands back the element, so a transport can drive it. */
+export interface FileAudioSource extends AudioSource {
+  /** The element doing the playing — play/pause/seek go through this. */
+  readonly media: HTMLAudioElement;
+}
+
+/** Why an `<audio>` element gave up on a file. */
+function mediaErrorHint(err: MediaError | null): string {
+  switch (err?.code) {
+    case MediaError.MEDIA_ERR_DECODE:
+      return 'the file is corrupt or uses an unsupported encoding.';
+    case MediaError.MEDIA_ERR_SRC_NOT_SUPPORTED:
+      return 'this browser cannot play that audio format.';
+    case MediaError.MEDIA_ERR_ABORTED:
+      return 'loading was aborted.';
+    case MediaError.MEDIA_ERR_NETWORK:
+      return 'the file could not be read.';
+    default:
+      return 'the file could not be decoded.';
+  }
+}
+
+/**
+ * Play a local audio file through the analyser.
+ *
+ * An `<audio>` element + `MediaElementAudioSourceNode` (rather than
+ * `decodeAudioData` into a buffer) is what buys transport for free: seeking,
+ * play/pause and duration are the element's job, and huge files stream instead
+ * of being held in memory decoded.
+ *
+ * Two quirks the rest of the app depends on:
+ * - An element can be captured by `createMediaElementSource` exactly **once**,
+ *   and from then on its audio only reaches the speakers through the graph —
+ *   hence `monitor: true`. Each call therefore builds a fresh element, and
+ *   `dispose()` really does throw it away.
+ * - Playback must start from a user gesture; the caller resumes the
+ *   AudioContext and calls `media.play()`.
+ */
+export async function createFileSource(
+  ctx: AudioContext,
+  file: File,
+): Promise<FileAudioSource> {
+  const url = URL.createObjectURL(file);
+  const media = new Audio();
+  media.preload = 'auto';
+  media.src = url;
+
+  try {
+    await new Promise<void>((resolve, reject) => {
+      media.addEventListener('loadedmetadata', () => resolve(), { once: true });
+      media.addEventListener(
+        'error',
+        () => reject(new Error(`"${file.name}" could not be loaded — ${mediaErrorHint(media.error)}`)),
+        { once: true },
+      );
+    });
+  } catch (e) {
+    URL.revokeObjectURL(url);
+    throw e;
+  }
+
+  // A decode failure mid-playback would otherwise just stop the visuals dead.
+  media.addEventListener('error', () => {
+    reportWarning('source:file', `playback of "${file.name}" failed — ${mediaErrorHint(media.error)}`);
+  });
+
+  const node = ctx.createMediaElementSource(media);
+  return {
+    node,
+    media,
+    // Unlike the mic, the file has to be audible: once the element is captured
+    // the graph is its only route to the speakers.
+    monitor: true,
+    label: `file: ${file.name}`,
+    dispose() {
+      media.pause();
+      node.disconnect();
+      media.removeAttribute('src');
+      media.load(); // drop the decoder's hold on the blob before revoking
+      URL.revokeObjectURL(url);
+    },
+  };
+}

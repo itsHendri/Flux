@@ -15,6 +15,9 @@ npm run dev      # serves on http://localhost:5173
 
 Open the page, click **Enable Audio**, grant microphone access, pick an input
 from the dropdown. The visuals react immediately — louder sound, more motion.
+Or drop an audio file anywhere on the stage to play a track instead: the File
+section gets play/pause (**Space**), a scrubber and a time readout, and the
+input dropdown switches back to the mic whenever you want the room again.
 
 ```bash
 npm run build    # type-check (tsc) + production bundle to dist/

@@ -354,3 +354,60 @@ input[type='range'] {
 .err.warn .err-src {
   color: var(--mid);
 }
+
+/* --- File transport ------------------------------------------------------ */
+.transport {
+  margin-top: 10px;
+}
+
+.transport-row {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  margin-bottom: 8px;
+}
+
+.transport-play {
+  width: 38px;
+  padding: 6px 0;
+  text-align: center;
+  font-size: 12px;
+  line-height: 1;
+}
+
+.transport-time {
+  font-size: 10px;
+  color: var(--ink-dim);
+  font-variant-numeric: tabular-nums;
+}
+
+.transport-seek {
+  width: 100%;
+}
+
+.transport-seek:disabled {
+  opacity: 0.4;
+}
+
+/* Drop target is the whole window; this is the only thing that says so. */
+#drop-hint {
+  position: fixed;
+  inset: 0;
+  z-index: 90;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 13px;
+  letter-spacing: 0.2em;
+  text-transform: uppercase;
+  color: var(--accent);
+  background: rgba(10, 11, 13, 0.72);
+  border: 1px dashed var(--accent);
+  opacity: 0;
+  pointer-events: none;
+  transition: opacity 0.15s ease;
+}
+
+#drop-hint.visible {
+  opacity: 1;
+}
