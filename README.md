@@ -36,9 +36,9 @@ npm test         # run the unit tests (vitest)
   domain-warp flow, Voronoi cells, an uploaded-logo mode, magneto (charged
   particles in the spirit of the iTunes 8 visualizer, each listening to its
   own frequency), and trails3d (GPGPU curl-noise particles).
-- **9 toggleable post-effects** — MilkDrop-style warp feedback, trails, a
-  polar tunnel, MilkDrop's video echo, a beat-driven shockwave, dither
-  (Bayer/IGN/blue-noise), mip-chain bloom, kaleidoscope and scanline/VHS.
+- **7 toggleable post-effects** — MilkDrop-style warp feedback, trails, a
+  polar tunnel, dither (Bayer/IGN/blue-noise), mip-chain bloom, kaleidoscope
+  and scanline/VHS.
 - **HDR pipeline** — all off-screen targets are RGBA16F where the hardware
   allows (RGBA8 fallback), so bloom and trails accumulate real energy past
   1.0; a final present pass tonemaps (None / Reinhard / ACES).

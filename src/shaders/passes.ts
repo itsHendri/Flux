@@ -5,9 +5,7 @@ import bloomDown from './passes/bloom-down.frag?raw';
 import bloomUp from './passes/bloom-up.frag?raw';
 import bloomComposite from './passes/bloom-composite.frag?raw';
 import dither from './passes/dither.frag?raw';
-import echo from './passes/echo.frag?raw';
 import tunnel from './passes/tunnel.frag?raw';
-import shock from './passes/shock.frag?raw';
 import kaleido from './passes/kaleido.frag?raw';
 import scanline from './passes/scanline.frag?raw';
 
@@ -23,12 +21,9 @@ export const PASSES: PostPass[] = [
   // coordinate field, trails lays a straight decay over whatever comes out.
   { name: 'warp', fragSource: warp },
   { name: 'trails', fragSource: trails },
-  // Then the passes that rebuild the picture's geometry. Tunnel before echo
-  // and kaleido, so both of those fold the tunnel rather than the other way
-  // round; shock before bloom, so the ring front blooms.
+  // Tunnel rebuilds the picture's geometry; it sits before kaleido so the
+  // kaleidoscope folds the tunnel rather than the other way round.
   { name: 'tunnel', fragSource: tunnel },
-  { name: 'echo', fragSource: echo },
-  { name: 'shock', fragSource: shock },
   { name: 'dither', fragSource: dither },
   // Mip-chain bloom (Jimenez 2014): the Renderer routes this name to
   // BloomPipeline; stage order is [downsample, upsample, composite].

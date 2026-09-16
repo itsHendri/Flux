@@ -310,7 +310,8 @@ visual". Research round two (REFERENCES.md) looked for structural effects.
 - [x] **Raymarch colour + motion.** Thin-film iridescence (the iTunes nebula
   sheen), six Lissajous satellites, travelling ripple.
 - [x] **Structural effects.** `tunnel`, `echo` and `shock` added; `quantize`
-  and `chroma` retired.
+  and `chroma` retired. After live use, `echo` and `shock` removed too —
+  only `tunnel` earned its place.
 
 ---
 

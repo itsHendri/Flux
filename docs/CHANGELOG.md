@@ -5,6 +5,14 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — echo and shock removed
+
+User's verdict after trying them live: tunnel is cool, echo and shock aren't.
+Both passes and their controls are gone; `coral` drops shock. Seven effects
+remain: warp, trails, tunnel, dither, bloom, kaleido, scanline.
+
+---
+
 ## Phase 6 — Structural effects: tunnel, echo, shock
 
 "Some of the rest don't really look like they affect things much. It looks
