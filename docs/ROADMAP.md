@@ -265,19 +265,19 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   *Done:* enabling it produces tunnels/spirals that hold structure over
   frames, composes with kaleidoscope, and is a no-op when off; build clean.
 
-- [ ] **New mode: waveform — the classic iTunes read.** *(Replaces `pulse`,
-  pending the user's call — see NEEDS DECISION.)* The time-domain waveform
+- [ ] **New mode: waveform — the classic iTunes read.** *(Replaces `pulse`
+  — user confirmed 2026-09-16.)* The time-domain waveform
   drawn as a glowing line with mirror symmetry, a radial/Lissajous option,
   and history offsets so the line leaves a ribbon. Depends on the audio
   texture. *Done:* the drawn line visibly tracks the waveform (a sine reads
   as a sine); ≥3 controls; build + Preview clean.
 
-- [ ] **`plasma`'s future.** *(Pending the user's call — see NEEDS
-  DECISION.)* Either retire it (it and `flow` are both domain-warped fbm)
-  or re-cast it as **Gray-Scott reaction-diffusion**: a real ping-pong
-  simulation, organic growth rather than a noise field, feed/kill rates
-  driven by bands. *Done:* per the decision; if re-cast, the pattern grows
-  and reacts, and mode-switching in and out reseeds cleanly.
+- [ ] **Re-cast `plasma` as Gray-Scott reaction-diffusion.** *(User
+  confirmed 2026-09-16: re-cast, don't retire.)* It and `flow` are both
+  domain-warped fbm today. Replace its internals with a real ping-pong
+  simulation — organic growth rather than a noise field — with feed/kill
+  rates driven by the bands. *Done:* the pattern grows and reacts, mode
+  switching in and out reseeds cleanly, build + Preview clean.
 
 - [ ] **New 3D mode: magnetosphere.** Hodgin's charged-particle physics on
   the existing `trails3d` GPGPU rig: per-particle charge, attractors and

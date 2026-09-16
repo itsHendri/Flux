@@ -7,6 +7,10 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ## NEEDS DECISION — two modes' futures (research round, 2026-09-16)
 
+> **RESOLVED (2026-09-16): both as proposed.** `pulse` is replaced by the
+> waveform mode; `plasma` is re-cast as Gray-Scott reaction-diffusion. Phase
+> 5 proceeds in roadmap order.
+
 The iTunes/MilkDrop research is logged in
 [`REFERENCES.md`](REFERENCES.md) and the work it implies is planned as
 **Phase 5** in [`ROADMAP.md`](ROADMAP.md). Two of those tasks delete or
