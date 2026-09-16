@@ -242,52 +242,6 @@ input[type='range'] {
   margin: 8px 0;
 }
 
-.meters {
-  display: flex;
-  flex-direction: column;
-  gap: 6px;
-}
-
-.meter {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-}
-
-.meter .name {
-  width: 34px;
-  font-size: 9px;
-  color: var(--ink-dim);
-}
-
-.meter .track {
-  flex: 1;
-  height: 8px;
-  background: #05060a;
-  border: 1px solid var(--panel-edge);
-  border-radius: 2px;
-  overflow: hidden;
-}
-
-.meter .fill {
-  height: 100%;
-  width: 0%;
-  transition: none;
-}
-
-.meter.bass .fill {
-  background: var(--bass);
-}
-.meter.mid .fill {
-  background: var(--mid);
-}
-.meter.high .fill {
-  background: var(--high);
-}
-.meter.level .fill {
-  background: var(--ink);
-}
-
 .source-select {
   width: 100%;
   font: inherit;
@@ -539,4 +493,51 @@ input[type='range'] {
 .perf-look {
   min-width: 70px;
   text-transform: lowercase;
+}
+
+/* Mode picker: the bar's mode name opens the full list above it. */
+.perf-mode-group {
+  position: relative;
+}
+
+button.perf-mode {
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: 999px;
+  padding: 5px 10px;
+  cursor: pointer;
+}
+
+button.perf-mode:hover,
+button.perf-mode.open {
+  border-color: rgba(199, 204, 214, 0.22);
+}
+
+.perf-picker {
+  position: absolute;
+  bottom: calc(100% + 14px);
+  left: 50%;
+  transform: translateX(-50%);
+  display: grid;
+  grid-template-columns: repeat(3, auto);
+  /* Absolutely positioned inside a narrow group, so without this it shrinks
+     to that group's width and the labels overprint each other. */
+  width: max-content;
+  gap: 4px;
+  padding: 8px;
+  border-radius: 14px;
+  background: rgba(14, 16, 20, 0.86);
+  border: 1px solid rgba(199, 204, 214, 0.14);
+  box-shadow: 0 8px 30px rgba(0, 0, 0, 0.45);
+  backdrop-filter: blur(14px) saturate(1.2);
+  -webkit-backdrop-filter: blur(14px) saturate(1.2);
+}
+
+.perf-picker[hidden] {
+  display: none;
+}
+
+.perf-picker .perf-btn {
+  justify-content: flex-start;
+  white-space: nowrap;
 }

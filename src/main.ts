@@ -25,7 +25,6 @@ import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
-import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
 import { Transport } from './ui/Transport.ts';
 import { PerformanceBar, stepIndex } from './ui/PerformanceBar.ts';
@@ -110,29 +109,13 @@ const controlPanel = new ControlPanel(panel, CONTROLS, [
   ...passToggles,
   ...THEME_COLOR_CONTROLS,
 ]);
-const meters = new Meters(panel);
-
 const isPassEnabled = (name: string): boolean =>
   controlPanel.getValue(passToggleUniform(name)) >= 0.5;
 
-const app = new App(audio, renderer, controlPanel, meters);
+const app = new App(audio, renderer, controlPanel);
 
-// Shader mode switcher.
-const modeSection = document.createElement('div');
-modeSection.className = 'section';
-modeSection.innerHTML = '<h2>Mode</h2>';
-const modeRow = document.createElement('div');
-modeRow.className = 'btn-row';
-const modeButtons: Record<string, HTMLButtonElement> = {};
-for (const name of [...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)]) {
-  const btn = document.createElement('button');
-  btn.textContent = name;
-  btn.addEventListener('click', () => selectMode(name));
-  modeButtons[name] = btn;
-  modeRow.appendChild(btn);
-}
-modeSection.appendChild(modeRow);
-panel.appendChild(modeSection);
+// Mode selection lives on the performance bar (cycler + picker). The dock
+// panel used to carry a second copy of the same buttons; one place is enough.
 
 /** Refresh which controls the panel shows for the current mode + enabled passes. */
 function refreshControls(): void {
@@ -147,9 +130,6 @@ let perfBar: PerformanceBar | null = null;
 
 function selectMode(name: string): void {
   app.setMode(name);
-  for (const [n, btn] of Object.entries(modeButtons)) {
-    btn.classList.toggle('active', n === name);
-  }
   perfBar?.setMode(name);
   refreshControls();
 }
@@ -616,6 +596,7 @@ perfBar = new PerformanceBar(document.body, THEMES, {
   },
   onPlayPause: () => transport.toggle(),
   onTheme: (i) => controlPanel.applyValues({ uTheme: i }),
+  onPickMode: (name) => selectMode(name),
   onCycleMode: (step) => {
     const next = stepIndex(MODE_NAMES.indexOf(app.getMode()), step, MODE_NAMES.length);
     selectMode(MODE_NAMES[next]);
@@ -627,6 +608,7 @@ perfBar = new PerformanceBar(document.body, THEMES, {
   onFullscreen: () => goFullscreen(),
   onPip: () => void togglePip(),
 });
+perfBar.setModes(MODE_NAMES);
 perfBar.setMode(app.getMode());
 perfBar.setTheme(controlPanel.getValue('uTheme'));
 transport.watch((s) => perfBar?.setTransport(s));

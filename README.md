@@ -84,7 +84,7 @@ npm test         # run the unit tests (vitest)
   header + uniform block + `common.glsl`. Editing a `.frag` hot-reloads.
 - **UI** (`src/ui/`) — control panel generated from a single typed schema
   (`controls.ts`: slider/toggle/select/color, scoped per mode/pass — pass
-  toggles live in the same serialisable store), level meters, mode switcher,
+  toggles live in the same serialisable store),
   device picker, file transport, theme selector, presets, MIDI learn, logo
   upload, output controls. Vanilla TS, no framework, so nothing churns at
   60fps. `onChange` on the control store lets one control drive others (Theme

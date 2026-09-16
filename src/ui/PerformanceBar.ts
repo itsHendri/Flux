@@ -21,6 +21,8 @@ export interface PerformanceBarCallbacks {
   onTheme(index: number): void;
   /** Step the mode list by -1 or +1. */
   onCycleMode(step: number): void;
+  /** Jump straight to a mode from the picker. */
+  onPickMode(name: string): void;
   /** Advance to the next built-in look. */
   onCycleLook(): void;
   onFullscreen(): void;
@@ -44,7 +46,11 @@ export class PerformanceBar {
   private readonly playBtn: HTMLButtonElement;
   private readonly time: HTMLElement;
   private readonly transportGroup: HTMLElement;
-  private readonly modeLabel: HTMLElement;
+  private readonly modeLabel: HTMLButtonElement;
+  private readonly picker: HTMLElement;
+  private readonly pickMode: (name: string) => void;
+  private modeNames: string[] = [];
+  private activeMode = '';
   private readonly lookBtn: HTMLButtonElement;
   private readonly swatches: HTMLButtonElement[] = [];
   private readonly pipBtn: HTMLButtonElement;
@@ -82,12 +88,33 @@ export class PerformanceBar {
     const themeGroup = this.group(...this.swatches);
 
     // --- Mode cycler -----------------------------------------------------
+    // ‹ › step through the list; the name itself opens a picker, because with
+    // nine modes stepping is fine for "something else" and slow for "that one".
     const prev = this.iconButton('‹', 'Previous mode', () => cb.onCycleMode(-1));
-    this.modeLabel = document.createElement('span');
+    this.pickMode = cb.onPickMode;
+    this.modeLabel = document.createElement('button');
     this.modeLabel.className = 'perf-mode';
     this.modeLabel.textContent = '—';
+    this.modeLabel.title = 'Choose a mode';
+    this.modeLabel.setAttribute('aria-haspopup', 'true');
+    this.modeLabel.setAttribute('aria-expanded', 'false');
+    this.modeLabel.addEventListener('click', (e) => {
+      e.stopPropagation();
+      this.togglePicker();
+    });
     const next = this.iconButton('›', 'Next mode', () => cb.onCycleMode(1));
-    const modeGroup = this.group(prev, this.modeLabel, next);
+    this.picker = document.createElement('div');
+    this.picker.className = 'perf-picker';
+    this.picker.hidden = true;
+    const modeGroup = this.group(prev, this.modeLabel, next, this.picker);
+    modeGroup.classList.add('perf-mode-group');
+    // Dismiss on any outside click or Escape.
+    document.addEventListener('click', (e) => {
+      if (!this.picker.hidden && !this.picker.contains(e.target as Node)) this.togglePicker(false);
+    });
+    window.addEventListener('keydown', (e) => {
+      if (e.key === 'Escape') this.togglePicker(false);
+    });
 
     // --- Looks -----------------------------------------------------------
     // One button, because mid-set the question is "give me a different look",
@@ -124,7 +151,8 @@ export class PerformanceBar {
   private wake(): void {
     this.root.classList.remove('idle');
     window.clearTimeout(this.idleTimer);
-    if (this.hovered) return;
+    // An open picker is in use even if the pointer has wandered off it.
+    if (this.hovered || !this.picker.hidden) return;
     this.idleTimer = window.setTimeout(() => {
       if (!this.hovered) this.root.classList.add('idle');
     }, IDLE_MS);
@@ -149,7 +177,37 @@ export class PerformanceBar {
   }
 
   setMode(name: string): void {
+    this.activeMode = name;
     this.modeLabel.textContent = name;
+    for (const b of this.picker.querySelectorAll('button')) {
+      b.classList.toggle('active', b.textContent === name);
+    }
+  }
+
+  /** The full mode list, in cycler order, for the picker. */
+  setModes(names: string[]): void {
+    this.modeNames = names;
+    this.picker.textContent = '';
+    for (const name of names) {
+      const b = document.createElement('button');
+      b.className = 'perf-btn';
+      b.textContent = name;
+      b.classList.toggle('active', name === this.activeMode);
+      b.addEventListener('click', (e) => {
+        e.stopPropagation();
+        this.pickMode(name);
+        this.togglePicker(false);
+      });
+      this.picker.appendChild(b);
+    }
+  }
+
+  private togglePicker(open = this.picker.hidden): void {
+    if (this.modeNames.length === 0) return;
+    this.picker.hidden = !open;
+    this.modeLabel.setAttribute('aria-expanded', String(open));
+    this.modeLabel.classList.toggle('open', open);
+    this.wake();
   }
 
   /** Name the look currently showing (or 'looks' when none is active). */

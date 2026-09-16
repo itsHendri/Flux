@@ -2,12 +2,11 @@ import type { FrameState } from './core/state.ts';
 import { AudioEngine } from './audio/AudioEngine.ts';
 import { Renderer } from './render/Renderer.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
-import { Meters } from './ui/Meters.ts';
 
 /**
  * The orchestrator. Owns the single requestAnimationFrame loop: ticks the
- * AudioEngine, assembles an immutable FrameState, hands it to the Renderer,
- * and updates the meters. Nothing else owns timing.
+ * AudioEngine, assembles an immutable FrameState, and hands it to the
+ * Renderer. Nothing else owns timing.
  */
 export class App {
   private running = false;
@@ -20,7 +19,6 @@ export class App {
     private readonly audio: AudioEngine,
     private readonly renderer: Renderer,
     private readonly controls: ControlPanel,
-    private readonly meters: Meters,
   ) {}
 
   setMode(name: string): void {
@@ -66,7 +64,6 @@ export class App {
     };
 
     this.renderer.render(state);
-    this.meters.update(audioFrame);
 
     this.rafId = requestAnimationFrame(this.loop);
   };
