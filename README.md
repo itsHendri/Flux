@@ -32,7 +32,8 @@ npm test         # run the unit tests (vitest)
 
 - **7 modes** — bars, pulse, plasma, raymarched SDF, domain-warp flow, Voronoi
   cells, and an uploaded-logo mode (image rides a bass ripple, pops on the
-  beat). **7 toggleable post-effects** — feedback trails, dither
+  beat). **8 toggleable post-effects** — MilkDrop-style warp feedback,
+  feedback trails, dither
   (Bayer/IGN/blue-noise), palette quantize, mip-chain bloom, chromatic
   aberration, kaleidoscope, scanline/VHS.
 - **HDR pipeline** — all off-screen targets are RGBA16F where the hardware

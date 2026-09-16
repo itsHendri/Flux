@@ -60,6 +60,10 @@ interface CompiledPass {
 
 const BUILTIN_UNIFORMS = [
   'uTime',
+  // Seconds since the last frame. Feedback effects are the reason: a per-frame
+  // transform (MilkDrop's model) moves twice as fast at 120 fps as at 60, so
+  // anything that compounds frame over frame scales its step by this.
+  'uDt',
   'uResolution',
   'uBass',
   'uMid',
@@ -581,6 +585,7 @@ export class Renderer {
     const gl = this.gl;
     const u = prog.uniforms;
     gl.uniform1f(u.get('uTime') ?? null, state.time);
+    gl.uniform1f(u.get('uDt') ?? null, state.dt);
     gl.uniform2f(u.get('uResolution') ?? null, this.canvas.width, this.canvas.height);
     gl.uniform1f(u.get('uBass') ?? null, state.audio.bass);
     gl.uniform1f(u.get('uMid') ?? null, state.audio.mid);

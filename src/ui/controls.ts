@@ -204,6 +204,62 @@ export const CONTROLS: ControlDef[] = [
 
   // --- Post-pass controls (shown only while their pass is enabled) ---------
   {
+    // MilkDrop's warp vocabulary (see passes/warp.frag). Defaults are Geiss's:
+    // zoom 1.0 = still, warp 1.0 = normal, decay 0.98 recommended.
+    id: 'warpZoom',
+    name: 'Warp Zoom',
+    glslName: 'uWarpZoom',
+    min: 0.9,
+    max: 1.1,
+    step: 0.001,
+    default: 1.012,
+    pass: 'warp',
+  },
+  {
+    id: 'warpRot',
+    name: 'Warp Rotate',
+    glslName: 'uWarpRot',
+    min: -1,
+    max: 1,
+    step: 0.01,
+    default: 0.18,
+    pass: 'warp',
+  },
+  {
+    id: 'warpAmount',
+    name: 'Warp',
+    glslName: 'uWarpAmount',
+    min: 0,
+    max: 2,
+    step: 0.01,
+    default: 1.0,
+    pass: 'warp',
+  },
+  {
+    id: 'warpDecay',
+    name: 'Warp Decay',
+    glslName: 'uWarpDecay',
+    min: 0.7,
+    max: 0.995,
+    step: 0.001,
+    // Geiss recommends 0.98, but MilkDrop draws sparse geometry into its
+    // feedback buffer; FLUX feeds it a full-screen mode, and above ~0.95 every
+    // pixel keeps getting re-lit until the image washes out. 0.90 keeps the
+    // mode's structure with the outward pull on top.
+    default: 0.9,
+    pass: 'warp',
+  },
+  {
+    id: 'warpAudio',
+    name: 'Warp Drive',
+    glslName: 'uWarpAudio',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+    pass: 'warp',
+  },
+  {
     id: 'trailDecay',
     name: 'Trail Decay',
     glslName: 'uTrailDecay',

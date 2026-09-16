@@ -257,7 +257,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   it stays musical rather than jittery. *Done:* a swept sine walks the bars
   left to right; build + Preview clean.
 
-- [ ] **Warp-feedback post-pass — MilkDrop's signature.** A pass that samples
+- [x] **Warp-feedback post-pass — MilkDrop's signature.** A pass that samples
   `uPrevFrame` through a displaced UV field, with Geiss's vocabulary as
   controls: zoom, rot, warp, dx/dy, cx/cy, decay (defaults per the authoring
   guide: zoom 1.0, warp 1.0, decay 0.98). Per pixel rather than MilkDrop's

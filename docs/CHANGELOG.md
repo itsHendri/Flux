@@ -5,6 +5,55 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — Warp feedback: MilkDrop's signature move
+
+FLUX has had a history buffer since Phase 1 and used it for exactly one thing:
+a straight decay trail. `warp` is the same buffer with a *moving coordinate
+field* in front of it — each frame samples the previous frame through a
+displaced UV field, so the image is continually pulled through itself. Zoom
+alone gives tunnels, rotation gives spirals, the sine terms give the liquid
+churn. It's the reason MilkDrop presets look like nothing else, and it pairs
+with kaleidoscope into the mandala the genre is known for.
+
+- **Geiss's vocabulary as controls** (Warp Zoom / Rotate / Warp / Decay /
+  Drive): zoom 1 = still, <1 out, >1 in; warp 0 none, 1 normal, 2 major.
+  MilkDrop evaluated these on a coarse vertex mesh and interpolated between
+  them; a fragment shader does it **per pixel**, which is strictly better and
+  costs nothing extra.
+- **`uDt` is now a builtin.** Anything that compounds frame over frame has to
+  know how long a frame was, or it moves twice as fast at 120 fps as at 60 —
+  MilkDrop's per-frame model has exactly that bug. Every step here is scaled
+  to a 60 fps frame.
+- **Two places where Geiss's numbers don't carry over**, both because MilkDrop
+  draws sparse geometry into its feedback buffer while FLUX feeds it a
+  full-screen mode:
+  - *Additive is wrong here.* `cur + prev*decay` converges on
+    `cur/(1-decay)` — about 66× at decay 0.97. Fine for sparse waves, a
+    white-out for a full-screen source. `max(cur, prev*decay)` is bounded by
+    the brightest thing on screen, so Decay can go to 0.995 for long tunnels
+    without burning out.
+  - *Decay defaults to 0.90, not his 0.98.* Above ~0.95 every pixel keeps
+    getting re-lit and the image washes out; at 0.90 the mode keeps its
+    structure with the pull on top. Both deviations are commented where they
+    live.
+- Audio: bass leans on the zoom, mid on the rotation, `uBeat` snaps the warp.
+  Sampling outside the frame fades to black rather than dragging the edge
+  pixel inward, which would smear the border.
+
+Verified: build clean, 80/80 tests. In the Preview browser the pass measurably
+works, not just plausibly: reading the live backbuffer, the band down the far
+left of the `logo` mode — well outside its ring, background otherwise — is
+**2.1× brighter with warp on** (13.9 vs 6.8) and returns to 13.7 when toggled
+back on, so the feedback genuinely pulls content across the screen and
+switching it off is a clean no-op. `flow` + `warp` + `kaleido` renders the
+deep fractal mandala this technique is for. All 8 modes still render, all 8
+passes run simultaneously, overlay empty, no console errors.
+
+Source: [MilkDrop preset authoring guide](https://www.geisswerks.com/milkdrop/milkdrop_preset_authoring.html)
+(see REFERENCES.md).
+
+---
+
 ## Phase 5 — Bars stops faking it
 
 `bars` has always been a lie: `barHeight()` spread three band values across

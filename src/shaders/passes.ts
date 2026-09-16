@@ -1,4 +1,5 @@
 import type { PostPass } from '../render/Renderer.ts';
+import warp from './passes/warp.frag?raw';
 import trails from './passes/trails.frag?raw';
 import bloomDown from './passes/bloom-down.frag?raw';
 import bloomUp from './passes/bloom-up.frag?raw';
@@ -16,7 +17,10 @@ import scanline from './passes/scanline.frag?raw';
  * here, and it appears as a toggle in the Effects panel automatically.
  */
 export const PASSES: PostPass[] = [
-  // Trails first so feedback operates on the raw motion, before stylisation.
+  // Feedback first, so it operates on the raw motion rather than on
+  // stylisation. Warp before trails: warp pulls the past through a moving
+  // coordinate field, trails lays a straight decay over whatever comes out.
+  { name: 'warp', fragSource: warp },
   { name: 'trails', fragSource: trails },
   { name: 'dither', fragSource: dither },
   { name: 'quantize', fragSource: quantize },
