@@ -222,6 +222,17 @@ export const CONTROLS: ControlDef[] = [
     modes: ['reaction'],
   },
   {
+    // 0 = the old single cosine ramp, 1 = full thin-film sheen.
+    id: 'rayIris',
+    name: 'Iridescence',
+    glslName: 'uRayIris',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.85,
+    modes: ['raymarch'],
+  },
+  {
     id: 'rayGlow',
     name: 'Glow',
     glslName: 'uRayGlow',

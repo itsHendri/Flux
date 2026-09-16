@@ -1,16 +1,18 @@
 // RAYMARCH — an audio-reactive metaball blob built from signed distance fields
-// and sphere-traced. A pulsing core is smooth-unioned with three orbiting
-// spheres, with audio-driven high-frequency surface displacement, then lit
-// (diffuse + rim + specular) and coloured with a cosine palette, plus an
-// additive proximity glow.
+// and sphere-traced. A breathing core is smooth-unioned with six satellites on
+// Lissajous orbits, with a travelling surface ripple, then lit (diffuse + rim +
+// specular) and coloured with thin-film iridescence, plus an additive proximity
+// glow.
 //
 // Adapted from Inigo Quilez: raymarching distance fields
 // (https://iquilezles.org/articles/raymarchingdf/), distance functions
 // (https://iquilezles.org/articles/distfunctions/), and smooth-min
 // (https://iquilezles.org/articles/smin/).
 //
-// Steering: uScale = zoom, uWarp = extra spin, uGain = brightness. Bands drive
-// the pulse (bass), surface wobble (mid), shimmer/specular (high), glow (level).
+// Steering: uScale = zoom, uWarp = extra spin, uRayIris = iridescence,
+// uGain = brightness. Bass breathes the core, mid ripples the surface and swells
+// the satellites, highs shimmer, level lifts the glow, and a kick throws the
+// satellites outward.
 
 mat2 rot(float a) {
   float c = cos(a), s = sin(a);
@@ -29,23 +31,35 @@ vec3 palette(float t) {
 
 // Scene SDF.
 float map(vec3 p) {
-  p.xz *= rot(uTime * 0.25 + uWarp * 3.0);
-  p.xy *= rot(uTime * 0.18);
+  // The whole system tumbles slowly on two axes, so the blob is never seen
+  // from the same side for long.
+  p.xz *= rot(uTime * 0.23 + uWarp * 3.0);
+  p.xy *= rot(sin(uTime * 0.17) * 0.6);
 
-  // Pulsing core.
-  float d = length(p) - (0.75 + uBass * 0.45);
+  // A breathing core.
+  float d = length(p) - (0.6 + uBass * 0.38);
 
-  // Three orbiting spheres, smooth-unioned into the core (metaballs).
-  for (int i = 0; i < 3; i++) {
-    float a = uTime * 0.8 + float(i) * TAU / 3.0;
-    vec3 c = vec3(cos(a), sin(a * 1.3), sin(a)) * (1.1 + uLevel * 0.3);
-    float s = length(p - c) - (0.35 + uMid * 0.2);
-    d = smin(d, s, 0.5);
+  // Six satellites on Lissajous orbits. Every one has its own speed and phase
+  // on each axis, and none of the ratios are simple, so the cluster keeps
+  // re-forming instead of settling into a loop you can see repeat. A kick
+  // throws them all outward; the smooth-union pulls them back into the body.
+  for (int i = 0; i < 6; i++) {
+    float fi = float(i);
+    float sp = 0.42 + 0.17 * fi;
+    vec3 c = vec3(
+      sin(uTime * sp + fi * 1.7),
+      sin(uTime * sp * 1.31 + fi * 2.9),
+      cos(uTime * sp * 0.87 + fi * 0.6)
+    );
+    c *= 1.0 + 0.25 * sin(uTime * 0.31 + fi) + uBeat * 0.45 + uLevel * 0.15;
+    float r = 0.22 + 0.08 * sin(uTime * 1.3 + fi * 2.1) + uMid * 0.12;
+    d = smin(d, length(p - c) - r, 0.42);
   }
 
-  // High-frequency surface displacement (mid-driven, high adds shimmer).
-  float disp = sin(6.0 * p.x + uTime) * sin(6.0 * p.y) * sin(6.0 * p.z + uTime) *
-               (0.04 + uMid * 0.18 + uHigh * 0.1);
+  // A surface ripple that travels (all three terms move) rather than one that
+  // just breathes in place; mid drives its depth, highs add shimmer.
+  float disp = sin(3.1 * p.x + uTime * 1.3) * sin(2.7 * p.y - uTime * 1.1) *
+               sin(3.4 * p.z + uTime * 0.9) * (0.03 + uMid * 0.16 + uHigh * 0.08);
   return d + disp;
 }
 
@@ -83,6 +97,10 @@ vec3 render(vec2 uv) {
 
   // Background — dark vertical gradient.
   vec3 col = mix(vec3(0.02, 0.025, 0.04), vec3(0.05, 0.02, 0.07), uv.y);
+  // Where each pixel sits on the theme ramp. Indexing by brightness (as this
+  // mode used to) pulls every lit patch of the blob to the same stop; indexing
+  // by the iridescence phase below spreads the theme across the surface.
+  float rampT = 0.62 + uv.y * 0.2;
 
   if (hit) {
     vec3 pos = ro + rd * t;
@@ -90,19 +108,30 @@ vec3 render(vec2 uv) {
     vec3 lig = normalize(vec3(0.7, 0.8, 0.4));
     float dif = clamp(dot(nor, lig), 0.0, 1.0);
     float amb = 0.4 + 0.6 * nor.y;
-    float fre = pow(1.0 - clamp(dot(nor, -rd), 0.0, 1.0), 3.0); // rim
+    float ndv = clamp(dot(nor, -rd), 0.0, 1.0);
+    float fre = pow(1.0 - ndv, 3.0); // rim
     float spe = pow(clamp(dot(reflect(-lig, nor), -rd), 0.0, 1.0), 24.0);
 
-    vec3 base = palette(0.55 + length(pos) * 0.15 + uBass * 0.2 + uTime * 0.03);
+    // Thin-film iridescence — the oil-slick sheen of the iTunes nebula clouds.
+    // Real thin-film colour depends on the film's thickness and the viewing
+    // angle; approximating the phase with the grazing angle, the surface
+    // orientation and position gives bands that slide across the blob as it
+    // turns, which is the whole effect. Highs push the phase for shimmer.
+    float film = (1.0 - ndv) * 1.7 + dot(nor, vec3(0.3, 0.6, 0.2)) * 0.55 +
+                 length(pos) * 0.45 + uTime * 0.05 + uHigh * 0.3;
+    vec3 iri = palette(film);
+    vec3 base = mix(palette(0.55 + length(pos) * 0.15 + uTime * 0.03), iri, uRayIris);
+
     col = base * (amb * 0.35 + dif * 0.85);
     col += vec3(1.0) * spe * (0.4 + uHigh);
-    col += palette(0.1 + uHigh * 0.4) * fre * 0.6;
+    col += palette(film + 0.33) * fre * (0.5 + uRayIris * 0.5);
+    rampT = mix(0.55 + length(pos) * 0.15, film, uRayIris);
   }
 
   // Additive proximity glow, coloured and level-driven (steerable amount).
-  col += palette(0.6 + uLevel * 0.3) * glow * (0.6 + uLevel * 1.2) * uRayGlow;
+  col += palette(0.6 + uLevel * 0.3 + uTime * 0.02) * glow * (0.6 + uLevel * 1.2) * uRayGlow;
 
   // Overall brightness control.
   col *= mix(0.7, 1.6, uGain);
-  return themed(col, 0.15 + luma(col) * 0.6);
+  return themed(col, rampT);
 }
