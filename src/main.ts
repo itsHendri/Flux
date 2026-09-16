@@ -31,6 +31,7 @@ import { Transport } from './ui/Transport.ts';
 import { PerformanceBar, stepIndex } from './ui/PerformanceBar.ts';
 import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
+import { LOOKS, defaultValues, findLook } from './presets/looks.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
 import { MidiEngine, MidiMap, MidiBindingStore } from './audio/midi.ts';
 
@@ -267,6 +268,24 @@ function repaintFxButtons(): void {
 // --- Presets ----------------------------------------------------------------
 // Snapshot/recall of mode + all control values (pass toggles included) in
 // localStorage, keyed by stable ControlDef ids.
+// --- Built-in looks ---------------------------------------------------------
+// Whole-instrument settings worth starting from. A look is applied onto a
+// clean slate rather than onto whatever was on before: one that inherited
+// leftover effects wouldn't be a look, it would be a suggestion.
+let currentLook: string | null = null;
+
+function applyLook(name: string): void {
+  const look = findLook(name);
+  if (!look) return;
+  controlPanel.applyValues(defaultValues(allControls));
+  controlPanel.applyValues(resolvePreset(look.preset, allControls));
+  selectMode(look.preset.mode);
+  repaintFxButtons();
+  refreshControls();
+  currentLook = name;
+  perfBar?.setLook(name);
+}
+
 const presetStore = new PresetStore(window.localStorage);
 const presetPanel = new PresetPanel(panel, {
   onSave: (name) => {
@@ -280,12 +299,16 @@ const presetPanel = new PresetPanel(panel, {
     controlPanel.applyValues(resolvePreset(preset, allControls));
     repaintFxButtons();
     refreshControls();
+    currentLook = null;
+    perfBar?.setLook(null);
   },
   onDelete: (name) => {
     presetStore.remove(name);
     presetPanel.refresh(presetStore.list());
   },
+  onLook: (name) => applyLook(name),
 });
+presetPanel.setLooks(LOOKS.map((l) => ({ name: l.name, note: l.note })));
 presetPanel.refresh(presetStore.list());
 
 // --- MIDI -------------------------------------------------------------------
@@ -596,6 +619,10 @@ perfBar = new PerformanceBar(document.body, THEMES, {
   onCycleMode: (step) => {
     const next = stepIndex(MODE_NAMES.indexOf(app.getMode()), step, MODE_NAMES.length);
     selectMode(MODE_NAMES[next]);
+  },
+  onCycleLook: () => {
+    const i = currentLook ? LOOKS.findIndex((l) => l.name === currentLook) : -1;
+    applyLook(LOOKS[stepIndex(i, 1, LOOKS.length)].name);
   },
   onFullscreen: () => goFullscreen(),
   onPip: () => void togglePip(),

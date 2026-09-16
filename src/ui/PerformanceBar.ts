@@ -21,6 +21,8 @@ export interface PerformanceBarCallbacks {
   onTheme(index: number): void;
   /** Step the mode list by -1 or +1. */
   onCycleMode(step: number): void;
+  /** Advance to the next built-in look. */
+  onCycleLook(): void;
   onFullscreen(): void;
   onPip(): void;
 }
@@ -43,6 +45,7 @@ export class PerformanceBar {
   private readonly time: HTMLElement;
   private readonly transportGroup: HTMLElement;
   private readonly modeLabel: HTMLElement;
+  private readonly lookBtn: HTMLButtonElement;
   private readonly swatches: HTMLButtonElement[] = [];
   private readonly pipBtn: HTMLButtonElement;
   private idleTimer = 0;
@@ -86,12 +89,19 @@ export class PerformanceBar {
     const next = this.iconButton('›', 'Next mode', () => cb.onCycleMode(1));
     const modeGroup = this.group(prev, this.modeLabel, next);
 
+    // --- Looks -----------------------------------------------------------
+    // One button, because mid-set the question is "give me a different look",
+    // not "which of six".
+    this.lookBtn = this.iconButton('looks', 'Next built-in look', cb.onCycleLook);
+    this.lookBtn.classList.add('perf-look');
+    const lookGroup = this.group(this.lookBtn);
+
     // --- Output ----------------------------------------------------------
     const fsBtn = this.iconButton('⛶', 'Fullscreen', cb.onFullscreen);
     this.pipBtn = this.iconButton('⧉', 'Picture-in-Picture window', cb.onPip);
     const outGroup = this.group(fsBtn, this.pipBtn);
 
-    this.root.append(source, this.transportGroup, themeGroup, modeGroup, outGroup);
+    this.root.append(source, this.transportGroup, themeGroup, modeGroup, lookGroup, outGroup);
     parent.appendChild(this.root);
 
     // Hovering the bar means it's in use — never fade out from under the
@@ -140,6 +150,12 @@ export class PerformanceBar {
 
   setMode(name: string): void {
     this.modeLabel.textContent = name;
+  }
+
+  /** Name the look currently showing (or 'looks' when none is active). */
+  setLook(name: string | null): void {
+    this.lookBtn.textContent = name ?? 'looks';
+    this.lookBtn.classList.toggle('active', name !== null);
   }
 
   setPip(on: boolean): void {

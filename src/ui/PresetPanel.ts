@@ -7,15 +7,35 @@ export interface PresetPanelCallbacks {
   onSave: (name: string) => void;
   onLoad: (name: string) => void;
   onDelete: (name: string) => void;
+  /** Recall a built-in look (no delete — they ship with the app). */
+  onLook: (name: string) => void;
+}
+
+/** A shipped combination: name + one line on why it exists. */
+export interface LookChip {
+  name: string;
+  note: string;
 }
 
 export class PresetPanel {
   private readonly list: HTMLElement;
+  private readonly looks: HTMLElement;
 
   constructor(parent: HTMLElement, cb: PresetPanelCallbacks) {
     const section = document.createElement('div');
     section.className = 'section';
-    section.innerHTML = '<h2>Presets</h2>';
+    section.innerHTML = '<h2>Looks</h2>';
+
+    // Built-in looks first: the answer to "which combinations are worth
+    // using", before the space for your own.
+    this.looks = document.createElement('div');
+    this.looks.className = 'btn-row look-list';
+    section.appendChild(this.looks);
+
+    const yours = document.createElement('h2');
+    yours.textContent = 'Your presets';
+    yours.className = 'subhead';
+    section.appendChild(yours);
 
     const row = document.createElement('div');
     row.className = 'preset-row';
@@ -48,6 +68,18 @@ export class PresetPanel {
   }
 
   private readonly cb: PresetPanelCallbacks;
+
+  /** Render the built-in looks. Called once — they never change. */
+  setLooks(looks: LookChip[]): void {
+    this.looks.textContent = '';
+    for (const look of looks) {
+      const btn = document.createElement('button');
+      btn.textContent = look.name;
+      btn.title = look.note;
+      btn.addEventListener('click', () => this.cb.onLook(look.name));
+      this.looks.appendChild(btn);
+    }
+  }
 
   /** Re-render the chip list from the current preset names. */
   refresh(names: string[]): void {

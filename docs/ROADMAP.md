@@ -286,7 +286,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   depth sort. *Done:* the swarm forms and breaks up on the music with ≥3
   controls; composites through bloom/trails; build + Preview clean.
 
-- [ ] **Built-in looks — curated combos.** The user's open question is which
+- [x] **Built-in looks — curated combos.** The user's open question is which
   effect combinations are worth using; answer it in the product rather than
   leaving him to hunt. Ship ~6 named built-in presets (mode + pass chain +
   control values + theme), kaleidoscope-forward, loaded alongside the user's

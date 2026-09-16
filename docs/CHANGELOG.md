@@ -5,6 +5,84 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 5 COMPLETE — review
+
+Seven verified commits, from a research sweep of the iTunes visualizers and
+their open-source clones to six things you can actually switch between.
+
+1. **The audio texture** — shaders finally see the spectrum and the waveform,
+   in Shadertoy's layout, which also makes that whole library portable here.
+2. **Honest bars** — it read three numbers and faked the rest; now it reads
+   the FFT on a log axis.
+3. **Warp feedback** — MilkDrop's signature, on a history buffer FLUX had been
+   using for a flat decay.
+4. **waveform** replaces `pulse` — the classic iTunes read, triggered like a
+   scope so it holds still.
+5. **reaction** replaces `plasma` — a Gray-Scott simulation instead of a
+   second noise field.
+6. **magneto** — the iTunes 8 physics: charged particles, each listening to
+   its own frequency.
+7. **Six built-in looks** — the combinations question, answered in the
+   product.
+
+FLUX is now 9 modes, 8 effects, 5 themes and 6 looks, still vanilla TS and raw
+WebGL2 with zero runtime dependencies (~44 kB gzipped).
+
+**For the user, live in Chrome with a real track:** walk the `looks` button on
+the bar, then `1`–`5` over whichever one lands. Two things the embedded pane
+can't judge and you can: **comet** (and `trails3d` generally) is sparse and
+dim here because the pane only pumps frames during capture, so trails and
+bloom never accumulate — it should be much brighter live, and its Gain is the
+knob if not. And **magneto**'s Charge/Momentum pair is the taste control of the
+whole set: higher Charge throws more dramatic streams, and the point where it
+stops being a swarm and starts being a starfield is a judgement call, not a
+number. Still outstanding from earlier phases: the Traktor S2 MIDI check.
+
+---
+
+## Phase 5 — Built-in looks
+
+The user's own open question — "I still need to play around and look at a few
+combos" — answered in the product rather than left as homework. Nine modes
+and eight effects is more combinations than anyone wants to audition mid-set,
+so six are named and shipped: **cathedral** (flow pulled through itself and
+mirrored), **coral** (the reaction in firelight), **scope** (the mirrored
+waveform on a cold ribbon), **supernova** (magneto with the glow the original
+had), **tape** (the spectrum through a dithered, scanlined transfer) and
+**comet** (the curl-noise swarm mirrored into acid).
+
+- **A look is applied onto a clean slate.** Every control resets to its
+  default first, so recalling one always lands in the same place — a look that
+  inherited whatever effects were already on wouldn't be a look, it would be a
+  suggestion. Verified by turning on four unrelated effects and recalling: the
+  chain comes back to exactly the look's own.
+- **In the panel and on the bar.** The Looks row sits above your own presets;
+  the bar gets a single button that cycles them, because mid-set the question
+  is "give me a different look", not "which of six".
+- **A test guards the ids.** `resolvePreset` silently drops ids it doesn't
+  recognise, so a typo wouldn't throw — the look would just quietly come out
+  wrong. The suite now checks every id exists, every value is inside its
+  control's range or option set, every mode name is real, and every look turns
+  on at least one effect. It caught four wrong ids on the first run
+  (`chromaSplit`, `ditherMatrix`, `ditherNoise`, `scanline`).
+
+Tuning notes, since half the work was taste: `tape` dropped **quantize**,
+which maps luminance onto its own cosine palette and therefore overrides the
+theme — it can't be monochrome, whatever Mono says. Three looks needed an
+explicit tonemap (ACES for `cathedral` and `coral`, Reinhard for `scope`):
+with tonemap None, bloom on a bright full-screen mode clips straight to
+white. And `tape` runs at Gain 0.3 because on a loud track every column pins
+to full height at the usual gain, and a wall of full-height bars is not a
+spectrum.
+
+Verified: build clean, 89/89 tests. In the Preview browser all six load and
+render distinctly against a played track, the bar's button cycles them and
+names the active one, recalling a look after a pile of unrelated effects is
+deterministic, and user presets still save and recall alongside. All 9 modes
+and 8 passes still run together; overlay empty, no console errors.
+
+---
+
 ## Phase 5 — magneto: the iTunes 8 visualizer's physics
 
 The one this whole research round was pointed at. Robert Hodgin's

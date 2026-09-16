@@ -526,3 +526,17 @@ input[type='range'] {
 #errors {
   max-width: calc(50% - 220px);
 }
+
+/* Built-in looks sit above the space for your own presets. */
+.section h2.subhead {
+  margin-top: 12px;
+}
+
+.look-list button {
+  font-size: 11px;
+}
+
+.perf-look {
+  min-width: 70px;
+  text-transform: lowercase;
+}

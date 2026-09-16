@@ -53,8 +53,10 @@ npm test         # run the unit tests (vitest)
 - **Themes** — five global palettes (keys `1`-`5`) that every mode bends its
   own colour toward, keeping the mode's brightness so contrast survives; a
   Tint control sets how far. **Hotkeys** — Space plays/pauses a loaded file.
-- **Presets** — mode + every control + effect state saved/recalled from
-  localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,
+- **Looks** — six built-in combinations (mode + effect chain + theme +
+  controls) in the panel and on a cycling button in the bar; each lands on a
+  clean slate so it always looks the same. **Presets** — mode + every control
+  + effect state saved/recalled from localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,
   persisted. **Output** — fullscreen and a draggable Picture-in-Picture
   window for a second display. See [`docs/DEPLOY.md`](docs/DEPLOY.md) to host
   the static build.
