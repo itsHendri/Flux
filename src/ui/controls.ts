@@ -3,7 +3,7 @@ import { themeOptions } from './themes.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['waveform', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
+const SCALE_MODES = ['waveform', 'raymarch', 'flow', 'cells', 'logo', 'trails3d', 'magneto'];
 
 /**
  * THE uniform schema — single source of truth.
@@ -235,7 +235,40 @@ export const CONTROLS: ControlDef[] = [
       { label: '262k', value: 512 },
     ],
     default: 256,
-    modes: ['trails3d'],
+    modes: ['trails3d', 'magneto'],
+  },
+  {
+    // Magnetosphere's physics: how hard the poles pull, and how much momentum
+    // survives each step. Damping is the difference between a swarm and an
+    // explosion — the single most sensitive number in the mode.
+    id: 'magCharge',
+    name: 'Charge',
+    glslName: 'uMagCharge',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.65,
+    modes: ['magneto'],
+  },
+  {
+    id: 'magDamp',
+    name: 'Momentum',
+    glslName: 'uMagDamp',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.62,
+    modes: ['magneto'],
+  },
+  {
+    id: 'magSpin',
+    name: 'Pole Orbit',
+    glslName: 'uMagSpin',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+    modes: ['magneto'],
   },
   {
     id: 'flowSpeed',

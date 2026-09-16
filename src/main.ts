@@ -22,6 +22,7 @@ import { passToggleDefs, passToggleUniform } from './core/state.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { Trails3DMode } from './modes3d/Trails3DMode.ts';
+import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
@@ -93,7 +94,7 @@ for (const mode of MODES) renderer.registerMode(mode);
 // Custom-draw modes: `reaction` holds a chemical simulation, `trails3d` a
 // particle one. Both need state across frames, which a fragment mode can't
 // have, and both refuse to register without float render targets.
-const MODES_3D = [new ReactionMode(), new Trails3DMode()].filter((m) =>
+const MODES_3D = [new ReactionMode(), new MagnetoMode(), new Trails3DMode()].filter((m) =>
   renderer.registerCustomMode(m),
 );
 for (const pass of PASSES) renderer.registerPass(pass);

@@ -5,6 +5,54 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — magneto: the iTunes 8 visualizer's physics
+
+The one this whole research round was pointed at. Robert Hodgin's
+Magnetosphere — Apple's default visualizer from iTunes 8 — has no open-source
+clone, but the author describes the mechanism plainly: "a physics system which
+plays opposing forces against each other. Some elements in the scene have an
+attractive force, others have a repulsive force, and over time these elements
+create dynamic compositions." FLUX already owned the rig; what it needed was
+the physics.
+
+- **Every particle carries a charge and a frequency.** Half the swarm is
+  positive, half negative, and each particle keeps a fixed slice of the
+  spectrum for life. Four poles orbit the scene; whether a pole pulls or
+  throws a given particle is the product of their charges, so the same pole
+  grabs half the swarm and flings the other half. Nothing choreographs the
+  shapes — they're what the opposition does.
+- **The audio enters per particle, not globally.** This is Hodgin's actual
+  trick ("assign each particle a specific frequency to pay attention to"), and
+  it's only possible now that shaders can read the spectrum: a particle's
+  force, size and flare all scale with what *its* band is doing this instant.
+  A kick flips one pole's charge — one, not all, because flipping everything
+  just mirrors the scene while flipping one re-sorts which half of the swarm
+  each pole owns.
+- **Position and velocity in separate ping-pong pairs**, stepped by two passes
+  rather than one MRT pass: simpler, and the cost is one extra fullscreen draw
+  over a small texture. Additive points, **no depth buffer at all** — the same
+  reason Hodgin moved the original to additive blending, since light sums in
+  any order and there's nothing to sort.
+- **The tuning was the work.** The first balance boiled the swarm away into a
+  uniform starfield within seconds: a true 1/r² goes to infinity at the pole,
+  one close pass flings a particle clear of the scene, and the respawn brings
+  it back somewhere random. Fixed by softening the force a lot (r² + 0.35),
+  making the containing spring stiff enough to beat a pole at range, and
+  clamping speed to something the spring can answer for. The swarm is now a
+  *body* the poles deform rather than four independent clouds.
+
+Verified: build clean, 80/80 tests. In the Preview browser, with a kick-and-air
+track playing, the shell forms and the poles gather particles into bright
+streaming filaments that change between frames; with bloom + trails — how the
+original was meant to be seen — it reads as the luminous comet-arc swarm it's
+modelled on. All 9 modes and 8 passes run together, overlay empty, no console
+errors.
+
+Source: [roberthodgin.com/project/magnetosphere](https://roberthodgin.com/project/magnetosphere)
+(see REFERENCES.md).
+
+---
+
 ## Phase 5 — plasma becomes reaction: a simulation, not a field
 
 `plasma` and `flow` were both domain-warped fbm, which is why the user saw

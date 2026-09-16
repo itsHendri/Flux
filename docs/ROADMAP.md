@@ -279,7 +279,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   rates driven by the bands. *Done:* the pattern grows and reacts, mode
   switching in and out reseeds cleanly, build + Preview clean.
 
-- [ ] **New 3D mode: magnetosphere.** Hodgin's charged-particle physics on
+- [x] **New 3D mode: magnetosphere.** Hodgin's charged-particle physics on
   the existing `trails3d` GPGPU rig: per-particle charge, attractors and
   repulsors, and **per-particle frequency assignment** from the audio
   texture so each particle answers to its own bin. Additive HDR points, no
