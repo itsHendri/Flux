@@ -7,6 +7,37 @@ cross-cutting picture. Newest first.
 
 ---
 
+## Structural effects (sweep 2026-09-16, round two)
+
+Prompted by the user's note that several effects "affect the color rather than
+the visual". The question was what visualizers in this lineage did to the
+*geometry* of the picture.
+
+- **iTunes 10's Magnetosphere** had three named components: **cores** (the
+  moving spheres), **rays** flowing out of them, and **nebula clouds** filling
+  the screen, toggled with N and described as iridescent
+  ([TidBITS](https://tidbits.com/2015/06/12/funbits-be-a-vj-with-the-itunes-visualizer/),
+  [Macworld](https://www.macworld.com/article/192667/itunes8visualizer.html)).
+  The iridescence is what `raymarch` now borrows. Rays and nebula are
+  candidates for `magneto` if it ever needs more.
+- **MilkDrop's video echo** — a second graphics layer controlled by
+  `echo_zoom` (size), `echo_alpha` (0 off / 0.5 half / 1 opaque) and
+  `echo_orient` (four orientations)
+  ([Geiss's authoring guide](https://www.geisswerks.com/milkdrop/milkdrop_preset_authoring.html)).
+  → the `echo` pass.
+- **The 2D tunnel** — polar coordinates with depth as 1/radius, the demoscene
+  staple ([Shadertoy "Tunnel Effect"](https://www.shadertoy.com/view/4djBRm),
+  [GTC 14 basic tunnel](https://www.shadertoy.com/view/4lj3WD)). → `tunnel`.
+- **The shockwave filter** — a radial displacement ring expanding from a
+  point ([Geeks3D 2D shockwave](https://www.geeks3d.com/20091116/shader-library-2d-shockwave-post-processing-filter-glsl/)).
+  FLUX's version needs no timer: `uBeat` already decays exponentially from a
+  kick, so `1 - uBeat` is an ease-out radius. → `shock`.
+- **Retired:** `quantize` (maps luminance onto its own cosine palette, so it
+  also overrode the theme) and `chroma` (a constant RGB fringe; the fringe now
+  lives on the shock front, where something is actually happening).
+
+---
+
 ## The iTunes-visualizer lineage (sweep 2026-09-16)
 
 Prompted by the user: "have a look at iTunes and the iTunes visualizers, see

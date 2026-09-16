@@ -43,7 +43,7 @@ sources in the commit + CHANGELOG, then implement.
   glsl-dither. Add a toggleable dither post-pass; matrix size (2/4/8) as a
   control. *Done:* toggling it visibly dithers; off = unchanged; build clean.
 
-- [x] **Palette quantization pass.** Quantize output to N colours; optional
+- [x] **Palette quantization pass.** *(Retired 2026-09-16 — colour-only, overrode the theme.)* Quantize output to N colours; optional
   band-driven palette shift (e.g. bass rotates hue). Toggleable, N as a control.
   *Done:* quantization visible when on; build + Preview clean.
 
@@ -53,7 +53,7 @@ sources in the commit + CHANGELOG, then implement.
 - [x] **Bloom pass.** Bright-pass + separable Gaussian blur, additive composite;
   intensity + threshold controls. *Done:* highlights bloom when on; build clean.
 
-- [x] **Chromatic aberration pass.** Per-channel UV offset scaled by a control
+- [x] **Chromatic aberration pass.** *(Retired 2026-09-16 — folded into `shock`.)* Per-channel UV offset scaled by a control
   and/or audio. *Done:* visible RGB split when on; build clean.
 
 - [x] **Kaleidoscope / mirror-symmetry pass.** Angular reflection with a
@@ -293,6 +293,24 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   own in the Presets section and cyclable from the performance bar.
   *Done:* each built-in look loads and looks distinct; user presets are
   untouched; build + tests clean.
+
+---
+
+## Phase 6 — First feedback round on the performance build (2026-09-16)
+
+The user's notes after using the deployed build: the bar is right, so the dock
+panel's copies of it can go; reaction wants finer lines; raymarch wants more
+colour and movement; and several effects "affect the colour rather than the
+visual". Research round two (REFERENCES.md) looked for structural effects.
+
+- [x] **Trim the panel.** Level meters and the Mode section removed; the bar's
+  mode name opens a picker so direct selection isn't lost.
+- [x] **Reaction detail.** Detail (simulation resolution = line thickness),
+  named Pattern regimes, speckle seeding, colour varying across the field.
+- [x] **Raymarch colour + motion.** Thin-film iridescence (the iTunes nebula
+  sheen), six Lissajous satellites, travelling ripple.
+- [x] **Structural effects.** `tunnel`, `echo` and `shock` added; `quantize`
+  and `chroma` retired.
 
 ---
 

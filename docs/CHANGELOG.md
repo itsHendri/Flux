@@ -5,6 +5,90 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — Structural effects: tunnel, echo, shock
+
+"Some of the rest don't really look like they affect things much. It looks
+more like they affect the color rather than the visual." Fair on two counts:
+`quantize` only re-mapped colour (and in doing so overrode the theme), and
+`chroma` was a constant fringe. Both are retired. Three effects that change the
+picture's geometry replace them, each from this round's research
+(REFERENCES.md):
+
+- **tunnel** — every pixel re-expressed as (angle, 1/radius), so any mode
+  becomes the lining of an endless tube; depth scrolls (kicks surge it) and
+  angle offsets by depth to twist it. Mirror-repeat sampling avoids the seam
+  plain `fract` would put where the image's edges meet, and fog at the
+  vanishing point keeps it reading as depth.
+- **echo** — MilkDrop's video echo: a zoomed, optionally flipped copy of the
+  frame laid back over it (Geiss's echo_zoom / echo_alpha / echo_orient). It
+  turns slowly and bass pushes its zoom, so the two layers drift against each
+  other in time with the music. Screen-style layering adds light rather than
+  washing out.
+- **shock** — a ring on every kick that bends the image as it passes, with
+  the channels split across the front. No timer: `uBeat` decays exponentially,
+  so `1 - uBeat` is already an ease-out blast radius and `uBeat` its fading
+  strength; onsets throw a smaller second ring.
+
+Chain order puts tunnel before echo and kaleido (so they fold the tunnel), and
+shock before bloom (so the front blooms). The `coral` look swaps chroma for
+shock.
+
+Verified: build clean, 93/93 tests (the look guard confirms nothing references
+the retired controls). In the Preview browser `tunnel` wraps cells into a tube
+with a clear vanishing point, `echo` visibly doubles the cell grid, and `flow`
++ tunnel + kaleido + bloom makes an ornate kaleidoscopic tunnel. `shock` was
+proven with a temporary time-driven pulse standing in for the beat (removed
+before commit): the ring sits at the predicted radius and visibly bends the
+bars it crosses. The first strength was too faint for a note about effects not
+doing enough, so the displacement is now ~2.7× stronger (~35 px at the peak of
+a kick on an 800 px frame). The live beat-triggered version can't be caught
+in the pane, which only renders during a capture — worth a look in Chrome.
+All nine effects run at once with every mode and look; overlay empty.
+
+---
+
+## Phase 6 — Raymarch: iridescence and motion
+
+"More colour variation in the blob and more additional movement." The flat
+colour had a specific cause: the final theme tint was indexed by brightness,
+so every lit patch was pulled to the same stop. It's now indexed by a
+thin-film iridescence phase (grazing angle, surface orientation, position) —
+the oil-slick sheen of the iTunes Magnetosphere nebula — blended in by a new
+Iridescence control. Three orbiting spheres became six on Lissajous orbits
+with no simple ratios, so the cluster keeps re-forming; the system tumbles on
+two axes, kicks throw the satellites outward, and the surface ripple travels.
+
+Verified: pink-violet-cyan sheen under Ultra, glassy blue under Ice, different
+satellite arrangements in captures seconds apart.
+
+---
+
+## Phase 6 — Reaction: finer lines, named patterns, colour
+
+"Reaction can have more detail, maybe the lines are thinner." Gray-Scott
+features are a fixed number of cells wide, so thickness *is* resolution:
+**Detail** sets 384 / 720 (default) / 1080 simulation rows, with iterations
+scaled so Growth stays the same speed. **Pattern** picks one of five regimes
+from Munafo's map (Maze, Coral, Mitosis, Spots, Worms) and writes Feed/Kill,
+declared before them so a preset's tuned values still win on recall. Slow
+regimes left the screen empty from a dozen seeds, so seeding adds a sparse
+per-cell speckle; and a slow noise field now drifts regions along the theme
+ramp, since concentration alone put every line on one colour.
+
+Verified: 93/93 tests; thin maze at Fine, dense texture at Ultra, cells at
+Mitosis, 120 fps; cyan-to-magenta across the frame under Ultra.
+
+---
+
+## Phase 6 — The panel stops duplicating the bar
+
+The Mode section duplicated the bar's cycler and the level meters were
+read-outs nothing responded to; both removed. So direct selection isn't lost
+with nine modes, the bar's mode name opens a 3×3 picker (outside click and
+Escape close it; the bar won't idle out while it's open).
+
+---
+
 ## PHASE 5 COMPLETE — review
 
 Seven verified commits, from a research sweep of the iTunes visualizers and
