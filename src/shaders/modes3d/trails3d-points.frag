@@ -16,5 +16,6 @@ void main() {
   vec3 tail = vec3(0.84, 0.60, 1.0);
   vec3 col = mix(head, tail, smoothstep(0.0, 3.5, vAge));
   float lum = 0.45 + uLevel * 0.5 + uBeat * 0.4 + uHigh * 0.35;
+  col = themed(col, vAge / LIFE);
   outColor = vec4(col * m * fade * lum * mix(0.7, 1.6, uGain), 1.0);
 }

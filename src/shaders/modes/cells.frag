@@ -80,5 +80,5 @@ vec3 render(vec2 uv) {
 
   col *= (0.7 + uLevel * 0.9 + uBeat * 0.3);
   col *= mix(0.7, 1.6, uGain);
-  return col;
+  return themed(col, nearestId);
 }

@@ -11,12 +11,12 @@ vec3 render(vec2 uv) {
   float r = length(p);
 
   // Slow ambient glow field behind everything; level lifts it.
-  vec3 bg = hsv(0.6 + uTime * 0.015, 0.55, 0.05 + uLevel * 0.08) * (1.2 - r * 0.5);
+  vec3 bg = themed(hsv(0.6 + uTime * 0.015, 0.55, 0.05 + uLevel * 0.08), 0.15) * (1.2 - r * 0.5);
 
   // Placeholder before any upload: a soft breathing ring.
   if (uLogoAspect <= 0.0) {
     float ring = abs(r - (0.45 + 0.04 * sin(uTime * 2.0) + uBass * 0.08));
-    vec3 col = bg + hsv(uTime * 0.05, 0.4, 1.0) * smoothstep(0.05, 0.0, ring) * 0.35;
+    vec3 col = bg + themed(hsv(uTime * 0.05, 0.4, 1.0), 0.5) * smoothstep(0.05, 0.0, ring) * 0.35;
     return col * mix(0.7, 1.6, uGain);
   }
 

@@ -39,5 +39,5 @@ vec3 render(vec2 uv) {
   col += hsv(0.12 + uMid * 0.25, 0.7, 1.0) * veins * (0.3 + uMid) * uPlasmaVeins;
 
   col += vec3(0.015, 0.02, 0.03);
-  return col;
+  return themed(col, n1);
 }

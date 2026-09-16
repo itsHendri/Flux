@@ -42,5 +42,5 @@ vec3 render(vec2 uv) {
 
   // Vignette.
   col *= 1.0 - 0.4 * smoothstep(0.55, 1.5, r);
-  return col;
+  return themed(col, r * 0.6);
 }

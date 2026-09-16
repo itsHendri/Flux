@@ -23,6 +23,7 @@ function rgbToHex(rgb: [number, number, number]): string {
  * an `[r,g,b]` triple.
  */
 type ApplyFn = (v: number | number[]) => void;
+type ChangeFn = (v: number | number[]) => void;
 
 export class ControlPanel {
   private readonly values: Record<string, number | number[]> = {};
@@ -31,6 +32,10 @@ export class ControlPanel {
   // Per-widget repaint hooks so values applied programmatically (presets)
   // update the visible widget state too. Keyed by glslName.
   private readonly appliers = new Map<string, ApplyFn>();
+  // Subscribers to a control's value, however it changed — widget, hotkey,
+  // MIDI or preset recall. Lets one control drive others (Theme writes the
+  // theme colours) without anything reaching into the store behind our back.
+  private readonly listeners = new Map<string, ChangeFn[]>();
 
   /**
    * @param controls rendered as widgets in the Controls section.
@@ -124,6 +129,7 @@ export class ControlPanel {
       const v = Number(input.value);
       this.values[def.glslName] = v;
       val.textContent = v.toFixed(2);
+      this.emit(def.glslName, v);
     });
     this.appliers.set(def.glslName, (v) => {
       if (typeof v !== 'number') return;
@@ -149,6 +155,7 @@ export class ControlPanel {
       const next = this.values[def.glslName] !== 1;
       this.values[def.glslName] = next ? 1 : 0;
       paint(next);
+      this.emit(def.glslName, next ? 1 : 0);
     });
     this.appliers.set(def.glslName, (v) => paint(v === 1));
     wrap.append(row, btn);
@@ -170,6 +177,7 @@ export class ControlPanel {
       btn.addEventListener('click', () => {
         this.values[def.glslName] = opt.value;
         for (const b of buttons) b.classList.toggle('active', b === btn);
+        this.emit(def.glslName, opt.value);
       });
       buttons.push(btn);
       group.appendChild(btn);
@@ -194,7 +202,9 @@ export class ControlPanel {
     input.className = 'color-input';
     input.value = rgbToHex(init);
     input.addEventListener('input', () => {
-      this.values[def.glslName] = hexToRgb(input.value);
+      const rgb = hexToRgb(input.value);
+      this.values[def.glslName] = rgb;
+      this.emit(def.glslName, rgb);
     });
     this.appliers.set(def.glslName, (v) => {
       if (Array.isArray(v) && v.length === 3) {
@@ -202,6 +212,19 @@ export class ControlPanel {
       }
     });
     wrap.append(row, input);
+  }
+
+  /** Subscribe to a control's value. Fires for every path that writes it. */
+  onChange(glslName: string, cb: ChangeFn): void {
+    const list = this.listeners.get(glslName);
+    if (list) list.push(cb);
+    else this.listeners.set(glslName, [cb]);
+  }
+
+  private emit(glslName: string, v: number | number[]): void {
+    const list = this.listeners.get(glslName);
+    if (!list) return;
+    for (const cb of list) cb(v);
   }
 
   /** Current control values keyed by glslName. */
@@ -218,6 +241,7 @@ export class ControlPanel {
   /** Write one scalar value — the path external widgets (Effects row) use. */
   setValue(glslName: string, value: number): void {
     this.values[glslName] = value;
+    this.emit(glslName, value);
   }
 
   /**
@@ -230,6 +254,7 @@ export class ControlPanel {
       if (!(glslName in this.values)) continue;
       this.values[glslName] = Array.isArray(v) ? v.slice() : v;
       this.appliers.get(glslName)?.(v);
+      this.emit(glslName, v);
     }
   }
 }

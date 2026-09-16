@@ -46,5 +46,5 @@ vec3 render(vec2 uv) {
 
   // Vignette.
   col *= 1.0 - 0.32 * length(uv - 0.5);
-  return col;
+  return themed(col, t);
 }

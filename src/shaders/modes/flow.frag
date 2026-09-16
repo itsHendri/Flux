@@ -57,5 +57,5 @@ vec3 render(vec2 uv) {
   col += vec3(0.7, 0.85, 1.0) * fil * (0.15 + uHigh * 0.5);
 
   col *= mix(0.7, 1.7, uGain);
-  return col;
+  return themed(col, f);
 }

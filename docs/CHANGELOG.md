@@ -5,6 +5,55 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 3 — Global theme palettes + hotkeys
+
+FLUX looked like eight instruments: every mode invented its own colour, so
+switching modes mid-set switched palettes too. It now has one global colour,
+chosen in the panel or on the `1`-`5` keys, that all eight modes bend toward.
+
+- **Five themes** (`src/ui/themes.ts`) — Ultra, Ember, Ice, Acid, Mono; three
+  stops each. The table lives in TypeScript because two places need it: the
+  uniforms the shaders read, and the swatches the UI shows.
+- **`themed(col, t)`** (`common.glsl`) — the whole idea in four lines. Modes
+  keep their own colour logic and hand the result over on the way out;
+  `themed` takes the hue from the theme ramp and the **brightness from the
+  mode**, dividing out the tint's own luminance. That's what stops a dark
+  stop from dimming the image or a pale one from blowing it out, so contrast,
+  highlights and shape survive a full re-tint — at Tint 1.0 cells reads as
+  real fire under Ember and still shows every cell edge.
+- **Where each mode indexes the ramp** matters as much as the ramp: bars by
+  bar position, cells by cell id, plasma and flow by their field value,
+  raymarch by brightness, trails3d by particle age (heads and tails take
+  different stops, so the comet read survives). The uploaded logo is *not*
+  tinted — only the glow field behind it — because re-colouring somebody's
+  logo is vandalism.
+- **Tint** (`uThemeMix`) defaults to 0.85: high enough that a theme reads as
+  itself, low enough to keep a trace of each mode's own colour. Pull it to 0
+  for the native look.
+- **Hotkeys** (`src/ui/hotkeys.ts`) — the seam, not just the digits: one
+  window listener, bindings of code + description + action, and a shared
+  `isTypingTarget` guard so a focused field keeps its spaces and digits (a
+  focused button already fires its own click on Space). Space moved onto it.
+- **`ControlPanel.onChange`** — the plumbing that keeps this honest. The
+  Theme selector doesn't write the colours; a subscriber does, so hotkeys,
+  MIDI and preset recall all reach the same code. The three colour controls
+  are widgetless members of the normal store, so they're declared, uploaded
+  and serialised like any other control: a preset restores the colours it was
+  saved with even if the table later changes.
+- `luma()` is now defined once in `common.glsl` — the bloom bright-pass had
+  its own identical copy, which collided the moment the theme needed one.
+
+Verified: build clean, 60/60 tests. In the Preview browser, all 8 modes and
+all 7 passes compile and run with the new helpers (error overlay empty after
+cycling every one, and the console gained no new errors). Themes were
+switched by hotkey with the panel's swatch following: cells went violet
+(Ultra) → fire (Ember), flow went cold blue (Ice), bars went magenta/lime
+(Acid) — three modes, visibly re-tinted, screenshotted. A preset saved under
+Acid stored `theme: 3` plus `#ff2fd0` as themeA, and recalled correctly
+after switching to Ultra.
+
+---
+
 ## Phase 3 — Audio file playback source
 
 FLUX can now be driven by a track, not just the room. A second `AudioSource`

@@ -1,4 +1,5 @@
 import type { ControlDef } from '../core/state.ts';
+import { themeOptions } from './themes.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
@@ -40,6 +41,28 @@ export const CONTROLS: ControlDef[] = [
       { label: 'ACES', value: 2 },
     ],
     default: 0,
+  },
+  {
+    // The instrument's global colour: which theme, and how far every mode is
+    // pulled toward it (0 = each mode's own palette, 1 = fully re-tinted).
+    // Keys 1-5 switch themes; the colours themselves ride in uThemeA/B/C.
+    id: 'theme',
+    name: 'Theme',
+    glslName: 'uTheme',
+    type: 'select',
+    options: themeOptions(),
+    default: 0,
+  },
+  {
+    id: 'themeMix',
+    name: 'Tint',
+    glslName: 'uThemeMix',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    // High by default: at 0.85 a theme actually reads as itself while a trace
+    // of each mode's own colour survives. Pull it down for the native look.
+    default: 0.85,
   },
   {
     id: 'warp',

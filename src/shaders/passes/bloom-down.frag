@@ -11,9 +11,8 @@
 
 uniform float uFirstMip;
 
-float luma(vec3 c) {
-  return dot(c, vec3(0.2126, 0.7152, 0.0722));
-}
+// luma() is the same Rec. 709 weighting the theme uses, so it lives in
+// common.glsl now rather than being defined twice.
 
 vec3 knee(vec3 c) {
   float l = luma(c);

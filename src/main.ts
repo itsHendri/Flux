@@ -16,6 +16,8 @@ import {
   requestAudioPermission,
 } from './audio/devices.ts';
 import { CONTROLS } from './ui/controls.ts';
+import { THEMES, THEME_COLOR_CONTROLS, themeValues } from './ui/themes.ts';
+import { Hotkeys } from './ui/hotkeys.ts';
 import { passToggleDefs, passToggleUniform } from './core/state.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
@@ -63,7 +65,10 @@ document.body.appendChild(panelToggle);
 // declared as uniforms, stored alongside the other control values, read by the
 // Renderer to build the chain. One serialisable home for all live state.
 const passToggles = passToggleDefs(PASSES.map((p) => p.name));
-const allControls = [...CONTROLS, ...passToggles];
+// The theme's three colours are controls with no widget of their own: the
+// Theme selector writes them, every shader reads them (see themed() in
+// common.glsl), and presets carry them like any other value.
+const allControls = [...CONTROLS, ...passToggles, ...THEME_COLOR_CONTROLS];
 
 let renderer: Renderer;
 try {
@@ -89,7 +94,10 @@ const audio = new AudioEngine({ fftSize: 2048 });
 // --- UI -------------------------------------------------------------------
 // The pass toggles are widgetless here — the Effects button row below is
 // their UI, writing through setValue into the same store.
-const controlPanel = new ControlPanel(panel, CONTROLS, passToggles);
+const controlPanel = new ControlPanel(panel, CONTROLS, [
+  ...passToggles,
+  ...THEME_COLOR_CONTROLS,
+]);
 const meters = new Meters(panel);
 
 const isPassEnabled = (name: string): boolean =>
@@ -129,6 +137,23 @@ function selectMode(name: string): void {
 
 // Highlight a default mode up front so the chip shows as selected on load.
 if (MODES.length > 0) selectMode(MODES[0].name);
+
+// --- Theme ------------------------------------------------------------------
+// One selector re-tints the whole instrument: picking a theme writes its three
+// colours into the store, and every mode blends toward them by Tint. Listening
+// on the control (rather than on the widget) means hotkeys, MIDI and preset
+// recall all land here too — one path, whatever moved the value.
+const hotkeys = new Hotkeys();
+
+controlPanel.onChange('uTheme', (v) => {
+  if (typeof v === 'number') controlPanel.applyValues(themeValues(v));
+});
+
+THEMES.forEach((theme, i) => {
+  hotkeys.bind(`Digit${i + 1}`, `Theme: ${theme.name}`, () => {
+    controlPanel.applyValues({ uTheme: i });
+  });
+});
 
 // Post-pass effect toggles. Each registered pass is a toggle button writing
 // its uFx* control value — the single home for pass-enable state, which the
@@ -509,18 +534,9 @@ const transport = new Transport(panel, {
   });
 }
 
-// Space = play/pause, unless a widget owns the keystroke (a focused button
-// would fire its own click; typing a preset name needs its spaces).
-window.addEventListener('keydown', (e) => {
-  if (e.code !== 'Space' || e.repeat) return;
-  const t = e.target as HTMLElement | null;
-  const tag = t?.tagName;
-  if (tag === 'INPUT' || tag === 'SELECT' || tag === 'TEXTAREA' || tag === 'BUTTON') return;
-  if (t?.isContentEditable) return;
-  if (!transport.hasMedia) return;
-  e.preventDefault();
-  transport.toggle();
-});
+// Space = play/pause the loaded file (the hotkey seam stands down for
+// whatever is focused — see isTypingTarget).
+hotkeys.bind('Space', 'Play / pause the loaded file', () => transport.toggle());
 
 // Keep the device list fresh as hardware comes and goes (controller plugged
 // in, BlackHole installed/removed) — no manual rescan needed.

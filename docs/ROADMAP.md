@@ -179,7 +179,7 @@ theme palettes. Adapted for FLUX, in build order:
   and a seek scrubber + time readout. Mic stays the default live input.
   *Done:* a dropped file plays, drives the visuals, scrubs, and can be
   swapped back to mic; build + Preview clean.
-- [ ] **Global theme palettes + hotkeys.** A small set (~5) of named color
+- [x] **Global theme palettes + hotkeys.** A small set (~5) of named color
   themes as a typed control (serialises into presets), driving a global
   palette uniform trio that modes blend into their cosine palettes; keyboard
   shortcuts `1`–`5` switch themes, and a general hotkey seam lands with it

@@ -104,5 +104,5 @@ vec3 render(vec2 uv) {
 
   // Overall brightness control.
   col *= mix(0.7, 1.6, uGain);
-  return col;
+  return themed(col, 0.15 + luma(col) * 0.6);
 }

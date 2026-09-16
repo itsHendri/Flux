@@ -41,6 +41,9 @@ npm test         # run the unit tests (vitest)
 - **Beat detection** — spectral-flux onset detectors feed `uBeat` (kick) and
   `uOnset` (any transient) pulses to every shader, beyond the smoothed
   bass/mid/high/level bands.
+- **Themes** — five global palettes (keys `1`-`5`) that every mode bends its
+  own colour toward, keeping the mode's brightness so contrast survives; a
+  Tint control sets how far. **Hotkeys** — Space plays/pauses a loaded file.
 - **Presets** — mode + every control + effect state saved/recalled from
   localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,
   persisted. **Output** — fullscreen and a draggable Picture-in-Picture
@@ -71,8 +74,11 @@ npm test         # run the unit tests (vitest)
 - **UI** (`src/ui/`) — control panel generated from a single typed schema
   (`controls.ts`: slider/toggle/select/color, scoped per mode/pass — pass
   toggles live in the same serialisable store), level meters, mode switcher,
-  device picker, presets, MIDI learn, logo upload, output controls. Vanilla
-  TS, no framework, so nothing churns at 60fps.
+  device picker, file transport, theme selector, presets, MIDI learn, logo
+  upload, output controls. Vanilla TS, no framework, so nothing churns at
+  60fps. `onChange` on the control store lets one control drive others (Theme
+  writes the theme colours) so hotkeys, MIDI and presets share one path;
+  `hotkeys.ts` owns the keyboard.
 - **State** (`src/core/state.ts`, `src/presets/`) — `FrameState.controls` is
   the complete serialisable snapshot; presets round-trip it by stable ids.
 - **Errors** (`src/core/errors.ts`) — every failure surfaces on-screen; nothing

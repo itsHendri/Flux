@@ -35,3 +35,33 @@ vec3 hsv(float h, float s, float v) {
   vec3 p = abs(fract(h + k / 6.0) * 6.0 - 3.0);
   return v * mix(vec3(1.0), clamp(p - 1.0, 0.0, 1.0), s);
 }
+
+// --- Global theme ----------------------------------------------------------
+// uThemeA/B/C are the three stops of the theme chosen in the panel (keys 1-5);
+// uThemeMix is how far modes are pulled toward it. Modes keep their own colour
+// logic and hand the result to themed() on the way out.
+
+float luma(vec3 c) {
+  return dot(c, vec3(0.2126, 0.7152, 0.0722));
+}
+
+// The theme as a cyclic palette: t wraps A -> B -> C -> A, so anything a mode
+// already uses to index a palette (a cell id, a bar position, a field value)
+// indexes the theme too.
+vec3 themeRamp(float t) {
+  float x = fract(t) * 3.0;
+  float f = smoothstep(0.0, 1.0, fract(x));
+  if (x < 1.0) return mix(uThemeA, uThemeB, f);
+  if (x < 2.0) return mix(uThemeB, uThemeC, f);
+  return mix(uThemeC, uThemeA, f);
+}
+
+// Re-tint a colour: hue from the theme, brightness from the mode. Dividing out
+// the tint's own luminance is what keeps a dark stop from dimming the image and
+// a pale one from blowing it out, so highlights, contrast and shape survive —
+// the mode still looks like itself, in the theme's colours.
+vec3 themed(vec3 col, float t) {
+  vec3 tint = themeRamp(t);
+  vec3 lit = tint * (luma(col) / max(luma(tint), 0.001));
+  return mix(col, lit, uThemeMix);
+}
