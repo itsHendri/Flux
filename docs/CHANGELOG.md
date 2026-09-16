@@ -5,6 +5,41 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — Waveform replaces pulse
+
+The oldest read in the genre, and the one FLUX couldn't do at all until the
+audio texture landed: the actual time-domain signal drawn as a glowing line.
+iTunes inherited it from SoundJam, SoundJam from Winamp, and all of them
+mirrored it into symmetry. `pulse` is retired to make room — the user's call
+("not my favourite kind of visually").
+
+- **Three traces** (`Trace` control): **Line**, **Mirror** (the frame folded
+  about the centre so the trace and its reflection are one shape rather than
+  two) and **Radial** (angle standing in for time).
+- **Even line thickness.** Distance to the curve divides the vertical
+  distance by the slope; without that a steep section of the trace draws
+  several times fatter than a flat one, which is the tell of a naive
+  waveform shader.
+- **The ring has no seam.** Wrapping the angle puts the start and end of the
+  sampling window next to each other — unrelated samples, so the ring breaks
+  visibly at one edge. Folding the angle instead puts them on opposite sides
+  and makes the ring symmetric top to bottom, which this family of
+  visualizers does anyway.
+- **Echoes** are the same trace at growing phase offsets, each dimmer and
+  further along the theme ramp, so the line drags a coloured ribbon.
+- It holds still because the sampling window is triggered on a rising zero
+  crossing (Phase 5's first commit) — without that the trace slides sideways
+  every frame and none of this reads.
+
+Verified: build clean, 80/80 tests. In the Preview browser all three traces
+render against a played file and follow the signal: Mirror gives the
+symmetric iTunes read, Line the oscilloscope with its ribbon, Radial a clean
+closed loop with the seam gone. `pulse` is absent from the switcher and the
+bar's cycler; the 8 modes and 8 passes all still compile and run together.
+Overlay empty, no console errors.
+
+---
+
 ## Phase 5 — Warp feedback: MilkDrop's signature move
 
 FLUX has had a history buffer since Phase 1 and used it for exactly one thing:

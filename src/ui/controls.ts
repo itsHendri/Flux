@@ -3,7 +3,7 @@ import { themeOptions } from './themes.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
 const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['pulse', 'plasma', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
+const SCALE_MODES = ['waveform', 'plasma', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
 
 /**
  * THE uniform schema — single source of truth.
@@ -107,14 +107,47 @@ export const CONTROLS: ControlDef[] = [
     modes: ['bars'],
   },
   {
-    id: 'petals',
-    name: 'Petals',
-    glslName: 'uPetals',
-    min: 3,
-    max: 10,
+    id: 'waveStyle',
+    name: 'Trace',
+    glslName: 'uWaveStyle',
+    type: 'select',
+    options: [
+      { label: 'Line', value: 0 },
+      { label: 'Mirror', value: 1 },
+      { label: 'Radial', value: 2 },
+    ],
+    default: 1,
+    modes: ['waveform'],
+  },
+  {
+    id: 'waveAmp',
+    name: 'Amplitude',
+    glslName: 'uWaveAmp',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.55,
+    modes: ['waveform'],
+  },
+  {
+    id: 'waveGlow',
+    name: 'Glow',
+    glslName: 'uWaveGlow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.45,
+    modes: ['waveform'],
+  },
+  {
+    id: 'waveLayers',
+    name: 'Echoes',
+    glslName: 'uWaveLayers',
+    min: 1,
+    max: 6,
     step: 1,
-    default: 6,
-    modes: ['pulse'],
+    default: 3,
+    modes: ['waveform'],
   },
   {
     id: 'plasmaVeins',

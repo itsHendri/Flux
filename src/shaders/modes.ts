@@ -1,6 +1,6 @@
 import type { ShaderMode } from '../render/Renderer.ts';
 import bars from './modes/bars.frag?raw';
-import pulse from './modes/pulse.frag?raw';
+import waveform from './modes/waveform.frag?raw';
 import plasma from './modes/plasma.frag?raw';
 import raymarch from './modes/raymarch.frag?raw';
 import flow from './modes/flow.frag?raw';
@@ -10,7 +10,7 @@ import logo from './modes/logo.frag?raw';
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
   { name: 'bars', fragSource: bars },
-  { name: 'pulse', fragSource: pulse },
+  { name: 'waveform', fragSource: waveform },
   { name: 'plasma', fragSource: plasma },
   { name: 'raymarch', fragSource: raymarch },
   { name: 'flow', fragSource: flow },

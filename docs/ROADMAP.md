@@ -265,7 +265,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   *Done:* enabling it produces tunnels/spirals that hold structure over
   frames, composes with kaleidoscope, and is a no-op when off; build clean.
 
-- [ ] **New mode: waveform — the classic iTunes read.** *(Replaces `pulse`
+- [x] **New mode: waveform — the classic iTunes read.** *(Replaces `pulse`
   — user confirmed 2026-09-16.)* The time-domain waveform
   drawn as a glowing line with mirror symmetry, a radial/Lissajous option,
   and history offsets so the line leaves a ribbon. Depends on the audio

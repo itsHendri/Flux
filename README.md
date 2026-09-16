@@ -30,9 +30,10 @@ npm test         # run the unit tests (vitest)
 
 ## What it has (Phase 2)
 
-- **7 modes** — bars, pulse, plasma, raymarched SDF, domain-warp flow, Voronoi
-  cells, and an uploaded-logo mode (image rides a bass ripple, pops on the
-  beat). **8 toggleable post-effects** — MilkDrop-style warp feedback,
+- **8 modes** — bars (a real log-frequency spectrum), waveform (the
+  time-domain trace: line, mirrored or radial), plasma, raymarched SDF,
+  domain-warp flow, Voronoi cells, an uploaded-logo mode, and trails3d (GPGPU
+  curl-noise particles). **8 toggleable post-effects** — MilkDrop-style warp feedback,
   feedback trails, dither
   (Bayer/IGN/blue-noise), palette quantize, mip-chain bloom, chromatic
   aberration, kaleidoscope, scanline/VHS.
