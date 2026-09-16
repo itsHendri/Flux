@@ -272,7 +272,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   texture. *Done:* the drawn line visibly tracks the waveform (a sine reads
   as a sine); ≥3 controls; build + Preview clean.
 
-- [ ] **Re-cast `plasma` as Gray-Scott reaction-diffusion.** *(User
+- [x] **Re-cast `plasma` as Gray-Scott reaction-diffusion.** *(User
   confirmed 2026-09-16: re-cast, don't retire.)* It and `flow` are both
   domain-warped fbm today. Replace its internals with a real ping-pong
   simulation — organic growth rather than a noise field — with feed/kill

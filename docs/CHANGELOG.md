@@ -5,6 +5,52 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — plasma becomes reaction: a simulation, not a field
+
+`plasma` and `flow` were both domain-warped fbm, which is why the user saw
+them as the same thing. `reaction` takes the slot with something structurally
+different: **Gray-Scott reaction-diffusion**, two chemicals on a ping-pong
+buffer where what you see now is the consequence of what was there a second
+ago. Nothing draws the coral, worms or dividing cells — they're what the
+equations do at a given feed/kill pair.
+
+- **A CustomMode, not a fragment mode**, because a fragment mode can't hold
+  state. It owns its buffers and steps them 12 times a frame by default: one
+  Euler step barely moves, and the pattern has to grow at a watchable rate.
+  `Growth` is that iteration count — this mode's perf story, the way
+  `Particles` is trails3d's.
+- **Feed and Kill are the controls**, ranged to the *usable* window rather
+  than the mathematical one: the living region of this model is narrow, and
+  outside it the pattern either dies out or floods the frame. Audio nudges
+  both, but only slightly, for the same reason.
+- **Kicks spray fresh B**, latched on the rising edge so one kick means one
+  spray rather than one per sim step — the pattern keeps being reborn instead
+  of settling into a static maze.
+- **Re-entering the mode reseeds.** The growth is the interesting part and a
+  settled maze is the dull end of it — and at some feed/kill pairs the
+  reaction dies out completely, where resuming would hand you a black screen
+  with no way to restart it.
+- **Lit by its own gradient**: a central-difference normal off the B field
+  gives the raised, coral-like read instead of a flat stain, and the rims take
+  a second stop of the theme ramp.
+- The float-texture trap from trails3d applies here too and is handled the
+  same way: data textures are explicitly NEAREST, since a LINEAR-filtered
+  float texture is sampling-incomplete and every fetch silently returns zero.
+
+Verified: build clean, 80/80 tests. In the Preview browser the simulation
+does what the model says it should: seed blobs expand into rings, rings
+divide, and by ~4 s the frame is the classic labyrinth; moving Feed to 0.055
+and Kill to 0.062 shifts it to the finer coral regime; the theme re-tints it
+whole (Ember gives orange coral); switching away and back reseeds into fresh
+young colonies. `plasma` is gone from the switcher. All 8 modes and 8 passes
+run together, overlay empty, no console errors.
+
+Sources: Turing 1952; Pearson's parameterisation via
+[Munafo's atlas](http://www.mrob.com/pub/comp/xmorphia/index.html);
+[Karl Sims' tutorial](https://www.karlsims.com/rd.html) (see REFERENCES.md).
+
+---
+
 ## Phase 5 — Waveform replaces pulse
 
 The oldest read in the genre, and the one FLUX couldn't do at all until the

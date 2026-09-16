@@ -22,6 +22,7 @@ import { passToggleDefs, passToggleUniform } from './core/state.ts';
 import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { Trails3DMode } from './modes3d/Trails3DMode.ts';
+import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { Meters } from './ui/Meters.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -89,7 +90,12 @@ for (const mode of MODES) renderer.registerMode(mode);
 // Custom-draw (true 3D) modes — same switcher, same controls, same post
 // chain. Only successfully registered ones get switcher buttons (a mode can
 // refuse, e.g. trails3d without float render targets).
-const MODES_3D = [new Trails3DMode()].filter((m) => renderer.registerCustomMode(m));
+// Custom-draw modes: `reaction` holds a chemical simulation, `trails3d` a
+// particle one. Both need state across frames, which a fragment mode can't
+// have, and both refuse to register without float render targets.
+const MODES_3D = [new ReactionMode(), new Trails3DMode()].filter((m) =>
+  renderer.registerCustomMode(m),
+);
 for (const pass of PASSES) renderer.registerPass(pass);
 
 // --- Audio ----------------------------------------------------------------

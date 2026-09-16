@@ -2,8 +2,8 @@ import type { ControlDef } from '../core/state.ts';
 import { themeOptions } from './themes.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
-const WARP_MODES = ['plasma', 'raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['waveform', 'plasma', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
+const WARP_MODES = ['raymarch', 'flow', 'cells'];
+const SCALE_MODES = ['waveform', 'raymarch', 'flow', 'cells', 'logo', 'trails3d'];
 
 /**
  * THE uniform schema — single source of truth.
@@ -150,14 +150,47 @@ export const CONTROLS: ControlDef[] = [
     modes: ['waveform'],
   },
   {
-    id: 'plasmaVeins',
-    name: 'Veins',
-    glslName: 'uPlasmaVeins',
+    // Gray-Scott's two parameters. The living region is narrow — outside it
+    // the pattern either dies out or floods — so the ranges here are the
+    // usable window, not the mathematical one (Pearson/Munafo, REFERENCES.md).
+    id: 'rdFeed',
+    name: 'Feed',
+    glslName: 'uRdFeed',
+    min: 0.02,
+    max: 0.06,
+    step: 0.0005,
+    default: 0.037,
+    modes: ['reaction'],
+  },
+  {
+    id: 'rdKill',
+    name: 'Kill',
+    glslName: 'uRdKill',
+    min: 0.05,
+    max: 0.068,
+    step: 0.0005,
+    default: 0.0625,
+    modes: ['reaction'],
+  },
+  {
+    id: 'rdSpeed',
+    name: 'Growth',
+    glslName: 'uRdSpeed',
+    min: 2,
+    max: 24,
+    step: 1,
+    default: 12,
+    modes: ['reaction'],
+  },
+  {
+    id: 'rdAudio',
+    name: 'Chem Drive',
+    glslName: 'uRdAudio',
     min: 0,
     max: 1,
     step: 0.01,
-    default: 0.7,
-    modes: ['plasma'],
+    default: 0.6,
+    modes: ['reaction'],
   },
   {
     id: 'rayGlow',

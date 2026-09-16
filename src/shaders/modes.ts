@@ -1,7 +1,6 @@
 import type { ShaderMode } from '../render/Renderer.ts';
 import bars from './modes/bars.frag?raw';
 import waveform from './modes/waveform.frag?raw';
-import plasma from './modes/plasma.frag?raw';
 import raymarch from './modes/raymarch.frag?raw';
 import flow from './modes/flow.frag?raw';
 import cells from './modes/cells.frag?raw';
@@ -11,7 +10,6 @@ import logo from './modes/logo.frag?raw';
 export const MODES: ShaderMode[] = [
   { name: 'bars', fragSource: bars },
   { name: 'waveform', fragSource: waveform },
-  { name: 'plasma', fragSource: plasma },
   { name: 'raymarch', fragSource: raymarch },
   { name: 'flow', fragSource: flow },
   { name: 'cells', fragSource: cells },
