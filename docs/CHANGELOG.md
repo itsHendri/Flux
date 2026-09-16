@@ -5,6 +5,39 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 5 — Bars stops faking it
+
+`bars` has always been a lie: `barHeight()` spread three band values across
+the columns with Gaussian weights and multiplied in animated noise "so
+neighbours dance independently". It looked alive because it *was* animated —
+just not by the music. A single sine tone lit up the whole display.
+
+- **Every column now reads its own slice of the spectrum**, averaged over four
+  samples across the slice so it reads a band rather than one arbitrary bin
+  (which is what stops a tall thin column flickering as a note drifts). The
+  noise wobble is gone; it has nothing left to hide.
+- **The axis is logarithmic** — `spectrumLog()` spans nine octaves, roughly
+  30 Hz to 15 kHz. An octave gets the same width wherever it sits, so bass
+  doesn't crush into two columns and the top end isn't a dead zone. Below 30 Hz
+  is rumble and above 15 kHz is air; giving either room only spends display on
+  silence.
+- **`SpectrumSmoother`** gives all 512 bins the same fast-attack /
+  slow-release envelope the bands get (12 ms up, 220 ms down, framerate
+  independent). Raw FFT bytes flicker — the analyser's own smoothing is off
+  because it's symmetric and would mute transients — so bars now snap up on a
+  hit and settle, without any wobble faked in the shader.
+
+Verified: build clean, 80/80 tests (the smoother's attack/release asymmetry,
+per-bin independence, framerate independence and reset are all unit-tested).
+In the Preview browser, an exponential sweep from 30 Hz to 15 kHz walks a
+single peak across the display, and it lands where the arithmetic says: at
+≈72 Hz the peak is at x≈0.13, at ≈930 Hz at x≈0.5, at ≈6.8 kHz at x≈0.86,
+each within a bar's width of prediction — and the level meters follow it from
+bass to mid to high. A single sine now lights a single bar. Overlay empty,
+no console errors.
+
+---
+
 ## Phase 5 — The audio texture: shaders can finally see the sound
 
 Until now a FLUX shader got six numbers — bass, mid, high, level, beat,

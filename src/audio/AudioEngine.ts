@@ -3,7 +3,12 @@ import { EnvelopeFollower } from './EnvelopeFollower.ts';
 import { analyseBands } from './bands.ts';
 import { OnsetDetector } from './OnsetDetector.ts';
 import type { AudioSource } from './sources.ts';
-import { packAudioTexture, silentAudioTexture } from './audioTexture.ts';
+import {
+  AUDIO_TEX_WIDTH,
+  packAudioTexture,
+  silentAudioTexture,
+} from './audioTexture.ts';
+import { SpectrumSmoother } from './SpectrumSmoother.ts';
 
 export interface AudioEngineOptions {
   fftSize?: number;
@@ -35,6 +40,9 @@ export class AudioEngine {
   // The 512x2 spectrum+waveform texture data, refilled in place each tick —
   // one allocation for the life of the app rather than one per frame.
   private readonly audioTex = silentAudioTexture();
+  // The spectrum row gets the same fast-attack/slow-release treatment the
+  // bands get — raw FFT bytes flicker, and a flickering spectrum draws badly.
+  private readonly spectrumSmoother = new SpectrumSmoother(AUDIO_TEX_WIDTH);
 
   constructor(opts: AudioEngineOptions = {}) {
     this.ctx = new AudioContext();
@@ -80,6 +88,7 @@ export class AudioEngine {
     this.envLevel.reset();
     this.beatDetector.reset();
     this.onsetDetector.reset();
+    this.spectrumSmoother.reset();
   }
 
   /**
@@ -99,6 +108,7 @@ export class AudioEngine {
     this.analyser.getByteFrequencyData(this.freqData);
     this.analyser.getByteTimeDomainData(this.timeData);
     packAudioTexture(this.freqData, this.timeData, this.audioTex);
+    this.spectrumSmoother.update(this.audioTex.subarray(0, AUDIO_TEX_WIDTH), dt);
 
     const raw = analyseBands(
       this.freqData,

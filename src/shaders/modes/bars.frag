@@ -1,21 +1,27 @@
-// BARS — a lively multi-bar spectrum. The three bands are spread across many
-// columns with smooth weighting, and each bar carries its own animated noise
-// so neighbours dance independently rather than moving as three blocks.
+// BARS — a spectrum analyser that actually reads the spectrum.
+//
+// Each column takes its height from the FFT (uAudio row 0) over its own slice
+// of a log frequency axis, so an octave gets the same width wherever it sits —
+// bass doesn't crush into two columns and the top end isn't a dead zone. The
+// per-bin envelope follower lives in the AudioEngine, so bars snap up on a hit
+// and settle smoothly without any wobble faked in here.
+//
+// Steering: uBarCount = columns, uBarGlow = halo, uGain = brightness.
 
-// Height for a bar at normalised position t (0 = left/bass, 1 = right/high).
-float barHeight(float t) {
-  float wb = exp(-pow((t - 0.12) / 0.20, 2.0));
-  float wm = exp(-pow((t - 0.50) / 0.24, 2.0));
-  float wh = exp(-pow((t - 0.86) / 0.22, 2.0));
-  float v = (wb * uBass + wm * uMid + wh * uHigh) / (wb + wm + wh);
-  // Per-bar animated wobble keeps the spectrum alive.
-  v *= 0.5 + 0.75 * noise(vec2(t * 11.0, uTime * 1.3));
-  return v;
+// Height for the bar covering [t0, t1] of the log frequency axis. Averaging a
+// few samples across the slice reads the band rather than one arbitrary bin,
+// which is what stops tall thin columns flickering as a note drifts.
+float barHeight(float t0, float t1) {
+  float v = 0.0;
+  for (int i = 0; i < 4; i++) {
+    v += spectrumLog(mix(t0, t1, (float(i) + 0.5) / 4.0));
+  }
+  return v * 0.25;
 }
 
 vec3 render(vec2 uv) {
   vec3 col = vec3(0.02, 0.024, 0.03);
-  float gain = mix(0.6, 2.4, uGain);
+  float gain = mix(0.8, 3.0, uGain);
 
   float N = floor(uBarCount); // bar count (live-steerable)
   float fb = uv.x * N;
@@ -26,7 +32,7 @@ vec3 render(vec2 uv) {
   // Gap between bars.
   float bar = smoothstep(0.06, 0.18, local) * smoothstep(0.94, 0.82, local);
 
-  float h = clamp(barHeight(t) * gain, 0.0, 1.3);
+  float h = clamp(barHeight(idx / N, (idx + 1.0) / N) * gain, 0.0, 1.3);
   vec3 tint = hsv(mix(0.02, 0.55, t) + uHigh * 0.04, 0.78, 1.0);
 
   // Bar body, growing from the bottom with a vertical gradient.

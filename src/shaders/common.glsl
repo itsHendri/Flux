@@ -85,7 +85,9 @@ float wave(float x) {
 
 // Spectrum on a log frequency axis — an octave takes the same width wherever
 // it sits, which is how music is actually spaced and how a spectrum wants to
-// be drawn. x in 0..1 spans about nine octaves of the analysed range.
+// be drawn. x in 0..1 spans nine octaves, roughly 30 Hz to 15 kHz: below that
+// is rumble and above it is air, and giving either room only wastes half the
+// display on silence.
 float spectrumLog(float x) {
-  return spectrum(pow(2.0, clamp(x, 0.0, 1.0) * 9.0 - 9.0));
+  return spectrum(pow(2.0, mix(-9.5, -0.5, clamp(x, 0.0, 1.0))));
 }

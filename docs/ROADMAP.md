@@ -250,7 +250,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
   bin-accurate spectrum and a drawable waveform; existing modes unchanged;
   build + tests clean.
 
-- [ ] **Bars stops faking it.** `barHeight()` currently spreads three band
+- [x] **Bars stops faking it.** `barHeight()` currently spreads three band
   values across the columns with Gaussian weights plus noise. Replace with a
   real per-column spectrum read (log-frequency bucketed, so the low end
   isn't crushed into two columns), keeping the envelope smoothing per bar so
