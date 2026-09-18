@@ -7,6 +7,52 @@ cross-cutting picture. Newest first.
 
 ---
 
+## photism.app (sweep 2026-09-18)
+
+The user pointed at [photism.app](https://photism.app/), a commercial
+audio-reactive visualizer (VST3/AU/M4L/browser), for its styles. It's closed
+software, so nothing here is borrowed from it — what it gives is a **map of
+which looks are worth having**, in twenty named scenes with one-line
+descriptions. The techniques behind the two we took are public and long
+documented, and FLUX implements them from those sources.
+
+**Taken:**
+
+- **mandala** — "a kali fractal folded through a kaleidoscope, edge to edge.
+  The pattern opens and closes with the kick and rotates with your mids." The
+  kaliset (Kali, fractalforums) is `p = abs(p)/dot(p,p) - c` iterated: fold,
+  invert, offset. Sources: [Basic KaliSet](https://www.shadertoy.com/view/MsBGDK),
+  [Softology on kalisets](https://softologyblog.wordpress.com/2011/05/04/kalisets-and-hybrid-ducks/).
+  → FLUX's `mandala` mode.
+- **sand** — "a Chladni plate: sand gathering on the nodal lines of a
+  vibrating surface. The plate modes closest to the loudest frequencies in
+  your music carry the figure." The figure is the zero set of
+  `cos(n·pi·x)cos(m·pi·y) − cos(m·pi·x)cos(n·pi·y)`
+  ([Paul Bourke](https://paulbourke.net/geometry/chladni/),
+  [barbegenerativediary tutorial](https://barbegenerativediary.com/en/tutorials/how-to-create-a-chladni-figure-with-processing/)).
+  → FLUX's `sand` mode.
+- **morphogen** — "an inkblot grown by a reaction-diffusion sim." FLUX already
+  had the simulation; what it didn't have was the **mirror**. Symmetry is the
+  whole difference between wallpaper and an inkblot. → `reaction`'s Symmetry
+  control.
+
+**Noted, not built.** The rest of their catalogue, as a list of directions
+worth considering later: ink (marbled fluid), signal (analyser + scope +
+spectrogram + goniometer — a spectrogram would need a scrolling history
+texture, which FLUX has no equivalent of yet), relic/idol/citadel (Mandelbulb
+and Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
+of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), pelt
+(brushable fur), fluid (Navier-Stokes, kicks stir the ink), synapse (a node
+added per hit), gate (falling through a corridor), oracle (edge-lit dark
+room), limitless (your own image warped — FLUX's `logo` mode is the seed of
+this one).
+
+Worth noticing about their product framing, separate from the visuals: every
+scene ships with **presets that are whole looks** — "palette, motion, and post
+baked in" — which is the same conclusion FLUX reached with its built-in looks.
+
+---
+
 ## Structural effects (sweep 2026-09-16, round two)
 
 Prompted by the user's note that several effects "affect the color rather than

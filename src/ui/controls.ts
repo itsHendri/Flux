@@ -3,8 +3,18 @@ import { themeOptions } from './themes.ts';
 import { patternOptions, RD_PATTERNS } from '../modes2d/patterns.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
-const WARP_MODES = ['raymarch', 'flow', 'cells'];
-const SCALE_MODES = ['waveform', 'raymarch', 'flow', 'cells', 'logo', 'trails3d', 'magneto'];
+const WARP_MODES = ['raymarch', 'flow', 'cells', 'mandala'];
+const SCALE_MODES = [
+  'waveform',
+  'raymarch',
+  'flow',
+  'cells',
+  'logo',
+  'trails3d',
+  'magneto',
+  'mandala',
+  'sand',
+];
 
 /**
  * THE uniform schema — single source of truth.
@@ -202,6 +212,19 @@ export const CONTROLS: ControlDef[] = [
     modes: ['reaction'],
   },
   {
+    id: 'rdMirror',
+    name: 'Symmetry',
+    glslName: 'uRdMirror',
+    type: 'select',
+    options: [
+      { label: 'Free', value: 0 },
+      { label: 'Inkblot', value: 1 },
+      { label: 'Quad', value: 2 },
+    ],
+    default: 0,
+    modes: ['reaction'],
+  },
+  {
     id: 'rdSpeed',
     name: 'Growth',
     glslName: 'uRdSpeed',
@@ -251,6 +274,48 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.4,
     modes: ['flow'],
+  },
+  {
+    id: 'mandalaSegs',
+    name: 'Wedges',
+    glslName: 'uMandalaSegs',
+    min: 2,
+    max: 16,
+    step: 1,
+    default: 8,
+    modes: ['mandala'],
+  },
+  {
+    // How far the kick and bass push the kaliset's shape parameter — the
+    // pattern re-cuts rather than just brightening.
+    id: 'mandalaFold',
+    name: 'Fold',
+    glslName: 'uMandalaFold',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['mandala'],
+  },
+  {
+    id: 'sandGrain',
+    name: 'Grain',
+    glslName: 'uSandGrain',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['sand'],
+  },
+  {
+    id: 'sandSpread',
+    name: 'Spread',
+    glslName: 'uSandSpread',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.35,
+    modes: ['sand'],
   },
   {
     id: 'cellEdge',

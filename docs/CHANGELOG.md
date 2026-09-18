@@ -5,6 +5,57 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — Two modes from the photism sweep: mandala and sand
+
+The user pointed at [photism.app](https://photism.app/) for its styles. It's
+closed software; what it offers is a map of which looks are worth having, and
+two of its scenes name techniques that are public, cheap and unlike anything
+FLUX had (see REFERENCES.md).
+
+**mandala** — a kaliset fractal folded through a kaleidoscope. The kaliset is
+`p = abs(p)/dot(p, p) - c` in a loop: fold the plane, invert it through the
+unit circle, offset, repeat. c is the only thing deciding which filigree comes
+out, so a kick nudging c re-cuts the whole pattern rather than just brightening
+it; mids rotate the rosette. The radial fold runs *before* the fractal, not
+after, so the filigree is generated in wedge space and meets itself exactly at
+the seams.
+
+**sand** — a Chladni plate. Sand on a vibrating plate is thrown off the moving
+parts and settles on the nodal lines, which is why a driven plate draws a
+figure. The figure is the zero set of
+`cos(n·pi·x)cos(m·pi·y) − cos(m·pi·x)cos(n·pi·y)`, and FLUX takes the mode
+numbers n and m from the music.
+
+Three things that mattered in getting `sand` right:
+
+- **Not the loudest bins.** An argmax over the spectrum jitters between bands
+  that differ by a hair — a sustained note leaks across bins and the analyser
+  has a noise floor — and the plate twitches. The **spectral centroid**, the
+  energy-weighted average position, is stable, and quantised to an integer
+  mode number it holds while a chord holds and steps when the music moves.
+- **Tilted, like a spectrum analyser.** On a flat reading the kick decides
+  everything and the plate never hears the part of the track that's moving.
+- **`centroid` is a reserved word in GLSL ES 3.0** (an interpolation
+  qualifier). Naming a variable that is a syntax error — and because FLUX
+  keeps the last good program when a compile fails, the mode carried on
+  rendering the previous shader while three further edits appeared to do
+  nothing. The error overlay had been saying so the whole time.
+
+Also from that sweep: **reaction gains a Symmetry control** (Free / Inkblot /
+Quad). Their morphogen scene is "an inkblot grown by a reaction-diffusion
+sim"; FLUX had the simulation but not the mirror, and the mirror is the whole
+difference between wallpaper and a deliberate shape.
+
+Verified: build clean, 96/96 tests. In the Preview browser mandala renders a
+dense rosette that re-cuts on kicks; sand shows a square plate with grains on
+the nodal lines, and the figure redraws as the dominant frequency moves
+(150 Hz → 600 → 2400 → 6000 gave four distinct figures, each holding steady
+between changes — confirmed by reading the mode numbers back from the
+framebuffer with a temporary probe, removed before commit). Symmetry gives
+bilateral and four-fold folds. Overlay empty.
+
+---
+
 ## Phase 6 — magneto gets its nebula, rays and cores
 
 iTunes 10's Magnetosphere had three named parts: "the cores, which are the

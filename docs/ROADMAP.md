@@ -309,6 +309,10 @@ visual". Research round two (REFERENCES.md) looked for structural effects.
   named Pattern regimes, speckle seeding, colour varying across the field.
 - [x] **Raymarch colour + motion.** Thin-film iridescence (the iTunes nebula
   sheen), six Lissajous satellites, travelling ripple.
+- [x] **From the photism sweep (2026-09-18).** `mandala` (kaliset
+  through a kaleidoscope) and `sand` (a Chladni plate driven by the spectral
+  centroid) added; `reaction` gains Symmetry. Their remaining scenes are
+  logged in REFERENCES.md as directions, not commitments.
 - [x] **Structural effects.** `tunnel`, `echo` and `shock` added; `quantize`
   and `chroma` retired. After live use, `echo` and `shock` removed too —
   only `tunnel` earned its place.

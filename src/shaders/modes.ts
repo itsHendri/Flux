@@ -5,6 +5,8 @@ import raymarch from './modes/raymarch.frag?raw';
 import flow from './modes/flow.frag?raw';
 import cells from './modes/cells.frag?raw';
 import logo from './modes/logo.frag?raw';
+import mandala from './modes/mandala.frag?raw';
+import sand from './modes/sand.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -13,6 +15,8 @@ export const MODES: ShaderMode[] = [
   { name: 'raymarch', fragSource: raymarch },
   { name: 'flow', fragSource: flow },
   { name: 'cells', fragSource: cells },
+  { name: 'mandala', fragSource: mandala },
+  { name: 'sand', fragSource: sand },
   { name: 'logo', fragSource: logo },
 ];
 

@@ -30,10 +30,12 @@ npm test         # run the unit tests (vitest)
 
 ## What it has (Phase 2)
 
-- **9 modes** — bars (a real log-frequency spectrum), waveform (the
+- **11 modes** — bars (a real log-frequency spectrum), waveform (the
   time-domain trace: line, mirrored or radial), reaction (a live Gray-Scott
   reaction-diffusion simulation), raymarched SDF,
-  domain-warp flow, Voronoi cells, an uploaded-logo mode, magneto (charged
+  domain-warp flow, Voronoi cells, mandala (a kaliset fractal folded through
+  a kaleidoscope), sand (a Chladni plate driven by the spectrum), an
+  uploaded-logo mode, magneto (charged
   particles in the spirit of the iTunes visualizer, each listening to its own
   frequency, with its nebula clouds and rays), and trails3d (GPGPU curl-noise particles).
 - **7 toggleable post-effects** — MilkDrop-style warp feedback, trails, a
