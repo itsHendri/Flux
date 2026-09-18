@@ -31,6 +31,12 @@ documented, and FLUX implements them from those sources.
   ([Paul Bourke](https://paulbourke.net/geometry/chladni/),
   [barbegenerativediary tutorial](https://barbegenerativediary.com/en/tutorials/how-to-create-a-chladni-figure-with-processing/)).
   → FLUX's `sand` mode.
+- **fluid** — "a fluid simulation. Kicks stir the ink." Stam's stable-fluids
+  method: advect, vorticity confinement, Jacobi pressure projection, dye
+  carried along the velocity
+  ([Stam 1999](https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/ns.pdf);
+  Pavel Dobryakov's WebGL demo is the GPU arrangement everyone models).
+  → FLUX's `fluid` mode.
 - **morphogen** — "an inkblot grown by a reaction-diffusion sim." FLUX already
   had the simulation; what it didn't have was the **mirror**. Symmetry is the
   whole difference between wallpaper and an inkblot. → `reaction`'s Symmetry
@@ -42,7 +48,7 @@ spectrogram + goniometer — a spectrogram would need a scrolling history
 texture, which FLUX has no equivalent of yet), relic/idol/citadel (Mandelbulb
 and Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
 of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), pelt
-(brushable fur), fluid (Navier-Stokes, kicks stir the ink), synapse (a node
+(brushable fur), synapse (a node
 added per hit), gate (falling through a corridor), oracle (edge-lit dark
 room), limitless (your own image warped — FLUX's `logo` mode is the seed of
 this one).

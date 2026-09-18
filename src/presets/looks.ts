@@ -109,6 +109,25 @@ export const LOOKS: Look[] = [
     },
   },
   {
+    name: 'ink',
+    note: 'Ink stirred through a real fluid; kicks throw a new colour in.',
+    preset: {
+      mode: 'fluid',
+      values: {
+        theme: 2,
+        themeMix: 0.8,
+        'fx-bloom': 1,
+        fluidDetail: 384,
+        fluidForce: 0.55,
+        fluidSwirl: 0.7,
+        fluidFade: 0.3,
+        bloomIntensity: 0.35,
+        gain: 0.5,
+        tonemap: 2,
+      },
+    },
+  },
+  {
     name: 'tape',
     note: 'The spectrum through a dithered, quantised, scanlined transfer.',
     preset: {

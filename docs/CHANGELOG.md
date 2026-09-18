@@ -5,6 +5,51 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — fluid: a real fluid the music stirs
+
+The biggest of the directions from the photism sweep, and the one that needed
+an actual solver. `fluid` runs Jos Stam's stable-fluids method in the GPU
+arrangement that has been standard since GPU Gems: advect the velocity along
+itself, put back the small eddies the grid smeared away, measure how much the
+field is compressing, solve for the pressure that cancels it, subtract that
+pressure's gradient, and carry the dye along the result.
+
+- **Semi-Lagrangian advection** is what makes it stable: rather than pushing
+  each cell's contents forward — which explodes the moment anything moves more
+  than a cell per step — it looks backwards down the velocity for where this
+  cell's contents came from. It can't produce a value that wasn't already
+  there, so it can't diverge.
+- **Vorticity confinement** is not optional. Advecting on a grid eats small
+  eddies within a few steps, and a fluid without eddies looks like syrup; this
+  finds where spin is concentrated and pushes energy back toward it.
+- **The pressure solve** is 18 Jacobi iterations — 18 full-screen draws, and
+  the reason `Detail` is the mode's perf control. It measured 120 fps at all
+  three settings here, Ultra included.
+- **RGBA16F, not 32F**: advection samples *between* cells, and half-float
+  linear filtering is core WebGL2 while 32F filtering needs an extension that
+  isn't everywhere. A fluid reading NEAREST stair-steps every eddy.
+- **The music only enters through the splats.** A slow stirring finger keeps
+  quiet passages moving, kicks throw ink in from a fresh spot aimed at the
+  centre so the burst meets the stir and folds, and highs sprinkle bright
+  drops. Everything else on screen is the fluid carrying on with what it was
+  given, which is why it looks alive rather than animated.
+- Controls: Detail, Stir, Swirl, Ink Fade. A seventh built-in look, **ink**,
+  pairs it with bloom on the Ice theme.
+
+The looks guard test now takes its list of custom modes from the mode classes
+themselves — it failed on `fluid`, correctly, because that list was hand-kept.
+
+Verified: build clean, 96/96 tests; ink advects into curling filaments and
+vortices that evolve frame to frame, 120 fps at Coarse/Fine/Ultra, and the
+`ink` look renders the marbled blue-and-white ink it was aimed at. Overlay
+empty.
+
+Sources: [Stam, "Stable Fluids" (1999)](https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/ns.pdf);
+Pavel Dobryakov's WebGL fluid demo as the reference GPU arrangement (see
+REFERENCES.md).
+
+---
+
 ## Phase 6 — Two modes from the photism sweep: mandala and sand
 
 The user pointed at [photism.app](https://photism.app/) for its styles. It's

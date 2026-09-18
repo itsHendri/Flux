@@ -161,6 +161,52 @@ export const CONTROLS: ControlDef[] = [
     modes: ['waveform'],
   },
   {
+    // Simulation height in cells; width follows the window's aspect. Every
+    // pass is a full-screen draw over this and the pressure solve runs
+    // eighteen of them, so this is the perf control for the mode.
+    id: 'fluidDetail',
+    name: 'Detail',
+    glslName: 'uFluidDetail',
+    type: 'select',
+    options: [
+      { label: 'Coarse', value: 256 },
+      { label: 'Fine', value: 384 },
+      { label: 'Ultra', value: 640 },
+    ],
+    default: 384,
+    modes: ['fluid'],
+  },
+  {
+    id: 'fluidForce',
+    name: 'Stir',
+    glslName: 'uFluidForce',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['fluid'],
+  },
+  {
+    id: 'fluidSwirl',
+    name: 'Swirl',
+    glslName: 'uFluidSwirl',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+    modes: ['fluid'],
+  },
+  {
+    id: 'fluidFade',
+    name: 'Ink Fade',
+    glslName: 'uFluidFade',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+    modes: ['fluid'],
+  },
+  {
     // Named regimes. Declared before Feed/Kill on purpose: picking one writes
     // them through an onChange listener, and recalling a preset applies values
     // in schema order — so the pattern lands first and a preset's hand-tuned

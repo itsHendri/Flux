@@ -5,13 +5,20 @@ import { THEME_COLOR_CONTROLS } from '../src/ui/themes.ts';
 import { passToggleDefs } from '../src/core/state.ts';
 import { PASSES } from '../src/shaders/passes.ts';
 import { MODES } from '../src/shaders/modes.ts';
+import { ReactionMode } from '../src/modes2d/ReactionMode.ts';
+import { FluidMode } from '../src/modes2d/FluidMode.ts';
+import { MagnetoMode } from '../src/modes3d/MagnetoMode.ts';
+import { Trails3DMode } from '../src/modes3d/Trails3DMode.ts';
 import { resolvePreset } from '../src/presets/presets.ts';
 
 const PASS_NAMES = PASSES.map((p) => p.name);
 const DEFS = [...CONTROLS, ...passToggleDefs(PASS_NAMES), ...THEME_COLOR_CONTROLS];
 const BY_ID = new Map(DEFS.map((d) => [d.id, d]));
-// Custom-draw modes aren't in MODES (they register separately at runtime).
-const MODE_NAMES = [...MODES.map((m) => m.name), 'reaction', 'magneto', 'trails3d'];
+// Custom-draw modes aren't in MODES — they register at runtime — so their
+// names come from the classes themselves rather than a list that has to be
+// remembered every time a mode is added.
+const CUSTOM_MODES = [new ReactionMode(), new FluidMode(), new MagnetoMode(), new Trails3DMode()];
+const MODE_NAMES = [...MODES.map((m) => m.name), ...CUSTOM_MODES.map((m) => m.name)];
 
 describe('the built-in looks', () => {
   it('have unique names', () => {
