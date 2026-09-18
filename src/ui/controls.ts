@@ -3,7 +3,7 @@ import { themeOptions } from './themes.ts';
 import { patternOptions, RD_PATTERNS } from '../modes2d/patterns.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
-const WARP_MODES = ['raymarch', 'flow', 'cells', 'mandala'];
+const WARP_MODES = ['raymarch', 'flow', 'cells', 'mandala', 'bulb'];
 const SCALE_MODES = [
   'waveform',
   'raymarch',
@@ -14,6 +14,7 @@ const SCALE_MODES = [
   'magneto',
   'mandala',
   'sand',
+  'bulb',
 ];
 
 /**
@@ -159,6 +160,52 @@ export const CONTROLS: ControlDef[] = [
     step: 1,
     default: 3,
     modes: ['waveform'],
+  },
+  {
+    // Iterations per distance estimate and steps per ray — the two numbers a
+    // fractal's cost is made of. Draft exists so weak GPUs get a picture.
+    id: 'bulbQuality',
+    name: 'Quality',
+    glslName: 'uBulbQuality',
+    type: 'select',
+    options: [
+      { label: 'Draft', value: 0 },
+      { label: 'Fine', value: 1 },
+      { label: 'Ultra', value: 2 },
+    ],
+    default: 1,
+    modes: ['bulb'],
+  },
+  {
+    // 8 is the classic Mandelbulb; the shape is unrecognisable either side.
+    id: 'bulbPower',
+    name: 'Power',
+    glslName: 'uBulbPower',
+    min: 3,
+    max: 12,
+    step: 0.1,
+    default: 8,
+    modes: ['bulb'],
+  },
+  {
+    id: 'bulbGrow',
+    name: 'Regrow',
+    glslName: 'uBulbGrow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.45,
+    modes: ['bulb'],
+  },
+  {
+    id: 'bulbGlow',
+    name: 'Glow',
+    glslName: 'uBulbGlow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['bulb'],
   },
   {
     // Simulation height in cells; width follows the window's aspect. Every

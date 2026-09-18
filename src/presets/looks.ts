@@ -128,6 +128,26 @@ export const LOOKS: Look[] = [
     },
   },
   {
+    name: 'shrine',
+    note: 'The Mandelbulb, close and lit; every accent re-grows its spires.',
+    preset: {
+      mode: 'bulb',
+      values: {
+        theme: 1,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        bulbQuality: 1,
+        bulbPower: 8,
+        bulbGrow: 0.5,
+        bulbGlow: 0.45,
+        scale: 0.55,
+        bloomIntensity: 0.3,
+        gain: 0.45,
+        tonemap: 2,
+      },
+    },
+  },
+  {
     name: 'tape',
     note: 'The spectrum through a dithered, quantised, scanlined transfer.',
     preset: {

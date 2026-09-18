@@ -5,6 +5,40 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — bulb: the Mandelbulb
+
+The 3D analogue of the Mandelbrot set (White/Nylander): the same
+`z -> z^n + c`, but with z raised the spherical way — take the radius to the
+power and multiply both angles by it. There's no closed-form distance to that
+surface, so the ray advances by a **distance estimate** built from the running
+derivative, `0.5 * log(r) * r / dr`, which is guaranteed not to overshoot.
+That estimate is the only reason an infinitely detailed object is renderable
+at all (iq's distance-estimator writing; see REFERENCES.md).
+
+- **The music is in the exponent.** Bass leans on the power and a kick shoves
+  it, so an accent doesn't light the fractal, it **re-grows** it — different
+  lobes, different spires. That's the behaviour photism's relic scene
+  describes, and the exponent is the natural place for it because the whole
+  shape is a function of that one number.
+- **Two free effects fall out of the march.** Steps that end in a crevice
+  needed more iterations to get there, so the step count is ambient occlusion;
+  and accumulating the near-misses gives the haze of detail beyond the surface
+  the ray actually reaches.
+- **The orbit trap picks the colour** — how close the iteration came to the
+  origin — so the bands follow the fractal's structure instead of its position.
+- **Quality** sets iterations per estimate and steps per ray, the two numbers a
+  fractal's cost is made of. Draft exists so a weak GPU still gets a picture;
+  this machine held 120 fps at all three, Ultra included, at 2048×1536, but
+  that won't be true everywhere.
+- An eighth built-in look, **shrine**, flies it close in Ember with bloom.
+
+Verified: build clean, 96/96 tests; the bulb renders with its lobes and spires
+at 120 fps on Draft/Fine/Ultra, captures a second apart show the shape
+re-formed (the kick moving the exponent), and with kaleidoscope on top it
+folds into a rosette. Overlay empty.
+
+---
+
 ## Phase 6 — fluid: a real fluid the music stirs
 
 The biggest of the directions from the photism sweep, and the one that needed

@@ -316,6 +316,9 @@ visual". Research round two (REFERENCES.md) looked for structural effects.
 - [x] **fluid (2026-09-18).** Stam's stable-fluids solver — advect, vorticity
   confinement, Jacobi pressure projection — with the music entering only
   through splats. Ships with the `ink` look.
+- [x] **bulb (2026-09-18).** The Mandelbulb, sphere-traced by distance
+  estimate, with the music moving the exponent so accents re-grow it. Ships
+  with the `shrine` look.
 - [x] **Structural effects.** `tunnel`, `echo` and `shock` added; `quantize`
   and `chroma` retired. After live use, `echo` and `shock` removed too —
   only `tunnel` earned its place.

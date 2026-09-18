@@ -7,6 +7,7 @@ import cells from './modes/cells.frag?raw';
 import logo from './modes/logo.frag?raw';
 import mandala from './modes/mandala.frag?raw';
 import sand from './modes/sand.frag?raw';
+import bulb from './modes/bulb.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -17,6 +18,7 @@ export const MODES: ShaderMode[] = [
   { name: 'cells', fragSource: cells },
   { name: 'mandala', fragSource: mandala },
   { name: 'sand', fragSource: sand },
+  { name: 'bulb', fragSource: bulb },
   { name: 'logo', fragSource: logo },
 ];
 

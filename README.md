@@ -30,12 +30,13 @@ npm test         # run the unit tests (vitest)
 
 ## What it has (Phase 2)
 
-- **12 modes** — bars (a real log-frequency spectrum), waveform (the
+- **13 modes** — bars (a real log-frequency spectrum), waveform (the
   time-domain trace: line, mirrored or radial), reaction (a live Gray-Scott
   reaction-diffusion simulation), raymarched SDF,
   domain-warp flow, Voronoi cells, mandala (a kaliset fractal folded through
   a kaleidoscope), sand (a Chladni plate driven by the spectrum), fluid (a
-  stable-fluids simulation the music stirs), an
+  stable-fluids simulation the music stirs), bulb (a sphere-traced Mandelbulb
+  that accents re-grow), an
   uploaded-logo mode, magneto (charged
   particles in the spirit of the iTunes visualizer, each listening to its own
   frequency, with its nebula clouds and rays), and trails3d (GPGPU curl-noise particles).
@@ -56,7 +57,7 @@ npm test         # run the unit tests (vitest)
 - **Themes** — five global palettes (keys `1`-`5`) that every mode bends its
   own colour toward, keeping the mode's brightness so contrast survives; a
   Tint control sets how far. **Hotkeys** — Space plays/pauses a loaded file.
-- **Looks** — seven built-in combinations (mode + effect chain + theme +
+- **Looks** — eight built-in combinations (mode + effect chain + theme +
   controls) in the panel and on a cycling button in the bar; each lands on a
   clean slate so it always looks the same. **Presets** — mode + every control
   + effect state saved/recalled from localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,

@@ -37,6 +37,10 @@ documented, and FLUX implements them from those sources.
   ([Stam 1999](https://www.dgp.toronto.edu/public_user/stam/reality/Research/pdf/ns.pdf);
   Pavel Dobryakov's WebGL demo is the GPU arrangement everyone models).
   → FLUX's `fluid` mode.
+- **relic** — "a 3D Mandelbulb. Accents regrow it as you fly." The
+  White/Nylander power-8 formulation, sphere-traced with Green's distance
+  estimate ([iq on distance estimators](https://iquilezles.org/articles/distancefractals/)).
+  → FLUX's `bulb` mode.
 - **morphogen** — "an inkblot grown by a reaction-diffusion sim." FLUX already
   had the simulation; what it didn't have was the **mirror**. Symmetry is the
   whole difference between wallpaper and an inkblot. → `reaction`'s Symmetry
@@ -45,8 +49,7 @@ documented, and FLUX implements them from those sources.
 **Noted, not built.** The rest of their catalogue, as a list of directions
 worth considering later: ink (marbled fluid), signal (analyser + scope +
 spectrogram + goniometer — a spectrogram would need a scrolling history
-texture, which FLUX has no equivalent of yet), relic/idol/citadel (Mandelbulb
-and Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
+texture, which FLUX has no equivalent of yet), idol/citadel (Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
 of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), pelt
 (brushable fur), synapse (a node
 added per hit), gate (falling through a corridor), oracle (edge-lit dark
