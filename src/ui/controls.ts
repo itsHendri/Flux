@@ -3,7 +3,7 @@ import { themeOptions } from './themes.ts';
 import { patternOptions, RD_PATTERNS } from '../modes2d/patterns.ts';
 
 // Modes that share the generic Warp/Scale controls (the procedural fields).
-const WARP_MODES = ['raymarch', 'flow', 'cells', 'mandala', 'bulb'];
+const WARP_MODES = ['raymarch', 'flow', 'cells', 'mandala', 'bulb', 'lattice'];
 const SCALE_MODES = [
   'waveform',
   'raymarch',
@@ -15,6 +15,8 @@ const SCALE_MODES = [
   'mandala',
   'sand',
   'bulb',
+  'chrome',
+  'lattice',
 ];
 
 /**
@@ -206,6 +208,114 @@ export const CONTROLS: ControlDef[] = [
     step: 0.01,
     default: 0.5,
     modes: ['bulb'],
+  },
+  {
+    id: 'latticeQuality',
+    name: 'Quality',
+    glslName: 'uLatticeQuality',
+    type: 'select',
+    options: [
+      { label: 'Draft', value: 0 },
+      { label: 'Fine', value: 1 },
+      { label: 'Ultra', value: 2 },
+    ],
+    default: 1,
+    modes: ['lattice'],
+  },
+  {
+    // The single number the whole structure hangs on. Negative values give the
+    // cathedral-like interiors this mode is for.
+    id: 'boxScale',
+    name: 'Structure',
+    glslName: 'uBoxScale',
+    min: -3,
+    max: 3,
+    step: 0.01,
+    // 2.0 is the classic Mandelbox: boxes, arches and shafts. Negative scales
+    // give the folded, cathedral-like interiors.
+    default: 2.0,
+    modes: ['lattice'],
+  },
+  {
+    id: 'boxFold',
+    name: 'Fold',
+    glslName: 'uBoxFold',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.35,
+    modes: ['lattice'],
+  },
+  {
+    id: 'boxDrive',
+    name: 'Rebuild',
+    glslName: 'uBoxDrive',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.4,
+    modes: ['lattice'],
+  },
+  {
+    id: 'boxGlow',
+    name: 'Glow',
+    glslName: 'uBoxGlow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.45,
+    modes: ['lattice'],
+  },
+  {
+    id: 'chromeMelt',
+    name: 'Melt',
+    glslName: 'uChromeMelt',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['chrome'],
+  },
+  {
+    // Polished to brushed: jitters the reflected ray instead of tracing twice.
+    id: 'chromeRough',
+    name: 'Brushed',
+    glslName: 'uChromeRough',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.15,
+    modes: ['chrome'],
+  },
+  {
+    id: 'furLength',
+    name: 'Length',
+    glslName: 'uFurLength',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['fur'],
+  },
+  {
+    id: 'furDensity',
+    name: 'Density',
+    glslName: 'uFurDensity',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['fur'],
+  },
+  {
+    id: 'furBrush',
+    name: 'Brush',
+    glslName: 'uFurBrush',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['fur'],
   },
   {
     id: 'specWindow',

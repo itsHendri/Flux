@@ -5,6 +5,52 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — lattice, chrome and fur: the rest of the photism list
+
+The last three directions from that sweep, built together.
+
+**lattice — the Mandelbox.** Where the bulb is an object you orbit, this is a
+place: a box fold (reflect anything past ±1 back inside), a sphere fold
+(invert anything inside the minimum radius), then scale and add the original
+point, iterated, which builds an endless architecture of boxes, arches and
+shafts. Structure — the scale — is the single number the whole building hangs
+on, and bass and kicks move it, so the architecture rebuilds as you fly.
+
+The camera took two tries. Inside the volume a Mandelbox is a crust with no
+readable scale; at scale 2 it fills a ball about six units across, so the
+camera now orbits from fifteen out and the arches become architecture.
+Occlusion had to be gentler than the bulb's too — this structure is nearly all
+crevice, and the bulb's term left the whole building in shadow.
+
+**chrome — molten metal.** The shape is an SDF blob, but the shape isn't the
+point: a mirror has no colour of its own, so what you see is what it
+*reflects*. The first version reflected a gently shaded room and looked like
+coloured plastic. It now reflects a studio — one hard softbox overhead, a dark
+floor, a side strip and horizon bands — because contrast in the reflection is
+what reads as metal, and the bands bending as the surface bends is the whole
+cue. Fresnel starts at 0.65 rather than near zero, since metal reflects nearly
+everything even head-on; the theme only tints it 12%, because more turns the
+mirror back into plastic. Brushed blurs the reflection by jittering the
+reflected ray, which costs nothing next to tracing twice.
+
+**fur — a coat the music combs.** Shell rendering, flat: sample a strand mask
+repeatedly, stepping backwards along the direction the hair lies, and each
+step is a slice further up the strand. Stacked, the eye reads them as hairs
+standing out of a surface. Each hair is a cell hash — its own seat, thickness
+and length — so they're individuals rather than a texture, and lighting is
+Kajiya-Kay, where the highlight is a band *across* the strand rather than a
+dot, which is what separates fur from noise. Bass swings the parting, a kick
+lays the whole coat over, highs shiver the tips.
+
+Three more built-in looks: **vault**, **molten** and **coat**.
+
+Verified: build clean, 96/96 tests; all three render at 121 fps at 2048×1536,
+lattice as a fractal citadel with fog and depth, chrome as silver under a
+studio light with the horizon bands curving across it, fur as a dense pelt
+with partings and crowns. Overlay empty.
+
+---
+
 ## Phase 6 — spectro: the first mode that remembers
 
 Every other mode in FLUX shows the present — this frame's spectrum, this

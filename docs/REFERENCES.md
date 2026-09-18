@@ -46,12 +46,17 @@ documented, and FLUX implements them from those sources.
   whole difference between wallpaper and an inkblot. → `reaction`'s Symmetry
   control.
 
+**Now built, from that list:** `fluid`, `bulb` (their relic), `spectro` (the
+spectrogram half of signal), `lattice` (idol/citadel), `chrome` (ingot) and
+`fur` (pelt). What's left below is what remains, plus the one that can't be
+done as things stand — a goniometer needs a stereo signal and FLUX's analyser
+is mono.
+
 **Noted, not built.** The rest of their catalogue, as a list of directions
 worth considering later: ink (marbled fluid), signal (analyser + scope +
 spectrogram + goniometer — the spectrogram half is now FLUX's `spectro` mode;
-the goniometer needs stereo, which the mono analyser can't give), idol/citadel (Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
-of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), pelt
-(brushable fur), synapse (a node
+the goniometer needs stereo, which the mono analyser can't give), forge (a chrome swarm that assembles and breaks), anemone (chains
+of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), synapse (a node
 added per hit), gate (falling through a corridor), oracle (edge-lit dark
 room), limitless (your own image warped — FLUX's `logo` mode is the seed of
 this one).

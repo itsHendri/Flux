@@ -168,6 +168,62 @@ export const LOOKS: Look[] = [
     },
   },
   {
+    name: 'vault',
+    note: 'The Mandelbox from outside: arches and shafts, fog and distance.',
+    preset: {
+      mode: 'lattice',
+      values: {
+        theme: 0,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        latticeQuality: 1,
+        boxScale: 2.0,
+        boxFold: 0.35,
+        boxDrive: 0.4,
+        boxGlow: 0.35,
+        scale: 0.45,
+        bloomIntensity: 0.3,
+        gain: 0.5,
+        tonemap: 2,
+      },
+    },
+  },
+  {
+    name: 'molten',
+    note: 'A slug of chrome under a studio light; kicks dent it.',
+    preset: {
+      mode: 'chrome',
+      values: {
+        theme: 4,
+        themeMix: 0.6,
+        'fx-bloom': 1,
+        chromeMelt: 0.55,
+        chromeRough: 0.12,
+        scale: 0.45,
+        bloomIntensity: 0.4,
+        gain: 0.5,
+        tonemap: 2,
+      },
+    },
+  },
+  {
+    name: 'coat',
+    note: 'A field of fur the bass combs; the tips catch the highs.',
+    preset: {
+      mode: 'fur',
+      values: {
+        theme: 1,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        furLength: 0.55,
+        furDensity: 0.5,
+        furBrush: 0.55,
+        bloomIntensity: 0.2,
+        gain: 0.5,
+      },
+    },
+  },
+  {
     name: 'tape',
     note: 'The spectrum through a dithered, quantised, scanlined transfer.',
     preset: {

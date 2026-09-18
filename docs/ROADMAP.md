@@ -321,6 +321,10 @@ visual". Research round two (REFERENCES.md) looked for structural effects.
   with the `shrine` look.
 - [x] **spectro (2026-09-18).** A spectrogram on a ring buffer of columns —
   FLUX's first mode with a memory. Ships with the `readout` look.
+- [x] **lattice, chrome, fur (2026-09-18).** The Mandelbox from outside,
+  reflective molten metal, and shell-rendered fur. Ship with the `vault`,
+  `molten` and `coat` looks — which closes the photism list except the
+  goniometer, which needs stereo.
 - [x] **Structural effects.** `tunnel`, `echo` and `shock` added; `quantize`
   and `chroma` retired. After live use, `echo` and `shock` removed too —
   only `tunnel` earned its place.
