@@ -5,6 +5,42 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 6 — spectro: the first mode that remembers
+
+Every other mode in FLUX shows the present — this frame's spectrum, this
+frame's waveform. A spectrogram puts **time** on an axis, so a phrase leaves a
+shape: a held note is a horizontal line, a kick is a vertical stripe, a riser
+is a diagonal climbing the frame.
+
+- **A ring buffer of columns, never scrolled.** Each tick stamps the current
+  spectrum into one column with a one-pixel-wide viewport, so writing a
+  "frame" of history costs a column. The picture moves because the *read*
+  mapping walks backwards from the write head — no history is ever copied.
+- **Columns are stamped on a clock, not per frame.** One column per frame
+  would scroll the same music at different speeds on different machines and
+  the time axis would stop meaning anything; it's a fixed 1/120 s per column,
+  with however many columns a long frame is worth (capped, so a stall can't
+  redraw the whole buffer at once).
+- **The ring is sampled by hand.** A wrapped LINEAR fetch blends the oldest
+  column into the newest across the seam, so the four neighbours are fetched
+  and blended explicitly.
+- **Contrast is a gamma, not a multiplier.** Multiplying pushes everything
+  above the loudest bin to white and the picture becomes a silhouette; a gamma
+  moves the midtones and lets a quiet harmonic and a kick share a frame. The
+  first version multiplied, and looked like a stencil.
+- **Across or Waterfall**, and a Window control for how much past is on screen.
+  Unlike the other buffered modes this one needs no float textures — the
+  analyser's output is 8-bit anyway — so it runs anywhere WebGL2 does.
+- A ninth built-in look, **readout**, puts it on a cold CRT with scanlines.
+
+Verified: build clean, 96/96 tests; against a test track with a rising sweep,
+a stepped melody, kicks and hats, the sweep draws as a diagonal, the melody as
+horizontal steps and the hits as vertical stripes, in both orientations, at
+121 fps. Re-entering the mode starts from a clean buffer rather than showing
+stale history. Overlay empty.
+
+---
+
 ## Phase 6 — bulb: the Mandelbulb
 
 The 3D analogue of the Mandelbrot set (White/Nylander): the same

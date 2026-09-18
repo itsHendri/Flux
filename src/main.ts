@@ -25,6 +25,7 @@ import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
+import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
 import { patternValues } from './modes2d/patterns.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -99,6 +100,7 @@ for (const mode of MODES) renderer.registerMode(mode);
 const MODES_3D = [
   new ReactionMode(),
   new FluidMode(),
+  new SpectrogramMode(),
   new MagnetoMode(),
   new Trails3DMode(),
 ].filter((m) => renderer.registerCustomMode(m));

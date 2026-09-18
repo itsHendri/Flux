@@ -148,6 +148,26 @@ export const LOOKS: Look[] = [
     },
   },
   {
+    name: 'readout',
+    note: 'The last few seconds of the track as a picture, on a cold CRT.',
+    preset: {
+      mode: 'spectro',
+      values: {
+        theme: 2,
+        themeMix: 0.8,
+        'fx-scanline': 1,
+        'fx-bloom': 1,
+        specWindow: 0.6,
+        specGain: 0.42,
+        specWaterfall: 0,
+        scanlineIntensity: 0.3,
+        bloomIntensity: 0.25,
+        gain: 0.45,
+        tonemap: 1,
+      },
+    },
+  },
+  {
     name: 'tape',
     note: 'The spectrum through a dithered, quantised, scanlined transfer.',
     preset: {

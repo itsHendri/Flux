@@ -48,8 +48,8 @@ documented, and FLUX implements them from those sources.
 
 **Noted, not built.** The rest of their catalogue, as a list of directions
 worth considering later: ink (marbled fluid), signal (analyser + scope +
-spectrogram + goniometer — a spectrogram would need a scrolling history
-texture, which FLUX has no equivalent of yet), idol/citadel (Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
+spectrogram + goniometer — the spectrogram half is now FLUX's `spectro` mode;
+the goniometer needs stereo, which the mono analyser can't give), idol/citadel (Mandelbox fly-throughs), ingot and forge (molten chrome), anemone (chains
 of rings), grove (fractal forest), wisp (dust), spacetime (neon rays), pelt
 (brushable fur), synapse (a node
 added per hit), gate (falling through a corridor), oracle (edge-lit dark

@@ -208,6 +208,39 @@ export const CONTROLS: ControlDef[] = [
     modes: ['bulb'],
   },
   {
+    id: 'specWindow',
+    name: 'Window',
+    glslName: 'uSpecWindow',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+    modes: ['spectro'],
+  },
+  {
+    // A spectrogram is mostly quiet, and a linear map of it is mostly black.
+    id: 'specGain',
+    name: 'Contrast',
+    glslName: 'uSpecGain',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.42,
+    modes: ['spectro'],
+  },
+  {
+    id: 'specWaterfall',
+    name: 'Flow',
+    glslName: 'uSpecWaterfall',
+    type: 'select',
+    options: [
+      { label: 'Across', value: 0 },
+      { label: 'Waterfall', value: 1 },
+    ],
+    default: 0,
+    modes: ['spectro'],
+  },
+  {
     // Simulation height in cells; width follows the window's aspect. Every
     // pass is a full-screen draw over this and the pressure solve runs
     // eighteen of them, so this is the perf control for the mode.
