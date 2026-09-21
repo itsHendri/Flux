@@ -158,15 +158,17 @@ const storage = (() => {
 })();
 const governor = new QualityGovernor({
   leverFor: (mode) => {
-    const glslName = QUALITY_LEVERS[mode];
-    const def = glslName ? CONTROLS.find((c) => c.glslName === glslName) : undefined;
-    return def?.options ? { glslName: def.glslName, options: def.options.map((o) => o.value) } : null;
+    const lever = QUALITY_LEVERS[mode];
+    const def = lever ? CONTROLS.find((c) => c.glslName === lever.glslName) : undefined;
+    return def?.options
+      ? { glslName: def.glslName, options: def.options.map((o) => o.value), scaleFirst: lever.scaleFirst }
+      : null;
   },
   getValue: (n) => controlPanel.getValue(n),
   setValue: (n, v) => controlPanel.applyValues({ [n]: v }),
   setRenderScale: (scale) => renderer.setRenderScale(scale),
 });
-for (const lever of new Set(Object.values(QUALITY_LEVERS))) {
+for (const lever of new Set(Object.values(QUALITY_LEVERS).map((l) => l.glslName))) {
   controlPanel.onChange(lever, (v) => {
     if (typeof v === 'number') governor.onLeverChanged(lever, v);
   });

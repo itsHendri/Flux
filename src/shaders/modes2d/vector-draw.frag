@@ -7,7 +7,9 @@
 in vec2 vUv;
 out vec4 outColor;
 
-uniform sampler2D uPhosphor;
+// highp: the hot core of the trace runs well past 1.0, and a lowp sampler
+// clamps it where precision qualifiers are honoured (mobile GPUs).
+uniform highp sampler2D uPhosphor;
 
 float gridLine(float v, float spacing, float px) {
   float d = abs(fract(v / spacing + 0.5) - 0.5) * spacing;

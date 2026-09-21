@@ -64,6 +64,24 @@ describe('Constellation — every hit adds a node', () => {
     }
   });
 
+  it('never parents a new star on the one whose slot it is about to take', () => {
+    const c = new Constellation(8);
+    c.reset(0);
+    const r = rng(2);
+    for (let i = 0; i < 7; i++) c.grow(i, 0.5, 0.5, r); // memory now full
+    // Scripted: "pick a random parent" (0.1 < 0.3), then the oldest live star
+    // (0.999 → the last of the 8), then ordinary randomness.
+    const script = [0.1, 0.999];
+    const n = c.grow(10, 0.5, 0.5, () => script.shift() ?? r());
+    // Every link the new star made — live or not — must lead to a star that
+    // still exists. (liveEdges would hide a dead parent link, and the near-
+    // neighbour link could make the star look connected anyway.)
+    const all = (c as unknown as { edges: ({ a: number; b: number } | null)[] }).edges;
+    const made = all.filter((e) => e && e.b === n.order);
+    expect(made.length).toBeGreaterThan(0);
+    for (const e of made) expect(c.byOrder(e!.a)).not.toBeNull();
+  });
+
   it('fades the oldest nodes ahead of reuse, newest fully present', () => {
     const c = new Constellation(64);
     c.reset(0);

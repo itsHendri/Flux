@@ -5,6 +5,52 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — self-review fixes
+
+An independent review of the six Phase 7 commits (a fresh agent reading the
+diff, tracing each claim) found nothing wrong in the GL state, the GLSL or the
+audio graph, but four real bugs and four plausible ones. All eight are fixed.
+
+**Governor.**
+- **A 3 fps machine was never helped.** Every frame over 250 ms was thrown away
+  as a hitch, so a machine that slow fed the governor nothing. One long frame
+  is still a hitch; three in a row now count as slow frames.
+- **A 30 Hz cap drove every mode to the bottom rung for good.** On Energy Saver,
+  Low Power Mode or a 30 Hz display, frames read 33 ms whatever the load. The
+  governor now judges each step down once a full window has passed. A step
+  that improved the median by under 8% bought nothing, so it's undone and
+  that frame time is learned as a **cap floor**; slow and good are then judged
+  relative to it. A median well under the floor forgets it (the cap has
+  lifted).
+- **Steps wiped simulations.** Moving the reaction, fluid, particle or bead
+  lever reallocates (and reseeds) the simulation, and at the edge a failed
+  probe did that twice every couple of minutes. Those modes now spend the
+  **resolution rungs first** and only touch the lever below half resolution.
+  Reaction and fluid also stopped reseeding when a resize only moves the
+  aspect's rounding by a texel or two.
+- **The probe backoff carried across modes.** A heavy mode could leave a light
+  one waiting two minutes to step back up. It now resets on a mode switch
+  (the cap floor stays, since it's a property of the machine).
+
+**synapse.** With the memory full, a new star could pick the oldest star as
+its parent, then take that star's slot, leaving a disconnected orphan with a
+dead link. The oldest can no longer be a parent. The regression test was
+first written so the near-neighbour link hid the bug; it now checks every link
+the new star made, and fails without the fix.
+
+**vector.** On 8-bit render targets (no float support) the multiply-fade
+rounds faint values back up to themselves, leaving a ghost trace that never
+fades; a second, reverse-subtract draw takes 1.5/255 off each frame. The
+phosphor sampler is now `highp` so the hot core isn't clamped where
+precision qualifiers are honoured.
+
+Verified: build clean, 147/147 tests (7 new: the 3 fps machine, the 30 Hz cap
+learned rather than chased, the cap forgotten, the per-mode backoff reset,
+the scale-first ladder, the orphan parent). In the preview all 22 modes compile
+and cycle with an empty overlay, and vector's trace draws as before.
+
+---
+
 ## Phase 7 — grove: a fractal forest the music re-grows
 
 Each tree is a 2D KIFS. Draw the trunk, move to its top, fold x (so one branch

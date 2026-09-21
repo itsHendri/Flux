@@ -67,7 +67,72 @@ describe('FrameGovernor — when to step', () => {
   });
 });
 
+describe('FrameGovernor — the machines it must not misread', () => {
+  it('a machine managing 3 fps still gets stepped down', () => {
+    // Every frame is over the hitch limit; one would be a hitch, a run isn't.
+    const g = new FrameGovernor();
+    const steps: number[] = [];
+    for (let i = 0; i < 40 && steps.length === 0; i++) {
+      const s = g.update(1 / 3, false, true);
+      if (s !== 0) steps.push(s);
+    }
+    expect(steps).toEqual([-1]);
+  });
+
+  it('a 30 Hz cap is learned, not chased to the bottom rung', () => {
+    // Frames are 33 ms whatever the rung: stepping down buys nothing.
+    const g = new FrameGovernor();
+    let rung = 0;
+    const steps: number[] = [];
+    for (let t = 0; t < 60; t += 1 / 30) {
+      const s = g.update(1 / 30, rung > 0, rung < 3);
+      if (s !== 0) {
+        steps.push(s);
+        rung -= s;
+      }
+    }
+    // One step down, judged useless and undone — then it holds.
+    expect(steps).toEqual([-1, 1]);
+    expect(rung).toBe(0);
+    expect(g.capFloor).toBeCloseTo(1 / 30, 3);
+  });
+
+  it('forgets the cap when frames get well under it', () => {
+    const g = new FrameGovernor();
+    let rung = 0;
+    for (let t = 0; t < 20; t += 1 / 30) {
+      const s = g.update(1 / 30, rung > 0, rung < 3);
+      rung -= s;
+    }
+    expect(g.capFloor).toBeGreaterThan(0);
+    run(g, 60, 3, false, false);
+    expect(g.capFloor).toBe(0);
+  });
+
+  it('a new mode starts with a fresh probe wait', () => {
+    const g = new FrameGovernor();
+    let rung = 1;
+    for (let t = 0; t < 120; t += 1 / 60) {
+      const s = g.update(rung === 0 ? 1 / 40 : 1 / 60, rung > 0, rung < 1);
+      rung -= s;
+    }
+    expect(g.upWait).toBeGreaterThan(5);
+    g.resetForMode();
+    expect(g.upWait).toBe(5);
+  });
+});
+
 describe('qualityLadder', () => {
+  it('with scaleFirst, spends the resolution before touching the lever', () => {
+    expect(qualityLadder([0, 1, 2], 2, true)).toEqual([
+      { quality: 2, scale: 1 },
+      { quality: 2, scale: 0.75 },
+      { quality: 2, scale: 0.5 },
+      { quality: 1, scale: 0.5 },
+      { quality: 0, scale: 0.5 },
+    ]);
+  });
+
   it('starts at the user’s own value and only ever goes down', () => {
     expect(qualityLadder([0, 1, 2], 1)).toEqual([
       { quality: 1, scale: 1 },
@@ -102,8 +167,14 @@ describe('QualityGovernor — the lever', () => {
     const gov = new QualityGovernor(h);
     return { gov, values, scale: () => scale };
   }
+  /** A machine that gets ~15% faster per rung: 30 fps at the top, 60 by rung 4. */
+  const machine = (level: number) => Math.max(1 / 60, (1 / 30) * Math.pow(0.85, level));
   const slow = (gov: QualityGovernor, seconds: number) => {
-    for (let t = 0; t < seconds; t += 1 / 30) gov.frame(1 / 30);
+    for (let t = 0; t < seconds; ) {
+      const dt = machine(gov.level);
+      gov.frame(dt);
+      t += dt;
+    }
   };
 
   it('steps the mode’s own quality down first, then the render scale', () => {
@@ -112,9 +183,24 @@ describe('QualityGovernor — the lever', () => {
     slow(gov, 2.5);
     expect(values.uQ).toBe(1);
     expect(scale()).toBe(1);
-    slow(gov, 6);
+    slow(gov, 8);
     expect(values.uQ).toBe(0);
     expect(scale()).toBeLessThan(1);
+  });
+
+  it('spends the resolution first for a lever that would wipe a simulation', () => {
+    const values: Record<string, number> = { uQ: 2 };
+    let scale = 1;
+    const gov = new QualityGovernor({
+      leverFor: () => ({ glslName: 'uQ', options: [0, 1, 2], scaleFirst: true }),
+      getValue: (n) => values[n],
+      setValue: (n, v) => (values[n] = v),
+      setRenderScale: (s) => (scale = s),
+    });
+    gov.setMode('sim');
+    slow(gov, 2.5);
+    expect(scale).toBe(0.75);
+    expect(values.uQ).toBe(2); // the pattern survives the first steps
   });
 
   it('a user change becomes the new ceiling and restarts from the top', () => {

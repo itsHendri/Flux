@@ -118,6 +118,12 @@ export class Constellation {
     if (!parent || rng() < 0.3) {
       parent = this.randomLive(rng) ?? newest;
     }
+    // Once the memory is full the new star takes the oldest star's slot, so
+    // the oldest can't be its parent — it would be gone the moment the child
+    // arrived, leaving an orphan with a dead link.
+    if (parent && this.added >= this.maxNodes && parent.order === this.added - this.maxNodes) {
+      parent = newest;
+    }
     const px = parent?.x ?? 0;
     const py = parent?.y ?? 0;
     const pz = parent?.z ?? 0;

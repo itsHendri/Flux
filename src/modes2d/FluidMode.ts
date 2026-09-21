@@ -140,7 +140,9 @@ export class FluidMode implements CustomMode {
     if (!ctx || !this.fmt) return;
     const simH = Math.round(detail);
     const simW = Math.max(128, Math.min(1600, Math.round((simH * w) / Math.max(h, 1))));
-    if (this.simW === simW && this.simH === simH && this.velRead) return;
+    // A width a texel or two off is the aspect's rounding moving (a render-
+    // scale step, a sub-pixel resize), not a new size: keep the dye.
+    if (this.simH === simH && Math.abs(this.simW - simW) <= 2 && this.velRead) return;
 
     const gl = ctx.gl;
     for (const f of [

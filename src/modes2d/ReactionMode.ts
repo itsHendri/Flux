@@ -122,7 +122,9 @@ export class ReactionMode implements CustomMode {
     const simH = Math.round(typeof detail === 'number' && detail > 0 ? detail : DEFAULT_DETAIL);
     const aspect = w / Math.max(h, 1);
     const simW = Math.max(256, Math.min(2048, Math.round(simH * aspect)));
-    if (this.simW === simW && this.simH === simH && this.read && this.write) return;
+    // A width a texel or two off is the aspect's rounding moving (a render-
+    // scale step, a sub-pixel resize), not a new size: keep the pattern.
+    if (this.simH === simH && Math.abs(this.simW - simW) <= 2 && this.read && this.write) return;
 
     const gl = ctx.gl;
     if (this.read) deleteFbo(gl, this.read);
