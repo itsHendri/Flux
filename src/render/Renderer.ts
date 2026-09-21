@@ -78,6 +78,8 @@ const BUILTIN_UNIFORMS = [
   'uOnset',
   // Stereo width 0..1 (0 = mono), smoothed; see AudioFrame.width.
   'uWidth',
+  // The music's clock: advances at the music's pace (see audio/drive.ts).
+  'uDrive',
   // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
   'uLogoAspect',
 ];
@@ -666,6 +668,7 @@ export class Renderer {
     gl.uniform1f(u.get('uBeat') ?? null, state.audio.beat);
     gl.uniform1f(u.get('uOnset') ?? null, state.audio.onset);
     gl.uniform1f(u.get('uWidth') ?? null, state.audio.width);
+    gl.uniform1f(u.get('uDrive') ?? null, state.audio.drive);
     gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     // Spectrum + waveform on unit 5 for every program (the data is re-uploaded
     // once per frame in render(), not once per program).

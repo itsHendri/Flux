@@ -12,6 +12,7 @@ import {
   stereoCorrelation,
 } from './audioTexture.ts';
 import { SpectrumSmoother } from './SpectrumSmoother.ts';
+import { driveRate } from './drive.ts';
 
 export interface AudioEngineOptions {
   fftSize?: number;
@@ -57,6 +58,8 @@ export class AudioEngine {
   private readonly onsetDetector = new OnsetDetector();
 
   private source: AudioSource | null = null;
+  /** The music's clock, integrated here because only the CPU can integrate. */
+  private drive = 0;
   private frame: AudioFrame = SILENT_FRAME;
   // The 512x2 spectrum+waveform texture data, refilled in place each tick —
   // one allocation for the life of the app rather than one per frame.
@@ -151,7 +154,9 @@ export class AudioEngine {
   /** Read the analyser, advance envelopes by `dt` seconds, snapshot the frame. */
   tick(dt: number): AudioFrame {
     if (!this.source) {
-      this.frame = SILENT_FRAME;
+      // Hold the clock where it stopped: a shader driven by it freezes rather
+      // than jumping back to the start.
+      this.frame = { ...SILENT_FRAME, drive: this.drive };
       return this.frame;
     }
     this.analyserL.getFloatTimeDomainData(this.leftData);
@@ -169,19 +174,24 @@ export class AudioEngine {
       this.ctx.sampleRate,
       this.analyser.fftSize,
     );
+    const bass = this.envBass.update(raw.bass, dt);
+    const level = this.envLevel.update(raw.level, dt);
+    const beat = this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize);
+    this.drive += Math.min(dt, 0.1) * driveRate(bass, level, beat);
     this.frame = {
-      bass: this.envBass.update(raw.bass, dt),
+      bass,
       mid: this.envMid.update(raw.mid, dt),
       high: this.envHigh.update(raw.high, dt),
-      level: this.envLevel.update(raw.level, dt),
+      level,
       width: this.envWidth.update(Math.max(0, Math.min(1, 1 - correlation)), dt),
-      beat: this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize),
+      beat,
       onset: this.onsetDetector.update(
         this.freqData,
         dt,
         this.ctx.sampleRate,
         this.analyser.fftSize,
       ),
+      drive: this.drive,
     };
     return this.frame;
   }

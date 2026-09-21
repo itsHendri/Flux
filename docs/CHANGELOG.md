@@ -5,6 +5,28 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — uDrive: the music's own clock
+
+A new builtin for every shader. `uTime` runs at one second per second whatever
+is playing; **`uDrive` runs at the music's pace**: fast through a loud, punchy
+passage, crawling through a quiet one, stopped in silence. A shader that moves
+by it (a zoom, a flight, a scroll) moves *with* the track.
+
+The obvious alternative, `uTime * (1 + uBass)`, is wrong in a way that shows:
+it scales the whole of elapsed time rather than the current step, so the
+picture jumps *backwards* whenever the bass drops. The rate has to be
+integrated, and only the CPU can integrate, so `AudioEngine` does it:
+`drive += dt · (1.4·bass + 0.6·level + 1.2·beat)`. When the source goes away
+the clock holds where it stopped rather than resetting, so a driven picture
+freezes instead of jumping to its start. (`gate` integrates its own speed
+because it wants a bespoke formula; the two photism modes still to come
+use this.)
+
+Verified: build clean, 149/149 tests (2 new on the rate: still in silence,
+faster for louder music, never negative).
+
+---
+
 ## Phase 7 — oracle: a dark chamber drawn in light at its edges
 
 A room of pillars around an altar, and above the altar a turning octahedron,

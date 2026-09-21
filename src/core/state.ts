@@ -16,6 +16,11 @@ export interface AudioFrame {
    * for unrelated or out-of-phase channels. `1 − correlation`, clamped.
    */
   width: number;
+  /**
+   * The music's clock (see audio/drive.ts): seconds-like, monotonic, advancing
+   * at the music's pace. Held, not reset, when the source goes silent.
+   */
+  drive: number;
 }
 
 export const SILENT_FRAME: AudioFrame = {
@@ -26,6 +31,7 @@ export const SILENT_FRAME: AudioFrame = {
   beat: 0,
   onset: 0,
   width: 0,
+  drive: 0,
 };
 
 /**
