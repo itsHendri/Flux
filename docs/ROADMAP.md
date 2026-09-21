@@ -514,6 +514,33 @@ crossfades instead of hard cuts.
 
 
 
+## Phase 9 — Tempo-locked motion (2026-09-21)
+
+Chosen by the user on 2026-09-21. Every mode so far *reacts*: something
+happens after a kick is detected. With the tempo known, motion can be
+*placed*: predicted onto the beat and the bar, the way a VJ cuts on the one.
+
+- [ ] **Beat tracker.** A phase-locked loop on the kick: tempo from the
+  median kick gap (shared with the phrase clock, one estimator), a beat phase
+  that runs on between kicks and is pulled toward each one, and a lock flag
+  that drops when the kicks stop. New builtins `uBeatPhase` (0..1 through the
+  beat), `uBarPhase` (0..1 through the bar), `uBpm`, `uLock`, with
+  `beatPulse()` / `barPulse()` helpers in `common.glsl`; a beat light on the
+  bar shows the lock. *Done:* on a synthetic 120 bpm kick the tracker reads
+  ~120 and its phase sits within a few percent of each kick; it re-locks after
+  a tempo change and unlocks when the kicks stop; tests cover all three.
+- [ ] **Modes on the bar.** Put the lock to work where it reads best, with
+  every mode unchanged when there's no lock: `gate` flies one gate per beat;
+  `forge` shatters on the downbeat; `magneto` flips a pole on the bar;
+  `spacetime` surges on each beat; `synapse` fires a star on each downbeat;
+  the `kaleido` effect turns a step each bar. *Done:* on a synthetic track
+  each locked event lands on the predicted beat (checked by probe), and with
+  no kicks each mode behaves as before.
+
+---
+
+## Known limitations
+
 - **Heavy modes are only measured on one machine.** Raymarched fractals and
   the Ultra settings of the simulations held 120 fps on Apple silicon; there's
   no data for integrated or older GPUs. The performance governor is the
