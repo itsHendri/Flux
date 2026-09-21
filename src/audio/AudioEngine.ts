@@ -13,6 +13,7 @@ import {
 } from './audioTexture.ts';
 import { SpectrumSmoother } from './SpectrumSmoother.ts';
 import { driveRate } from './drive.ts';
+import { BeatTracker } from './BeatTracker.ts';
 
 export interface AudioEngineOptions {
   fftSize?: number;
@@ -60,6 +61,7 @@ export class AudioEngine {
   private source: AudioSource | null = null;
   /** The music's clock, integrated here because only the CPU can integrate. */
   private drive = 0;
+  private readonly tracker = new BeatTracker();
   private frame: AudioFrame = SILENT_FRAME;
   // The 512x2 spectrum+waveform texture data, refilled in place each tick —
   // one allocation for the life of the app rather than one per frame.
@@ -156,7 +158,7 @@ export class AudioEngine {
     if (!this.source) {
       // Hold the clock where it stopped: a shader driven by it freezes rather
       // than jumping back to the start.
-      this.frame = { ...SILENT_FRAME, drive: this.drive };
+      this.frame = { ...SILENT_FRAME, drive: this.drive, bpm: this.tracker.bpm };
       return this.frame;
     }
     this.analyserL.getFloatTimeDomainData(this.leftData);
@@ -178,6 +180,7 @@ export class AudioEngine {
     const level = this.envLevel.update(raw.level, dt);
     const beat = this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize);
     this.drive += Math.min(dt, 0.1) * driveRate(bass, level, beat);
+    this.tracker.update(Math.min(dt, 0.1), beat);
     this.frame = {
       bass,
       mid: this.envMid.update(raw.mid, dt),
@@ -192,6 +195,10 @@ export class AudioEngine {
         this.analyser.fftSize,
       ),
       drive: this.drive,
+      beatPhase: this.tracker.beatPhase,
+      barPhase: this.tracker.barPhase,
+      bpm: this.tracker.bpm,
+      lock: this.tracker.locked ? 1 : 0,
     };
     return this.frame;
   }

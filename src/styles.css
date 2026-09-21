@@ -567,3 +567,18 @@ button.perf-mode.open {
   color: rgba(199, 204, 214, 0.5);
   margin: 8px 0 4px;
 }
+
+/* Beat light: a dot beside auto that flashes on the tracked beat. */
+.perf-beat {
+  width: 8px;
+  height: 8px;
+  margin: 0 6px 0 2px;
+  border-radius: 50%;
+  background: rgba(199, 204, 214, 0.6);
+  opacity: 0.12;
+}
+
+.perf-beat.locked {
+  background: var(--accent);
+  box-shadow: 0 0 8px var(--accent);
+}

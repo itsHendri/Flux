@@ -520,7 +520,7 @@ Chosen by the user on 2026-09-21. Every mode so far *reacts*: something
 happens after a kick is detected. With the tempo known, motion can be
 *placed*: predicted onto the beat and the bar, the way a VJ cuts on the one.
 
-- [ ] **Beat tracker.** A phase-locked loop on the kick: tempo from the
+- [x] **Beat tracker.** A phase-locked loop on the kick: tempo from the
   median kick gap (shared with the phrase clock, one estimator), a beat phase
   that runs on between kicks and is pulled toward each one, and a lock flag
   that drops when the kicks stop. New builtins `uBeatPhase` (0..1 through the

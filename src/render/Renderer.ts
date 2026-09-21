@@ -81,6 +81,12 @@ const BUILTIN_UNIFORMS = [
   'uWidth',
   // The music's clock: advances at the music's pace (see audio/drive.ts).
   'uDrive',
+  // The beat tracker: phase through the beat and the bar (0 on the beat),
+  // tempo, and whether it's locked (1) or guessing (0). See BeatTracker.ts.
+  'uBeatPhase',
+  'uBarPhase',
+  'uBpm',
+  'uLock',
   // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
   'uLogoAspect',
 ];
@@ -731,6 +737,10 @@ export class Renderer {
     gl.uniform1f(u.get('uOnset') ?? null, state.audio.onset);
     gl.uniform1f(u.get('uWidth') ?? null, state.audio.width);
     gl.uniform1f(u.get('uDrive') ?? null, state.audio.drive);
+    gl.uniform1f(u.get('uBeatPhase') ?? null, state.audio.beatPhase);
+    gl.uniform1f(u.get('uBarPhase') ?? null, state.audio.barPhase);
+    gl.uniform1f(u.get('uBpm') ?? null, state.audio.bpm);
+    gl.uniform1f(u.get('uLock') ?? null, state.audio.lock);
     gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     // Spectrum + waveform on unit 5 for every program (the data is re-uploaded
     // once per frame in render(), not once per program).

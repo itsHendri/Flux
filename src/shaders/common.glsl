@@ -102,3 +102,19 @@ vec2 stereoAt(int i) {
   i = clamp(i, 0, 2047);
   return vec2(texelFetch(uStereo, ivec2(i, 0), 0).r, texelFetch(uStereo, ivec2(i, 1), 0).r);
 }
+
+// --- Tempo -----------------------------------------------------------------
+// The beat tracker's prediction (uBeatPhase / uBarPhase, 0 on the beat). Unlike
+// uBeat, which fires after a kick is heard, these land *on* the beat and keep
+// time through a fill. Both are 0 when not locked (uLock = 0), so a mode that
+// uses them should keep its reactive behaviour as the fallback.
+
+// 1 on each beat, decaying through it; `sharp` sets how fast (8 is punchy).
+float beatPulse(float sharp) {
+  return uLock * exp(-uBeatPhase * sharp);
+}
+
+// 1 on each downbeat, decaying through the bar.
+float barPulse(float sharp) {
+  return uLock * exp(-uBarPhase * sharp);
+}

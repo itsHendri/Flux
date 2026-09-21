@@ -21,6 +21,16 @@ export interface AudioFrame {
    * at the music's pace. Held, not reset, when the source goes silent.
    */
   drive: number;
+  /**
+   * The beat tracker (audio/BeatTracker.ts): where we are in the beat and the
+   * bar, 0 on the beat / downbeat, predicted rather than detected. `lock` is 1
+   * when that prediction can be trusted, 0 otherwise (modes should fall back
+   * to reacting). `bpm` is the measured tempo (120 until measured).
+   */
+  beatPhase: number;
+  barPhase: number;
+  bpm: number;
+  lock: number;
 }
 
 export const SILENT_FRAME: AudioFrame = {
@@ -32,6 +42,10 @@ export const SILENT_FRAME: AudioFrame = {
   onset: 0,
   width: 0,
   drive: 0,
+  beatPhase: 0,
+  barPhase: 0,
+  bpm: 120,
+  lock: 0,
 };
 
 /**

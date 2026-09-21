@@ -1,14 +1,15 @@
 import { HitGate } from '../core/hitGate.ts';
+import { TempoEstimator } from './tempo.ts';
+
+export { foldPeriod } from './tempo.ts';
 
 /**
  * When a phrase ends — the moment a set would change picture.
  *
  * Built on the kick pulse (`AudioFrame.beat`):
  *
- * - **Tempo** from inter-onset intervals: the median of the recent gaps
- *   between kicks, folded into 80–160 bpm so a half-time or double-time kick
- *   pattern reads as the same tempo. Median, not mean, so a missed kick or a
- *   fill doesn't drag it.
+ * - **Tempo** from the gaps between kicks (`TempoEstimator`, shared with the
+ *   beat tracker).
  * - **Phrases** every `bars` bars of 4/4 at that tempo, and the boundary is
  *   taken *on a kick*: once the phrase is due, the next kick ends it. That puts
  *   a change on the downbeat rather than wherever the clock happens to land.
@@ -21,16 +22,9 @@ import { HitGate } from '../core/hitGate.ts';
  *
  * Pure and clock-driven, so it's tested without audio.
  */
-const MIN_BPM = 80;
-const MAX_BPM = 160;
-/** Tempo assumed until there are enough kicks to measure one. */
-const DEFAULT_PERIOD = 0.5;
-const HISTORY = 16;
-
 export class PhraseClock {
   private readonly kicks = new HitGate(0.2);
-  private readonly gaps: number[] = [];
-  private lastKick = -Infinity;
+  private readonly tempo = new TempoEstimator();
   private phraseStart = 0;
   private fast = 0;
   private slow = 0;
@@ -41,18 +35,16 @@ export class PhraseClock {
 
   /** Seconds per beat (the default until a tempo is measured). */
   get period(): number {
-    if (this.gaps.length < 4) return DEFAULT_PERIOD;
-    const s = [...this.gaps].sort((a, b) => a - b);
-    return s[s.length >> 1];
+    return this.tempo.period;
   }
 
   /** True once enough kicks have been heard to measure a tempo. */
   get measured(): boolean {
-    return this.gaps.length >= 4;
+    return this.tempo.measured;
   }
 
   get bpm(): number {
-    return 60 / this.period;
+    return this.tempo.bpm;
   }
 
   /** Bars since the current phrase began. */
@@ -83,14 +75,7 @@ export class PhraseClock {
     this.slow += (level - this.slow) * (1 - Math.exp(-dt / 8));
 
     const kick = this.kicks.update(beat, time, 0.5);
-    if (kick) {
-      const gap = time - this.lastKick;
-      this.lastKick = time;
-      if (gap > 0.2 && gap < 2) {
-        this.gaps.push(foldPeriod(gap));
-        if (this.gaps.length > HISTORY) this.gaps.shift();
-      }
-    }
+    if (kick) this.tempo.kick(time);
 
     // Silence isn't a set, and it doesn't count toward a phrase: a phrase
     // that aged through silence (before the music, or paused) would end the
@@ -130,12 +115,4 @@ export class PhraseClock {
     this.phraseStart = time;
     return true;
   }
-}
-
-/** A gap between kicks as a beat period in 80–160 bpm, by halving or doubling. */
-export function foldPeriod(gap: number): number {
-  let p = gap;
-  while (p > 60 / MIN_BPM) p /= 2;
-  while (p < 60 / MAX_BPM) p *= 2;
-  return p;
 }

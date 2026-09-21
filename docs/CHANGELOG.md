@@ -5,6 +5,41 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 9 — the beat tracker
+
+Every mode so far *reacts*: `uBeat` fires after a kick is heard, so a picture
+driven by it is always a little late and goes quiet through a fill.
+`audio/BeatTracker.ts` *predicts*. It's a phase-locked loop: a beat counter
+that runs on at the measured tempo between kicks and is pulled toward each kick
+it hears, gently once locked (a stray hit can't yank it) and harder while it's
+still finding the beat. Because it predicts, it lands on the beat and keeps
+time through a fill or a dropped kick.
+
+- **Locked** = a measured tempo, and the last several kicks landed within 15%
+  of a beat of where the counter said they would. It drops after four bars
+  without a kick.
+- **One tempo estimator** (`audio/tempo.ts`), now shared by the tracker and the
+  phrase clock, instead of the phrase clock keeping its own copy.
+- **New builtins:** `uBeatPhase` and `uBarPhase` (0 on the beat / downbeat),
+  `uBpm`, `uLock`; in `common.glsl`, `beatPulse(sharp)` and
+  `barPulse(sharp)`, both 0 when unlocked so a mode's reactive behaviour is
+  the natural fallback. The bar's downbeat is counted from the first kick
+  heard, which is a guess, but right for most dance music.
+- **A beat light** on the performance bar, beside *auto*: it flashes on each
+  predicted beat while locked and sits dim while not, so you can see whether
+  the lock has the beat before trusting it.
+
+Verified: 6 new tests on synthetic kick tracks. A 120 bpm kick locks at
+118–122 with the phase within 6% of a beat at every kick; through a two-second
+gap in the kicks, the first one back lands on the predicted beat; a change to
+128 bpm re-locks at 126–130 and back on the beat; with the kicks stopped it
+lets go, and it never locks without them. Build clean, 176/176 tests; all 27
+modes compile with the new builtins. The live lock can't be shown in the
+pane, whose sparse frames starve the tracker's clock, so that's for real
+Chrome. Nothing uses the lock yet; the modes come next.
+
+---
+
 ## PHASE 8 — review (the tuning task waits on the user)
 
 Phase 8's buildable tasks are done: **crossfades**, the **phrase clock** and

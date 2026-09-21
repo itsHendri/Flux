@@ -56,6 +56,7 @@ export class PerformanceBar {
   private activeMode = '';
   private readonly lookBtn: HTMLButtonElement;
   private readonly autoBtn: HTMLButtonElement;
+  private readonly beatLight: HTMLElement;
   private readonly swatches: HTMLButtonElement[] = [];
   private readonly pipBtn: HTMLButtonElement;
   private idleTimer = 0;
@@ -127,7 +128,13 @@ export class PerformanceBar {
     this.lookBtn.classList.add('perf-look');
     // Auto: let the phrase clock change the look on its own (key A).
     this.autoBtn = this.iconButton('auto', 'Change look every phrase (A)', cb.onAuto);
-    const lookGroup = this.group(this.lookBtn, this.autoBtn);
+    // The beat light: flashes on each predicted beat while the tracker is
+    // locked, sits dim when it isn't — so you can see whether the tempo-locked
+    // motion has the beat before trusting it.
+    this.beatLight = document.createElement('span');
+    this.beatLight.className = 'perf-beat';
+    this.beatLight.title = 'Beat lock';
+    const lookGroup = this.group(this.lookBtn, this.autoBtn, this.beatLight);
 
     // --- Output ----------------------------------------------------------
     const fsBtn = this.iconButton('⛶', 'Fullscreen', cb.onFullscreen);
@@ -240,6 +247,13 @@ export class PerformanceBar {
     this.autoBtn.classList.toggle('active', on);
     const tempo = bpm ? ` — ${Math.round(bpm)} bpm` : '';
     this.autoBtn.title = `Change look every phrase (A)${on ? tempo : ''}`;
+  }
+
+  /** Called every frame with the tracker's beat phase and lock. */
+  setBeat(phase: number, locked: boolean): void {
+    const glow = locked ? 0.25 + 0.75 * Math.exp(-phase * 6) : 0.12;
+    this.beatLight.style.opacity = glow.toFixed(3);
+    this.beatLight.classList.toggle('locked', locked);
   }
 
   setPip(on: boolean): void {

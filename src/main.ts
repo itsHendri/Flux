@@ -187,9 +187,13 @@ app.onFrame((dt) => {
   tickAuto();
 });
 
-/** Feed the phrase clock; on a boundary with auto on, change the look. */
+/**
+ * Feed the phrase clock (on a boundary with auto on, change the look) and the
+ * bar's beat light.
+ */
 function tickAuto(): void {
   const f = audio.getFrame();
+  perfBar?.setBeat(f.beatPhase, f.lock > 0.5);
   const boundary = phraseClock.update(nowSeconds(), f.beat, f.level, setSettings.phraseBars);
   if (boundary && setSettings.auto) {
     applyLook(lookSequence.next(currentLook, setSettings.order));
