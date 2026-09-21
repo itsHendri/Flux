@@ -5,6 +5,32 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — anemone: chains of rings from one point
+
+Arms leave one centre, spread evenly over the sphere (a Fibonacci spread, so
+any count from 4 to 32 is even), and curl on slow noise that grows toward the
+tips, so the root holds still and the ends swim. Each arm is a chain of 28
+rings, and **ring *n* answers to band *n***: every arm is the spectrum read
+outward, with bass swelling the body and hats flickering at the tips. A kick
+sends a swell out along every arm at once: as the decaying beat pulse falls
+from 1 to 0, the swell's position runs from root to tip.
+
+Each ring is an annulus on a quad in the ring's own plane, across the arm.
+Seen along the arm it's a circle, side-on a thin ellipse, which is what makes
+a chain of flat rings read as a 3D tentacle. Nothing is stored: every ring's
+place is a function of (arm, ring, time) in the vertex shader, instanced with
+no buffers. Additive light, no depth, so the crowded root glows.
+
+Controls: Arms, Reach, Sway (bass adds to it), Ring Weight, plus the shared
+Scale for the camera. New look: **polyp**.
+
+Verified in the preview: a 40 Hz → 12 kHz sweep over a 55 Hz drone makes the
+root glow (the drone) while a band of swollen rings travels outward along
+every arm as the sweep rises: mid-arm at ~5 s, at the tips by ~9 s. Build
+clean, 140/140 tests, overlay empty.
+
+---
+
 ## Phase 7 — the performance governor
 
 Most heavy modes have a Quality, Detail or Particles control, but until now

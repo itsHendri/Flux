@@ -17,7 +17,7 @@ export const MODE_GROUPS: ModeGroup[] = [
   { label: 'fields', modes: ['flow', 'cells', 'mandala', 'sand', 'fur', 'logo'] },
   { label: 'simulations', modes: ['reaction', 'fluid'] },
   { label: 'raymarched', modes: ['raymarch', 'chrome', 'bulb', 'lattice'] },
-  { label: 'particles', modes: ['magneto', 'trails3d', 'forge', 'synapse'] },
+  { label: 'particles', modes: ['magneto', 'trails3d', 'forge', 'synapse', 'anemone', 'wisp'] },
 ];
 
 /**

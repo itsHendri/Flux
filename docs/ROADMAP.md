@@ -426,7 +426,7 @@ commit unless noted.
 - [x] **Remaining photism directions — scoped (2026-09-21).** Split into the
   seven tasks below. Two overlap existing work, so each is scoped to be
   clearly different from what's there.
-- [ ] **anemone** — "chains of rings from one point". Instanced 3D rings (an
+- [x] **anemone** — "chains of rings from one point". Instanced 3D rings (an
   annulus on a quad in the ring's own plane) strung along tentacles that leave
   one centre and curl on noise; ring *n* of a chain answers to band *n*, so
   the spectrum runs out along every arm. *Done:* arms visibly carry the

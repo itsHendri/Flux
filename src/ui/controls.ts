@@ -18,6 +18,7 @@ const SCALE_MODES = [
   'chrome',
   'lattice',
   'forge',
+  'anemone',
 ];
 
 /**
@@ -350,6 +351,47 @@ export const CONTROLS: ControlDef[] = [
     ],
     default: 0,
     modes: ['spectro'],
+  },
+  {
+    id: 'anemoneArms',
+    name: 'Arms',
+    glslName: 'uAnemoneArms',
+    min: 4,
+    max: 32,
+    step: 1,
+    default: 14,
+    modes: ['anemone'],
+  },
+  {
+    id: 'anemoneReach',
+    name: 'Reach',
+    glslName: 'uAnemoneReach',
+    min: 0.5,
+    max: 1.6,
+    step: 0.01,
+    default: 1,
+    modes: ['anemone'],
+  },
+  {
+    // How far the tips swim; bass pushes it further.
+    id: 'anemoneSway',
+    name: 'Sway',
+    glslName: 'uAnemoneSway',
+    min: 0,
+    max: 1.5,
+    step: 0.01,
+    default: 0.7,
+    modes: ['anemone'],
+  },
+  {
+    id: 'anemoneRing',
+    name: 'Ring Weight',
+    glslName: 'uAnemoneRing',
+    min: 0.3,
+    max: 3,
+    step: 0.01,
+    default: 1,
+    modes: ['anemone'],
   },
   {
     // Cycle builds the next shape after every shatter; the rest hold one.

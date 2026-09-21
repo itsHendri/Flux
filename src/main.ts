@@ -25,6 +25,7 @@ import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ForgeMode } from './modes3d/ForgeMode.ts';
 import { SynapseMode } from './modes3d/SynapseMode.ts';
+import { AnemoneMode } from './modes3d/AnemoneMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
 import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
@@ -116,6 +117,7 @@ const MODES_3D = [
   new Trails3DMode(),
   new ForgeMode(),
   new SynapseMode(),
+  new AnemoneMode(),
 ].filter((m) => renderer.registerCustomMode(m));
 for (const pass of PASSES) renderer.registerPass(pass);
 

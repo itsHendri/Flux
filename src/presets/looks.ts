@@ -324,6 +324,21 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'polyp',
+    note: 'Rings strung out on curling arms — the spectrum read from the root to the tips.',
+    preset: {
+      mode: 'anemone',
+      values: {
+        theme: 2,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        bloomIntensity: 0.7,
+        anemoneArms: 18,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**
