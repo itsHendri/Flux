@@ -26,6 +26,7 @@ import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ForgeMode } from './modes3d/ForgeMode.ts';
 import { SynapseMode } from './modes3d/SynapseMode.ts';
 import { AnemoneMode } from './modes3d/AnemoneMode.ts';
+import { WispMode } from './modes3d/WispMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
 import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
@@ -120,6 +121,7 @@ const MODES_3D = [
   new SynapseMode(),
   new AnemoneMode(),
   new GateMode(),
+  new WispMode(),
 ].filter((m) => renderer.registerCustomMode(m));
 for (const pass of PASSES) renderer.registerPass(pass);
 

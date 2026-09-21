@@ -5,6 +5,37 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — wisp: a dust world with one bright wanderer
+
+The picture is made by a light moving, not by the things it lights. The dust
+is placed analytically: every mote is a hashed spot in a slab of air, drifting
+on slow per-mote sines, with no simulation at all. Each mote is lit only by
+the wanderer, by inverse-square distance, so the world is dark except where
+the light passes. Near the light the air is pushed aside (a wake, harder on
+bass), and close motes go white-hot.
+
+The wanderer is steered on the CPU: a damped spring toward a target that
+drifts every few seconds and **jumps somewhere well away on a kick**, with the
+music's level setting how keenly it chases. Its path is kept as a trail and
+drawn as a tail in a screen pass. The tail is segments between consecutive
+samples, not dots, because the first version drew a fast dart as a row of
+beads. The camera follows loosely.
+
+The dust count is the mode's quality lever for the governor (stateless, so it
+goes before the resolution).
+
+Controls: Dust (16k / 65k / 200k), Light, Wander, Wake. New look: **firefly**
+(with trails and bloom).
+
+Two tuning rounds in the preview. First the dust was invisible: too sparse
+near the light, each mote too dim and a pixel wide. The slab was packed
+tighter, the light's reach widened, and motes given a faint floor so the world
+exists in the dark. Then the dotted tail. Verified: the wanderer glows with a
+continuous streak behind it, lighting a pocket of dust that moves with it.
+Build clean, 147/147 tests, overlay empty.
+
+---
+
 ## Phase 7 — self-review fixes
 
 An independent review of the six Phase 7 commits (a fresh agent reading the

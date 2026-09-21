@@ -19,6 +19,7 @@ const SCALE_MODES = [
   'lattice',
   'forge',
   'anemone',
+  'wisp',
 ];
 
 /**
@@ -351,6 +352,50 @@ export const CONTROLS: ControlDef[] = [
     ],
     default: 0,
     modes: ['spectro'],
+  },
+  {
+    id: 'wispDust',
+    name: 'Dust',
+    glslName: 'uWispDust',
+    type: 'select',
+    options: [
+      { label: '16k', value: 16384 },
+      { label: '65k', value: 65536 },
+      { label: '200k', value: 200000 },
+    ],
+    default: 65536,
+    modes: ['wisp'],
+  },
+  {
+    id: 'wispLight',
+    name: 'Light',
+    glslName: 'uWispLight',
+    min: 0.2,
+    max: 3,
+    step: 0.01,
+    default: 1,
+    modes: ['wisp'],
+  },
+  {
+    // How eagerly the wanderer chases its next spot.
+    id: 'wispWander',
+    name: 'Wander',
+    glslName: 'uWispWander',
+    min: 0.2,
+    max: 2.5,
+    step: 0.01,
+    default: 1,
+    modes: ['wisp'],
+  },
+  {
+    id: 'wispWake',
+    name: 'Wake',
+    glslName: 'uWispWake',
+    min: 0,
+    max: 2,
+    step: 0.01,
+    default: 1,
+    modes: ['wisp'],
   },
   {
     id: 'groveSpread',

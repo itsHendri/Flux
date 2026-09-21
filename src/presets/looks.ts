@@ -369,6 +369,23 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'firefly',
+    note: 'One light wandering a world of dust, darting on the kick.',
+    preset: {
+      mode: 'wisp',
+      values: {
+        theme: 1,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        'fx-trails': 1,
+        trailDecay: 0.9,
+        bloomIntensity: 1.0,
+        wispLight: 1.3,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

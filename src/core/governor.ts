@@ -358,6 +358,8 @@ export const QUALITY_LEVERS: Record<string, { glslName: string; scaleFirst: bool
   magneto: { glslName: 'uParticles', scaleFirst: true },
   trails3d: { glslName: 'uParticles', scaleFirst: true },
   forge: { glslName: 'uForgeCount', scaleFirst: true },
+  // Stateless — the dust is placed analytically — so fewer motes go first.
+  wisp: { glslName: 'uWispDust', scaleFirst: false },
 };
 
 const PIN_KEY = 'flux.autoQuality';

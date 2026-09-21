@@ -439,7 +439,7 @@ commit unless noted.
   iterations) in parallax layers; band energy sets branch angles so the
   canopy re-grows with the music, wind from bass. *Done:* reads as trees, not
   noise; the spectrum visibly reshapes branches; ≥3 controls.
-- [ ] **wisp** — "a dust world with one bright wanderer". Dust placed
+- [x] **wisp** — "a dust world with one bright wanderer". Dust placed
   analytically in the vertex shader (no simulation) and lit by inverse-square
   distance to a single wandering light whose path the music drives. *Done:*
   the light moves through the dust and lights what's near it; kicks make it

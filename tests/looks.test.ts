@@ -15,6 +15,7 @@ import { ForgeMode } from '../src/modes3d/ForgeMode.ts';
 import { SynapseMode } from '../src/modes3d/SynapseMode.ts';
 import { AnemoneMode } from '../src/modes3d/AnemoneMode.ts';
 import { GateMode } from '../src/modes2d/GateMode.ts';
+import { WispMode } from '../src/modes3d/WispMode.ts';
 import { resolvePreset } from '../src/presets/presets.ts';
 
 const PASS_NAMES = PASSES.map((p) => p.name);
@@ -34,6 +35,7 @@ const CUSTOM_MODES = [
   new SynapseMode(),
   new AnemoneMode(),
   new GateMode(),
+  new WispMode(),
 ];
 const MODE_NAMES = [...MODES.map((m) => m.name), ...CUSTOM_MODES.map((m) => m.name)];
 
