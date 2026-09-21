@@ -35,12 +35,20 @@ export class PhraseClock {
   private fast = 0;
   private slow = 0;
   private lastTime = -1;
+  /** The energy rule fires once per change, then waits for the level to settle. */
+  private energyArmed = true;
+  private silent = true;
 
   /** Seconds per beat (the default until a tempo is measured). */
   get period(): number {
     if (this.gaps.length < 4) return DEFAULT_PERIOD;
     const s = [...this.gaps].sort((a, b) => a - b);
     return s[s.length >> 1];
+  }
+
+  /** True once enough kicks have been heard to measure a tempo. */
+  get measured(): boolean {
+    return this.gaps.length >= 4;
   }
 
   get bpm(): number {
@@ -84,14 +92,33 @@ export class PhraseClock {
       }
     }
 
-    const elapsed = this.barsAt(time);
-    // Silence isn't a set.
-    if (this.slow < 0.02 && this.fast < 0.02) return false;
+    // Silence isn't a set, and it doesn't count toward a phrase: a phrase
+    // that aged through silence (before the music, or paused) would end the
+    // moment sound arrived. The count and the energy averages start fresh
+    // when it does.
+    if (level < 0.01 && this.fast < 0.02) {
+      this.silent = true;
+      this.phraseStart = time;
+      return false;
+    }
+    if (this.silent) {
+      this.silent = false;
+      this.fast = this.slow = level;
+      this.phraseStart = time;
+      this.energyArmed = true;
+    }
 
-    // A sharp change of energy, at least two bars into the phrase.
-    if (elapsed >= 2 && this.slow > 0.03) {
+    const elapsed = this.barsAt(time);
+    // A sharp change of energy, at least two bars into the phrase — once per
+    // change: a drop keeps the fast average climbing for a while, and without
+    // re-arming it would fire again two bars later.
+    if (this.slow > 0.03) {
       const ratio = this.fast / this.slow;
-      if (ratio > 1.8 || ratio < 0.45) return this.boundary(time);
+      if (!this.energyArmed && ratio > 0.8 && ratio < 1.25) this.energyArmed = true;
+      if (this.energyArmed && elapsed >= 2 && (ratio > 1.8 || ratio < 0.45)) {
+        this.energyArmed = false;
+        return this.boundary(time);
+      }
     }
     // Due: take it on the next kick, or a bar late with no kick at all.
     if (elapsed >= bars - 0.125 && kick) return this.boundary(time);
@@ -101,8 +128,6 @@ export class PhraseClock {
 
   private boundary(time: number): boolean {
     this.phraseStart = time;
-    // The new phrase measures change against its own start, not the old one.
-    this.slow = this.fast;
     return true;
   }
 }

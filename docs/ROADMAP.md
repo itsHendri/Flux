@@ -20,9 +20,10 @@ moves past it rather than stopping on it.
 at `origin/main`. **The Phase 7 run is committed locally and not pushed** —
 pushing deploys it.
 
-**The instrument today:** 27 modes, 7 effects, 5 themes, 22 built-in looks.
+**The instrument today:** 27 modes, 7 effects, 5 themes, 22 built-in looks,
+crossfades and phrase-timed auto looks.
 Vanilla TypeScript + raw WebGL2, zero runtime dependencies, ~91 kB gzipped.
-151 unit tests across 21 files. Stereo analysis, a performance governor, and
+170 unit tests across 24 files. Stereo analysis, a performance governor, and
 a music-paced clock (`uDrive`) for shaders.
 
 | Group (as the picker shows it) | Modes |
@@ -47,8 +48,8 @@ were all removed for that reason); the performance bar is the primary surface
 and the dock panel should not duplicate it.
 
 **To start a new run:** read this section, then `Waiting on the user`
-below, then `CHANGELOG.md`'s newest entry (the Phase 7 review note). Phase 7
-is complete; there is no queued phase — propose one and confirm it first. Verification recipe
+below, then `CHANGELOG.md`'s newest entry (the Phase 8 review note). Phase 8's
+open task is the user's live-pass notes; build those when they arrive. Verification recipe
 (synthetic audio, the preview-pane quirks, the shader-error trap) is in
 `AGENT_LOOP.md` → *Verify*.
 
@@ -482,7 +483,7 @@ commit unless noted.
 
 ---
 
-## Phase 8 — Tuning from use, and a set that plays itself (2026-09-21)
+## Phase 8 — Tuning from use, and a set that plays itself (2026-09-21) — built; tuning waits on the user
 
 Chosen by the user on 2026-09-21: act on the live-pass notes, and build
 set-list tools so the instrument can carry a set — timed look changes and

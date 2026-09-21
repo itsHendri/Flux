@@ -5,6 +5,44 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 8 — review (the tuning task waits on the user)
+
+Phase 8's buildable tasks are done: **crossfades**, the **phrase clock** and
+**auto looks**. Its first task, tuning from the user's live-pass notes, stays
+open until the notes arrive.
+
+**Self-review.** A fresh review agent read the Phase 8 diff and found three
+confirmed bugs and two plausible ones. All five are fixed:
+
+- **A fade started mid-fade dropped the blend on screen.** The new fade took
+  only the incoming mode as its "from", so the part of the picture still
+  showing the older mode vanished for a frame. The dissolve is now rendered
+  into its own buffer, and a chained fade starts from a frozen copy of that
+  blend.
+- **One big drop fired two boundaries** two bars apart: the fast energy average
+  was still climbing after the first. The energy rule now fires once per
+  change and re-arms only when the level settles.
+- **Silence counted toward the first phrase**, so with auto on (it persists)
+  the look changed the instant music started, and again 4 s later. Silence no
+  longer ages the phrase, and the energy averages re-seed when sound arrives.
+  Pausing and resuming a track behaves the same way.
+- **Picking the outgoing mode again mid-fade re-entered it**, which wiped
+  synapse's sky while it was still on screen. `enter()` now skips a mode that
+  is still visible as the outgoing side.
+- The auto tooltip claimed 120 bpm before any kick was heard; it now shows a
+  tempo only once one has been measured.
+
+Verified: build clean, 170/170 tests (2 new: one drop is one boundary; silence
+before the music doesn't count, with the first boundary 8 bars after it
+starts; both fail on the old clock). In the preview, three mode switches
+inside one 4 s fade dissolve from the frozen blend into the last one with an
+empty overlay.
+
+**Waiting on the user:** the live pass (now including how the crossfades and
+auto looks feel over a real set), then the tuning notes. **Not pushed.**
+
+---
+
 ## Phase 8 — auto looks
 
 The set can now play itself. An **auto** switch on the performance bar (and key

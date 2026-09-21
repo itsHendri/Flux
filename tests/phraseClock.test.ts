@@ -75,6 +75,21 @@ describe('PhraseClock — phrases', () => {
     expect(times[0]).toBeLessThan(13.5);
   });
 
+  it('one big drop is one boundary, not two', () => {
+    const c = new PhraseClock();
+    const times = run(c, 40, (t) => beatAt(t, 0.5), (t) => (t < 20 ? 0.05 : 0.8), 32);
+    const nearDrop = times.filter((t) => t > 19 && t < 30);
+    expect(nearDrop.length).toBe(1);
+  });
+
+  it('silence before the music does not count toward the first phrase', () => {
+    const c = new PhraseClock();
+    const times = run(c, 50, (t) => (t < 30 ? 0 : beatAt(t, 0.5, 30)), (t) => (t < 30 ? 0 : 0.5));
+    // Nothing on the music's arrival; the first boundary 8 bars (16 s) later.
+    expect(times.length).toBe(1);
+    expect(Math.abs(times[0] - 46)).toBeLessThan(0.6);
+  });
+
   it('a breakdown ends the phrase early too', () => {
     const c = new PhraseClock();
     // Full for 10 s, then the drums and most of the energy drop out.

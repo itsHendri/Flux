@@ -152,6 +152,9 @@ export class Renderer {
   // Mode transitions (see beginTransition): the outgoing mode renders into
   // sceneB, and the two are blended before the effect chain.
   private sceneB: Fbo | null = null;
+  // The blended picture of a running transition, kept so a transition that
+  // starts mid-fade can fade *from the blend* rather than dropping it.
+  private blendFbo: Fbo | null = null;
   // Where custom modes draw: normally `scene`, `sceneB` while drawing the
   // outgoing mode of a transition (rebindScene follows it).
   private drawTarget: Fbo | null = null;
@@ -163,8 +166,10 @@ export class Renderer {
     controls: Record<string, number | number[]>;
     duration: number;
     start: number;
-    /** Outgoing is the same custom mode: fade from a frozen frame instead. */
+    /** Fade from a frozen frame instead of a live mode (see stepTransition). */
     frozen: boolean;
+    /** Started while another fade was running: freeze that fade's blend. */
+    chained: boolean;
   } | null = null;
 
   // RGBA16F where renderable (HDR headroom for bloom/trails), RGBA8 fallback.
@@ -502,6 +507,9 @@ export class Renderer {
       this.transition = null;
       return;
     }
+    // Mid-fade, what's on screen is a blend of two modes; fading from just
+    // one of them would pop the other out of the picture for a frame.
+    const chained = this.transition !== null && this.transition.start >= 0 && this.blendFbo !== null;
     this.transition = {
       fromMode: this.current,
       fromCustom: this.currentCustom,
@@ -509,6 +517,7 @@ export class Renderer {
       duration: seconds,
       start: -1,
       frozen: false,
+      chained,
     };
   }
 
@@ -522,7 +531,10 @@ export class Renderer {
     if (custom) {
       // Only a real switch counts as entering: re-selecting the showing mode
       // (a shader hot-reload, a look on the same mode) must not restart it.
-      if (custom !== this.currentCustom) custom.enter?.();
+      // Nor does going back to a mode that's still on screen as the outgoing
+      // side of a fade: entering would wipe it (synapse's sky) mid-dissolve.
+      const stillShowing = this.transition?.fromCustom === custom;
+      if (custom !== this.currentCustom && !stillShowing) custom.enter?.();
       this.currentCustom = custom;
       this.current = null;
       return;
@@ -660,6 +672,7 @@ export class Renderer {
     resizeFbo(gl, this.history!, w, h);
     resizeFbo(gl, this.passInput!, w, h);
     if (this.sceneB) resizeFbo(gl, this.sceneB, w, h);
+    if (this.blendFbo) resizeFbo(gl, this.blendFbo, w, h);
     this.historyValid = false; // old contents are the wrong size
   }
 
@@ -811,8 +824,9 @@ export class Renderer {
       // The same custom mode on both sides (a look that keeps the mode):
       // drawing it twice a frame would step its simulation twice. Fade from
       // its last frame, still in the scene buffer, instead.
-      tr.frozen = tr.fromCustom !== null && tr.fromCustom === this.currentCustom;
-      if (tr.frozen) this.blit(this.scene, this.sceneB, w, h);
+      tr.frozen = tr.chained || (tr.fromCustom !== null && tr.fromCustom === this.currentCustom);
+      if (tr.chained && this.blendFbo) this.blit(this.blendFbo, this.sceneB, w, h);
+      else if (tr.frozen) this.blit(this.scene, this.sceneB, w, h);
     }
     const t = (state.time - tr.start) / tr.duration;
     if (t >= 1) {
@@ -872,8 +886,9 @@ export class Renderer {
     // The dissolve, before the effects: they see one picture, not two.
     if (fade !== null && this.sceneB) {
       const xf = this.ensureCrossfade();
+      if (!this.blendFbo) this.blendFbo = createFbo(gl, w, h, this.fboFormat);
       if (xf) {
-        gl.bindFramebuffer(gl.FRAMEBUFFER, writeFbo.framebuffer);
+        gl.bindFramebuffer(gl.FRAMEBUFFER, this.blendFbo.framebuffer);
         gl.useProgram(xf.program);
         this.uploadFrameUniforms(xf, state);
         gl.uniform1f(gl.getUniformLocation(xf.program, 'uFade'), fade);
@@ -884,8 +899,7 @@ export class Renderer {
         gl.bindTexture(gl.TEXTURE_2D, this.sceneB.texture);
         gl.uniform1i(xf.uniforms.get('uScene') ?? null, 2);
         this.drawFullscreen();
-        readFbo = writeFbo;
-        writeFbo = this.pong!;
+        readFbo = this.blendFbo;
       }
     }
 

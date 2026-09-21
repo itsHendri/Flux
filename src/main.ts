@@ -762,11 +762,14 @@ function toggleAuto(): void {
   saveSet(storage, setSettings);
   setPanel.set(setSettings);
   phraseClock.restart(nowSeconds());
-  perfBar?.setAuto(setSettings.auto, phraseClock.bpm);
+  perfBar?.setAuto(setSettings.auto, phraseClock.measured ? phraseClock.bpm : undefined);
 }
 hotkeys.bind('KeyA', 'Auto looks on / off', () => toggleAuto());
 // Keep the tempo in the auto button's tooltip roughly current.
-window.setInterval(() => perfBar?.setAuto(setSettings.auto, phraseClock.bpm), 2000);
+window.setInterval(
+  () => perfBar?.setAuto(setSettings.auto, phraseClock.measured ? phraseClock.bpm : undefined),
+  2000,
+);
 perfBar.setMode(app.getMode());
 perfBar.setTheme(controlPanel.getValue('uTheme'));
 transport.watch((s) => perfBar?.setTransport(s));
