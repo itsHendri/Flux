@@ -14,6 +14,7 @@ export class App {
   private lastTime = 0;
   private rafId = 0;
   private mode = '';
+  private frameCb: (dt: number) => void = () => {};
 
   constructor(
     private readonly audio: AudioEngine,
@@ -28,6 +29,14 @@ export class App {
 
   getMode(): string {
     return this.mode;
+  }
+
+  /**
+   * Called once per frame with the real, unclamped frame time — for the
+   * performance governor, which needs to see a slow frame as slow.
+   */
+  onFrame(cb: (dt: number) => void): void {
+    this.frameCb = cb;
   }
 
   start(): void {
@@ -47,8 +56,10 @@ export class App {
     if (!this.running) return;
 
     // Real dt — clamped so a stalled tab doesn't produce a huge jump.
-    const dt = Math.min((now - this.lastTime) / 1000, 0.1);
+    const rawDt = (now - this.lastTime) / 1000;
+    const dt = Math.min(rawDt, 0.1);
     this.lastTime = now;
+    this.frameCb(rawDt);
 
     const audioFrame = this.audio.tick(dt);
     this.renderer.resize();

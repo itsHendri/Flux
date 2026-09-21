@@ -40,6 +40,12 @@ import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts
 import { LOOKS, defaultValues, findLook } from './presets/looks.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
 import { MidiEngine, MidiMap, MidiBindingStore } from './audio/midi.ts';
+import {
+  QualityGovernor,
+  QUALITY_LEVERS,
+  loadAutoQuality,
+  saveAutoQuality,
+} from './core/governor.ts';
 
 installGlobalErrorHooks();
 
@@ -134,6 +140,36 @@ const isPassEnabled = (name: string): boolean =>
 
 const app = new App(audio, renderer, controlPanel);
 
+// --- Performance governor -------------------------------------------------
+// Watches frame time and, when the machine falls behind, steps the showing
+// mode's own quality lever down, then the render resolution; steps back up
+// when it recovers (see core/governor.ts). Its writes go through the control
+// store like anything else, so the panel shows what it did.
+const storage = (() => {
+  try {
+    return window.localStorage;
+  } catch {
+    return null;
+  }
+})();
+const governor = new QualityGovernor({
+  leverFor: (mode) => {
+    const glslName = QUALITY_LEVERS[mode];
+    const def = glslName ? CONTROLS.find((c) => c.glslName === glslName) : undefined;
+    return def?.options ? { glslName: def.glslName, options: def.options.map((o) => o.value) } : null;
+  },
+  getValue: (n) => controlPanel.getValue(n),
+  setValue: (n, v) => controlPanel.applyValues({ [n]: v }),
+  setRenderScale: (scale) => renderer.setRenderScale(scale),
+});
+for (const lever of new Set(Object.values(QUALITY_LEVERS))) {
+  controlPanel.onChange(lever, (v) => {
+    if (typeof v === 'number') governor.onLeverChanged(lever, v);
+  });
+}
+governor.setEnabled(loadAutoQuality(storage));
+app.onFrame((dt) => governor.frame(dt));
+
 // Mode selection lives on the performance bar (cycler + picker). The dock
 // panel used to carry a second copy of the same buttons; one place is enough.
 
@@ -152,6 +188,7 @@ let perfBar: PerformanceBar | null = null;
 
 function selectMode(name: string): void {
   app.setMode(name);
+  governor.setMode(name);
   perfBar?.setMode(name);
   refreshControls();
 }
@@ -296,7 +333,10 @@ function applyLook(name: string): void {
 const presetStore = new PresetStore(window.localStorage);
 const presetPanel = new PresetPanel(panel, {
   onSave: (name) => {
-    presetStore.save(name, snapshotPreset(app.getMode(), allControls, controlPanel.getValues()));
+    // The user's own quality settings, not whatever the governor has stepped
+    // down to right now.
+    const values = governor.userValues(controlPanel.getValues());
+    presetStore.save(name, snapshotPreset(app.getMode(), allControls, values));
     presetPanel.refresh(presetStore.list());
   },
   onLoad: (name) => {
@@ -457,7 +497,27 @@ async function togglePip(): Promise<void> {
   hint.className = 'midi-status';
   hint.textContent = 'drag the PiP window to a second display for output';
 
-  outRow.append(fsBtn, pipBtn);
+  // Auto Quality: a machine preference, so it lives in localStorage rather
+  // than in the control store (see loadAutoQuality).
+  const autoBtn = document.createElement('button');
+  const paintAuto = (on: boolean): void => {
+    autoBtn.classList.toggle('active', on);
+    autoBtn.textContent = on ? 'auto quality' : 'quality pinned';
+    autoBtn.title = on
+      ? 'Steps quality and resolution down when frames fall behind, and back up when they recover'
+      : 'Quality stays exactly as set';
+  };
+  // Held here rather than re-read from storage, which may be unavailable.
+  let autoOn = loadAutoQuality(storage);
+  paintAuto(autoOn);
+  autoBtn.addEventListener('click', () => {
+    autoOn = !autoOn;
+    saveAutoQuality(storage, autoOn);
+    governor.setEnabled(autoOn);
+    paintAuto(autoOn);
+  });
+
+  outRow.append(fsBtn, pipBtn, autoBtn);
   outSection.append(outRow, hint);
   panel.appendChild(outSection);
 }

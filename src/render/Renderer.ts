@@ -173,6 +173,8 @@ export class Renderer {
   // texelFetch, one texel per sample, and float filtering isn't guaranteed.
   private stereoTex: WebGLTexture | null = null;
 
+  private renderScale = 1;
+
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
 
@@ -573,8 +575,16 @@ export class Renderer {
   }
 
   /** Resize the drawing buffer (and render targets) to match the canvas. */
+  /**
+   * Render at a fraction of the display resolution (the performance
+   * governor's last resort); the browser scales the canvas back up. 1 = full.
+   */
+  setRenderScale(scale: number): void {
+    this.renderScale = Math.max(0.25, Math.min(1, scale));
+  }
+
   resize(): void {
-    const dpr = Math.min(window.devicePixelRatio || 1, 2);
+    const dpr = Math.min(window.devicePixelRatio || 1, 2) * this.renderScale;
     const w = Math.max(1, Math.round(this.canvas.clientWidth * dpr));
     const h = Math.max(1, Math.round(this.canvas.clientHeight * dpr));
     if (this.canvas.width !== w || this.canvas.height !== h) {

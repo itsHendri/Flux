@@ -5,6 +5,51 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — the performance governor
+
+Most heavy modes have a Quality, Detail or Particles control, but until now
+nothing turned them down when a machine struggled. The governor does, and
+turns them back up when it recovers.
+
+- **What a step is.** Each mode has a ladder, best first: the user's own
+  setting, each lower option of that mode's lever (bulb and lattice Quality,
+  fluid and reaction Detail, magneto and trails3d Particles, forge Beads), then
+  the render resolution at 0.75 and 0.5, with the browser scaling the canvas
+  back up. Modes with no lever (raymarch, chrome, mandala…) get the
+  resolution rungs, so every mode can be helped. The user's setting is the
+  ceiling: the governor only ever takes away, and when the user (or a look, or
+  MIDI) sets the lever, that becomes the new top of the ladder.
+- **When to step** (`FrameGovernor`, pure). Median of the last 31 frames, so a
+  single hitch doesn't count and frames over 250 ms (GC, a hidden tab) are
+  ignored. Step down after 1.2 s below ~48 fps. Stepping up is a **probe**:
+  on a vsync-capped 60 Hz display a frame never reports faster than 16.7 ms
+  however idle the GPU is, so spare capacity can't be measured, only tried.
+  After 5 s at ~55 fps or better it steps up. If that has to be undone within
+  6 s the probe failed, and the wait **doubles** (up to 2 minutes), so a
+  machine sitting right at the edge settles instead of flapping.
+- **The user can pin it:** *auto quality / quality pinned* in the Output
+  section. This is a per-machine preference in localStorage, deliberately not
+  a control, because looks reset controls to their defaults and would silently
+  switch a pinned governor back on.
+- **Presets save the user's value**, not whatever the governor has stepped
+  down to at that moment. Leaving a mode hands its lever back at the user's
+  setting.
+- `App.onFrame` gives the governor the real, unclamped frame time;
+  `Renderer.setRenderScale` scales the drawing buffer.
+
+Verified: build clean, 140/140 tests (13 new, including a simulated machine
+that manages 60 fps one rung down and 40 at the top: it makes fewer than 12
+steps in three minutes where a fixed probe would make ~26). In the preview,
+with a temporary hook feeding synthetic frame times (removed before commit),
+30 fps frames step `bulb` from Fine to Draft, then to 0.75 and 0.5 scale; the
+panel's Quality select follows. At 60 fps it probes back to Fine at full
+scale. On `raymarch`, which has no lever, the first step lands at 1.93 s and
+the canvas drops from 1634 to 817 px wide. Real frame pressure couldn't be
+produced in the pane. On the user's machine it should mostly stay idle. The
+point is weaker GPUs.
+
+---
+
 ## Phase 7 — synapse: every hit adds a star
 
 The first mode that **accumulates**. Everything else redraws the present, and

@@ -406,7 +406,7 @@ commit unless noted.
   (engine, then mode). *Done:* a hard-panned tone draws a vertical/horizontal
   line, a mono signal a diagonal, a wide stereo pad a cloud; mono sources still
   work; tests cover the channel packing.
-- [ ] **Performance governor.** Most heavy modes now have a Quality/Detail
+- [x] **Performance governor.** Most heavy modes now have a Quality/Detail
   control, but nothing lowers it when a machine struggles. Watch frame time and
   step the active mode's quality down (and back up) with hysteresis. *Done:*
   forcing a low frame budget steps quality down within ~2 s and back up when
