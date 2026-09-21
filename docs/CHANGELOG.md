@@ -5,6 +5,36 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — stereo analysis (engine)
+
+FLUX has only ever heard in mono: one analyser fed the source mixed down.
+That's right for everything musical (bands, beats, the spectrum) and stays as
+it is. Next to it now sits a stereo path: source → a 2-channel "speakers"
+upmix → a channel splitter → one analyser per side.
+
+- **The upmix matters.** A splitter on its own splits discretely, so a mono
+  source (most microphones) would come out in the left channel only and draw as
+  a hard-panned signal. Upmixing first puts a mono source in both channels,
+  where it belongs.
+- **A second texture, `uStereo`, not a third row in `uAudio`.** `uAudio` keeps
+  Shadertoy's 512×2 layout so ported shaders keep working. `uStereo` is
+  2048×2 **floats**: the analyser's full window (about 43 ms at 48 kHz), left
+  in row 0 and right in row 1, **at the same sample index**. No trigger, because
+  a goniometer plots L against R at each instant, and shifting one against the
+  other would draw phase that isn't there. Floats because 8 bits leaves a quiet
+  signal on a grid of a dozen steps. `stereoAt(i)` in `common.glsl` reads it.
+- **`uWidth`**, a new builtin: `1 − correlation`, clamped to 0..1 and slow both
+  ways (mono is 0; unrelated or out-of-phase channels are 1). Correlation is
+  the meter reading hardware shows — normalised cross-correlation at lag 0.
+
+Verified: build clean, 109/109 tests (7 new: packing is sample-aligned,
+float-precise, padded; correlation reads +1 mono, −1 inverted, ~0 in
+quadrature, 0 hard-panned, +1 silence). In the preview a hard-panned stereo
+WAV plays through the new graph and all 17 modes render with an empty error
+overlay. The goniometer that reads this comes next.
+
+---
+
 ## Phase 7 — the mode picker, grouped
 
 Seventeen modes in a flat three-column grid had stopped being a picker and

@@ -13,7 +13,10 @@ import { BloomPipeline } from './BloomPipeline.ts';
 import {
   AUDIO_TEX_WIDTH,
   AUDIO_TEX_HEIGHT,
+  STEREO_TEX_WIDTH,
+  STEREO_TEX_HEIGHT,
   silentAudioTexture,
+  silentStereoTexture,
 } from '../audio/audioTexture.ts';
 import type { CustomMode, CustomModeContext } from './CustomMode.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
@@ -73,6 +76,8 @@ const BUILTIN_UNIFORMS = [
   // uOnset = full spectrum. 1.0 on a hit, exponential decay after.
   'uBeat',
   'uOnset',
+  // Stereo width 0..1 (0 = mono), smoothed; see AudioFrame.width.
+  'uWidth',
   // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
   'uLogoAspect',
 ];
@@ -81,7 +86,12 @@ const BUILTIN_UNIFORMS = [
  * Samplers every mode declares. `uLogo` is the uploaded image (Logo section),
  * bound on unit 4 for modes and passes alike — transparent black until set.
  */
-const MODE_SAMPLERS = ['uLogo', 'uAudio'];
+const MODE_SAMPLERS = ['uLogo', 'uAudio', 'uStereo'];
+
+/** Sampler declaration: the stereo floats need highp, which isn't the default. */
+function samplerDecl(name: string): string {
+  return name === 'uStereo' ? `uniform highp sampler2D ${name};` : `uniform sampler2D ${name};`;
+}
 /**
  * Sampler uniforms only post-passes declare. `uSource` = previous stage,
  * `uPrevFrame` = last frame (feedback), `uScene` = this pass's own input
@@ -159,6 +169,9 @@ export class Renderer {
   // from FrameState.audioTexture. Bound in uploadFrameUniforms so modes,
   // passes, custom 3D modes and the present pass all get it for free.
   private audioTex: WebGLTexture | null = null;
+  // Left + right waveforms (uStereo, unit 6): 2048×2 R32F, NEAREST — read with
+  // texelFetch, one texel per sample, and float filtering isn't guaranteed.
+  private stereoTex: WebGLTexture | null = null;
 
   private errorCb: (e: ShaderError) => void = () => {};
   private successCb: (mode: string) => void = () => {};
@@ -188,6 +201,7 @@ export class Renderer {
     this.blueNoise = this.createBlueNoiseTexture();
     this.logo = this.createLogoTexture();
     this.audioTex = this.createAudioTexture();
+    this.stereoTex = this.createStereoTexture();
 
     const vao = gl.createVertexArray();
     if (!vao) throw new Error('Failed to create vertex array object.');
@@ -230,6 +244,31 @@ export class Renderer {
     );
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.LINEAR);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.LINEAR);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
+    gl.bindTexture(gl.TEXTURE_2D, null);
+    return tex;
+  }
+
+  private createStereoTexture(): WebGLTexture | null {
+    const gl = this.gl;
+    const tex = gl.createTexture();
+    if (!tex) return null;
+    gl.bindTexture(gl.TEXTURE_2D, tex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.texImage2D(
+      gl.TEXTURE_2D,
+      0,
+      gl.R32F,
+      STEREO_TEX_WIDTH,
+      STEREO_TEX_HEIGHT,
+      0,
+      gl.RED,
+      gl.FLOAT,
+      silentStereoTexture(),
+    );
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MIN_FILTER, gl.NEAREST);
+    gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_MAG_FILTER, gl.NEAREST);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_S, gl.CLAMP_TO_EDGE);
     gl.texParameteri(gl.TEXTURE_2D, gl.TEXTURE_WRAP_T, gl.CLAMP_TO_EDGE);
     gl.bindTexture(gl.TEXTURE_2D, null);
@@ -351,7 +390,7 @@ export class Renderer {
       ...BUILTIN_UNIFORMS.map((n) =>
         n === 'uResolution' ? `uniform vec2 ${n};` : `uniform float ${n};`,
       ),
-      ...MODE_SAMPLERS.map((n) => `uniform sampler2D ${n};`),
+      ...MODE_SAMPLERS.map(samplerDecl),
       this.controlDecls(),
       commonSource,
     ].join('\n');
@@ -372,7 +411,7 @@ export class Renderer {
       ...BUILTIN_UNIFORMS.map((n) =>
         n === 'uResolution' ? `uniform vec2 ${n};` : `uniform float ${n};`,
       ),
-      ...PASS_SAMPLERS.map((n) => `uniform sampler2D ${n};`),
+      ...PASS_SAMPLERS.map(samplerDecl),
       this.controlDecls(),
       commonSource,
     ].join('\n');
@@ -388,7 +427,7 @@ export class Renderer {
       ...BUILTIN_UNIFORMS.map((n) =>
         n === 'uResolution' ? `uniform vec2 ${n};` : `uniform float ${n};`,
       ),
-      ...MODE_SAMPLERS.map((n) => `uniform sampler2D ${n};`),
+      ...MODE_SAMPLERS.map(samplerDecl),
       this.controlDecls(),
       commonSource,
     ].join('\n');
@@ -580,6 +619,26 @@ export class Renderer {
     );
   }
 
+  /** Push this frame's left + right waveforms into the stereo texture. */
+  private uploadStereoTexture(data: Float32Array): void {
+    if (!this.stereoTex || data.length < STEREO_TEX_WIDTH * STEREO_TEX_HEIGHT) return;
+    const gl = this.gl;
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, this.stereoTex);
+    gl.pixelStorei(gl.UNPACK_ALIGNMENT, 4);
+    gl.texSubImage2D(
+      gl.TEXTURE_2D,
+      0,
+      0,
+      0,
+      STEREO_TEX_WIDTH,
+      STEREO_TEX_HEIGHT,
+      gl.RED,
+      gl.FLOAT,
+      data,
+    );
+  }
+
   /** Upload builtins + control values shared by modes and passes. */
   private uploadFrameUniforms(prog: CompiledProgram, state: FrameState): void {
     const gl = this.gl;
@@ -593,12 +652,16 @@ export class Renderer {
     gl.uniform1f(u.get('uLevel') ?? null, state.audio.level);
     gl.uniform1f(u.get('uBeat') ?? null, state.audio.beat);
     gl.uniform1f(u.get('uOnset') ?? null, state.audio.onset);
+    gl.uniform1f(u.get('uWidth') ?? null, state.audio.width);
     gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     // Spectrum + waveform on unit 5 for every program (the data is re-uploaded
     // once per frame in render(), not once per program).
     gl.activeTexture(gl.TEXTURE5);
     gl.bindTexture(gl.TEXTURE_2D, this.audioTex);
     gl.uniform1i(u.get('uAudio') ?? null, 5);
+    gl.activeTexture(gl.TEXTURE6);
+    gl.bindTexture(gl.TEXTURE_2D, this.stereoTex);
+    gl.uniform1i(u.get('uStereo') ?? null, 6);
     for (const c of this.controls) {
       const loc = u.get(c.glslName) ?? null;
       const v = state.controls[c.glslName];
@@ -646,6 +709,7 @@ export class Renderer {
     const h = this.canvas.height;
 
     this.uploadAudioTexture(state.audioTexture);
+    this.uploadStereoTexture(state.stereoTexture);
 
     const mode = this.current;
     if ((!mode && !this.currentCustom) || !this.scene) {

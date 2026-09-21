@@ -97,3 +97,73 @@ export function silentAudioTexture(): Uint8Array {
   buf.fill(128, AUDIO_TEX_WIDTH);
   return buf;
 }
+
+// --- Stereo ----------------------------------------------------------------
+// The texture above is mono: the analyser sees the source mixed down, which is
+// all a spectrum or a waveform wants. A goniometer wants the opposite — left
+// and right *separately*, sample-aligned — so stereo gets its own texture
+// rather than a third row in Shadertoy's layout, which would break the ports
+// that layout exists for.
+
+/**
+ * One texel per time-domain sample: the analyser's full 2048-sample window,
+ * about 43 ms at 48 kHz — long enough for a goniometer to draw a shape rather
+ * than a fragment of one.
+ */
+export const STEREO_TEX_WIDTH = 2048;
+/** Two rows: left, then right. */
+export const STEREO_TEX_HEIGHT = 2;
+
+/**
+ * Pack left and right into rows 0 and 1, **the same sample index in both** —
+ * no trigger, because a goniometer plots L against R at each instant, and
+ * shifting one channel against the other would draw phase that isn't there.
+ * Floats rather than bytes: 256 levels across -1..1 leaves a quiet signal on a
+ * visible grid of a dozen steps. A short channel pads with silence.
+ */
+export function packStereo(
+  left: Float32Array,
+  right: Float32Array,
+  out: Float32Array,
+  width = STEREO_TEX_WIDTH,
+): void {
+  for (let x = 0; x < width; x++) {
+    out[x] = x < left.length ? left[x] : 0;
+    out[width + x] = x < right.length ? right[x] : 0;
+  }
+}
+
+/**
+ * The correlation-meter reading: +1 when the channels move together (mono),
+ * 0 when they're unrelated (wide), −1 when one is the other inverted (out of
+ * phase — the reading that means a mix will cancel on a mono speaker).
+ * Normalised cross-correlation at lag 0, which is what hardware meters show;
+ * audio is near zero-mean, so the mean isn't removed. Silence reads as +1 —
+ * nothing there is, trivially, mono.
+ */
+export function stereoCorrelation(left: Float32Array, right: Float32Array): number {
+  const n = Math.min(left.length, right.length);
+  let lr = 0;
+  let ll = 0;
+  let rr = 0;
+  for (let i = 0; i < n; i++) {
+    lr += left[i] * right[i];
+    ll += left[i] * left[i];
+    rr += right[i] * right[i];
+  }
+  const denom = Math.sqrt(ll * rr);
+  // −80 dBFS RMS per channel: below this the reading is noise about noise.
+  const floor = n * 1e-8;
+  if (ll < floor || rr < floor || denom === 0) {
+    // One channel silent and the other not is maximally *un*-mono-like to a
+    // listener, but a mono source panned hard reads this way too, and the meter
+    // convention is 0 — unrelated.
+    return ll < floor && rr < floor ? 1 : 0;
+  }
+  return Math.max(-1, Math.min(1, lr / denom));
+}
+
+/** A silent stereo texture: both channels at 0. */
+export function silentStereoTexture(): Float32Array {
+  return new Float32Array(STEREO_TEX_WIDTH * STEREO_TEX_HEIGHT);
+}

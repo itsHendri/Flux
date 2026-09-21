@@ -11,9 +11,22 @@ export interface AudioFrame {
   level: number;
   beat: number;
   onset: number;
+  /**
+   * Stereo width, 0..1, smoothed: 0 for mono (the channels move together), 1
+   * for unrelated or out-of-phase channels. `1 − correlation`, clamped.
+   */
+  width: number;
 }
 
-export const SILENT_FRAME: AudioFrame = { bass: 0, mid: 0, high: 0, level: 0, beat: 0, onset: 0 };
+export const SILENT_FRAME: AudioFrame = {
+  bass: 0,
+  mid: 0,
+  high: 0,
+  level: 0,
+  beat: 0,
+  onset: 0,
+  width: 0,
+};
 
 /**
  * Immutable per-frame state handed from the App orchestrator to the Renderer.
@@ -35,6 +48,11 @@ export interface FrameState {
    * nothing, since the Renderer only ever uploads it.
    */
   audioTexture: Uint8Array;
+  /**
+   * Left and right waveforms, 2048×2 floats (see `packStereo`), sample-aligned
+   * for the goniometer. A live buffer like `audioTexture`, for the same reason.
+   */
+  stereoTexture: Float32Array;
   /**
    * glslName -> value, derived from the control schema. A number for
    * slider/toggle/select uniforms, an `[r,g,b]` triple for `color` uniforms.

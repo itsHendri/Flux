@@ -5,7 +5,11 @@ import {
   packAudioTexture,
   packSpectrum,
   packWaveform,
+  packStereo,
   silentAudioTexture,
+  silentStereoTexture,
+  stereoCorrelation,
+  STEREO_TEX_WIDTH,
 } from '../src/audio/audioTexture.ts';
 
 describe('packSpectrum', () => {
@@ -112,5 +116,58 @@ describe('the packed texture', () => {
     const buf = silentAudioTexture();
     expect(buf[0]).toBe(0);
     expect(buf[AUDIO_TEX_WIDTH]).toBe(128);
+  });
+});
+
+describe('packStereo — left and right, sample-aligned', () => {
+  const ramp = (n: number, k: number) => Float32Array.from({ length: n }, (_, i) => (i * k) / n);
+
+  it('puts left in row 0 and right in row 1 at the same index', () => {
+    const l = ramp(STEREO_TEX_WIDTH, 1);
+    const r = ramp(STEREO_TEX_WIDTH, -1);
+    const out = silentStereoTexture();
+    packStereo(l, r, out);
+    for (const i of [0, 1, 777, STEREO_TEX_WIDTH - 1]) {
+      expect(out[i]).toBe(l[i]);
+      expect(out[STEREO_TEX_WIDTH + i]).toBe(r[i]);
+    }
+  });
+
+  it('keeps full float precision — a quiet signal is not quantised', () => {
+    const l = new Float32Array(STEREO_TEX_WIDTH).fill(0.0013);
+    const out = silentStereoTexture();
+    packStereo(l, l, out);
+    expect(out[5]).toBeCloseTo(0.0013, 7);
+  });
+
+  it('pads a short channel with silence', () => {
+    const out = silentStereoTexture().fill(9);
+    packStereo(new Float32Array(10).fill(0.5), new Float32Array(0), out);
+    expect(out[9]).toBe(0.5);
+    expect(out[10]).toBe(0);
+    expect(out[STEREO_TEX_WIDTH]).toBe(0);
+  });
+});
+
+describe('stereoCorrelation — the correlation meter', () => {
+  const tone = (n: number, phase = 0, gain = 1) =>
+    Float32Array.from({ length: n }, (_, i) => gain * Math.sin((2 * Math.PI * i) / 64 + phase));
+
+  it('reads +1 for mono, whatever the level difference', () => {
+    expect(stereoCorrelation(tone(2048), tone(2048, 0, 0.3))).toBeCloseTo(1, 5);
+  });
+
+  it('reads −1 for one channel inverted', () => {
+    expect(stereoCorrelation(tone(2048), tone(2048, Math.PI))).toBeCloseTo(-1, 5);
+  });
+
+  it('reads ~0 for channels in quadrature (a wide, unrelated pair)', () => {
+    expect(Math.abs(stereoCorrelation(tone(2048), tone(2048, Math.PI / 2)))).toBeLessThan(0.01);
+  });
+
+  it('reads 0 for a hard-panned signal and +1 for silence', () => {
+    const silent = new Float32Array(2048);
+    expect(stereoCorrelation(tone(2048), silent)).toBe(0);
+    expect(stereoCorrelation(silent, silent)).toBe(1);
   });
 });

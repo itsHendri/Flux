@@ -91,3 +91,14 @@ float wave(float x) {
 float spectrumLog(float x) {
   return spectrum(pow(2.0, mix(-9.5, -0.5, clamp(x, 0.0, 1.0))));
 }
+
+// --- Stereo ----------------------------------------------------------------
+// uStereo is 2048x2 floats: row 0 the left channel, row 1 the right, the same
+// instant in both columns (no trigger — see packStereo). Values are raw
+// samples, -1..1. Read by index: there's nothing between two samples to blend.
+
+// Left and right at sample i (0..2047).
+vec2 stereoAt(int i) {
+  i = clamp(i, 0, 2047);
+  return vec2(texelFetch(uStereo, ivec2(i, 0), 0).r, texelFetch(uStereo, ivec2(i, 1), 0).r);
+}

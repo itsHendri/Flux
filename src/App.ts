@@ -59,6 +59,7 @@ export class App {
       resolution: this.renderer.resolution,
       audio: audioFrame,
       audioTexture: this.audio.textureData,
+      stereoTexture: this.audio.stereoData,
       controls: this.controls.getValues(),
       mode: this.mode,
     };

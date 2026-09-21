@@ -6,7 +6,10 @@ import type { AudioSource } from './sources.ts';
 import {
   AUDIO_TEX_WIDTH,
   packAudioTexture,
+  packStereo,
   silentAudioTexture,
+  silentStereoTexture,
+  stereoCorrelation,
 } from './audioTexture.ts';
 import { SpectrumSmoother } from './SpectrumSmoother.ts';
 
@@ -15,15 +18,33 @@ export interface AudioEngineOptions {
 }
 
 /**
- * Owns a single AudioContext and a single AnalyserNode. The current source is
+ * Owns a single AudioContext and its analysers. The current source is
  * swappable; everything downstream (analysis, smoothing) is identical no matter
  * where the audio came from.
+ *
+ * The main analyser sees the source mixed to mono — everything musical (bands,
+ * beats, the spectrum) is read there. Beside it, a splitter feeds one analyser
+ * per channel for the stereo picture (goniometer, width).
  */
 export class AudioEngine {
   private readonly ctx: AudioContext;
   private readonly analyser: AnalyserNode;
   private readonly freqData: Uint8Array<ArrayBuffer>;
   private readonly timeData: Uint8Array<ArrayBuffer>;
+
+  // Stereo: source → upmix → splitter → one analyser per channel. The upmix
+  // is what makes a mono source (most microphones) arrive in *both* channels —
+  // a splitter alone splits discretely, and a mono input would land in the
+  // left only and draw as a hard-panned signal.
+  private readonly stereoIn: GainNode;
+  private readonly analyserL: AnalyserNode;
+  private readonly analyserR: AnalyserNode;
+  private readonly leftData: Float32Array<ArrayBuffer>;
+  private readonly rightData: Float32Array<ArrayBuffer>;
+  private readonly stereoTex = silentStereoTexture();
+  // Width is a property of the mix, not a transient: slow both ways, or
+  // every drum hit (near-mono in most mixes) would flick it toward zero.
+  private readonly envWidth = new EnvelopeFollower(0.15, 0.4);
 
   private readonly envBass = new EnvelopeFollower();
   private readonly envMid = new EnvelopeFollower();
@@ -53,6 +74,22 @@ export class AudioEngine {
     this.analyser.smoothingTimeConstant = 0;
     this.freqData = new Uint8Array(this.analyser.frequencyBinCount);
     this.timeData = new Uint8Array(this.analyser.fftSize);
+
+    this.stereoIn = this.ctx.createGain();
+    this.stereoIn.channelCount = 2;
+    this.stereoIn.channelCountMode = 'explicit';
+    this.stereoIn.channelInterpretation = 'speakers';
+    const splitter = this.ctx.createChannelSplitter(2);
+    this.stereoIn.connect(splitter);
+    this.analyserL = this.ctx.createAnalyser();
+    this.analyserR = this.ctx.createAnalyser();
+    for (const [i, a] of [this.analyserL, this.analyserR].entries()) {
+      a.fftSize = this.analyser.fftSize;
+      a.smoothingTimeConstant = 0;
+      splitter.connect(a, i);
+    }
+    this.leftData = new Float32Array(this.analyserL.fftSize);
+    this.rightData = new Float32Array(this.analyserR.fftSize);
   }
 
   get context(): AudioContext {
@@ -78,6 +115,7 @@ export class AudioEngine {
 
     this.source = source;
     source.node.connect(this.analyser);
+    source.node.connect(this.stereoIn);
     // A monitored source also goes to the speakers. A dropped file must be (once
     // its element is captured, the graph is its only route out); the live mic
     // must not be, or it would feed back through the room.
@@ -87,6 +125,8 @@ export class AudioEngine {
     this.envMid.reset();
     this.envHigh.reset();
     this.envLevel.reset();
+    this.envWidth.reset();
+    this.stereoTex.fill(0);
     this.beatDetector.reset();
     this.onsetDetector.reset();
     this.spectrumSmoother.reset();
@@ -100,12 +140,24 @@ export class AudioEngine {
     return this.audioTex;
   }
 
+  /**
+   * Left and right waveforms for shaders (2048×2 floats, sample-aligned; see
+   * `packStereo`). Refilled by `tick`; silent until a source is armed.
+   */
+  get stereoData(): Float32Array {
+    return this.stereoTex;
+  }
+
   /** Read the analyser, advance envelopes by `dt` seconds, snapshot the frame. */
   tick(dt: number): AudioFrame {
     if (!this.source) {
       this.frame = SILENT_FRAME;
       return this.frame;
     }
+    this.analyserL.getFloatTimeDomainData(this.leftData);
+    this.analyserR.getFloatTimeDomainData(this.rightData);
+    packStereo(this.leftData, this.rightData, this.stereoTex);
+    const correlation = stereoCorrelation(this.leftData, this.rightData);
     this.analyser.getByteFrequencyData(this.freqData);
     this.analyser.getByteTimeDomainData(this.timeData);
     packAudioTexture(this.freqData, this.timeData, this.audioTex);
@@ -122,6 +174,7 @@ export class AudioEngine {
       mid: this.envMid.update(raw.mid, dt),
       high: this.envHigh.update(raw.high, dt),
       level: this.envLevel.update(raw.level, dt),
+      width: this.envWidth.update(Math.max(0, Math.min(1, 1 - correlation)), dt),
       beat: this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize),
       onset: this.onsetDetector.update(
         this.freqData,
