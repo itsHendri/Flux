@@ -415,7 +415,7 @@ commit unless noted.
   long. Group it by the table above (signal / fields / simulations / raymarched
   / particles). *Done:* picker shows labelled groups, keyboard/click selection
   unchanged, cycler order matches.
-- [ ] **forge** — "a chrome swarm that builds a shape and breaks it apart"
+- [x] **forge** — "a chrome swarm that builds a shape and breaks it apart"
   (photism). Magneto's particle rig with chrome's reflective shading and a
   target-shape attractor that kicks shatter. *Done:* the swarm assembles into a
   recognisable shape and a kick scatters it; ≥3 controls; ≥60 fps at default.

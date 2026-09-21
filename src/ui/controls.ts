@@ -17,6 +17,7 @@ const SCALE_MODES = [
   'bulb',
   'chrome',
   'lattice',
+  'forge',
 ];
 
 /**
@@ -349,6 +350,70 @@ export const CONTROLS: ControlDef[] = [
     ],
     default: 0,
     modes: ['spectro'],
+  },
+  {
+    // Cycle builds the next shape after every shatter; the rest hold one.
+    id: 'forgeShape',
+    name: 'Shape',
+    glslName: 'uForgeShape',
+    type: 'select',
+    options: [
+      { label: 'Cycle', value: -1 },
+      { label: 'Sphere', value: 0 },
+      { label: 'Torus', value: 1 },
+      { label: 'Knot', value: 2 },
+      { label: 'Cube', value: 3 },
+      { label: 'Helix', value: 4 },
+    ],
+    default: -1,
+    modes: ['forge'],
+  },
+  {
+    // How readily a kick breaks the shape. 0 never does; a broken shape
+    // always gets most of its rebuild before the next kick can count.
+    id: 'forgeShatter',
+    name: 'Shatter',
+    glslName: 'uForgeShatter',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.6,
+    modes: ['forge'],
+  },
+  {
+    // How much the assembled surface breathes with bass and shimmers with
+    // each bead's own band.
+    id: 'forgeReact',
+    name: 'React',
+    glslName: 'uForgeReact',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.5,
+    modes: ['forge'],
+  },
+  {
+    id: 'forgeSize',
+    name: 'Bead Size',
+    glslName: 'uForgeSize',
+    min: 0.4,
+    max: 2,
+    step: 0.01,
+    default: 1,
+    modes: ['forge'],
+  },
+  {
+    id: 'forgeCount',
+    name: 'Beads',
+    glslName: 'uForgeCount',
+    type: 'select',
+    options: [
+      { label: '4k', value: 64 },
+      { label: '16k', value: 128 },
+      { label: '36k', value: 192 },
+    ],
+    default: 128,
+    modes: ['forge'],
   },
   {
     // X/Y is the oscilloscope (L across, R up: mono is a diagonal, and

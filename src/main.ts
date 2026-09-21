@@ -23,6 +23,7 @@ import { MODES, onModesChanged } from './shaders/modes.ts';
 import { PASSES, onPassesChanged } from './shaders/passes.ts';
 import { Trails3DMode } from './modes3d/Trails3DMode.ts';
 import { MagnetoMode } from './modes3d/MagnetoMode.ts';
+import { ForgeMode } from './modes3d/ForgeMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
 import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
@@ -106,6 +107,7 @@ const MODES_3D = [
   new VectorMode(),
   new MagnetoMode(),
   new Trails3DMode(),
+  new ForgeMode(),
 ].filter((m) => renderer.registerCustomMode(m));
 for (const pass of PASSES) renderer.registerPass(pass);
 

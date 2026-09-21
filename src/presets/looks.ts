@@ -290,6 +290,22 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'foundry',
+    note: 'A swarm of chrome beads that builds a shape and breaks it on the kick.',
+    preset: {
+      mode: 'forge',
+      values: {
+        theme: 1,
+        themeMix: 0.7,
+        'fx-bloom': 1,
+        bloomIntensity: 0.45,
+        forgeShatter: 0.65,
+        forgeReact: 0.6,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

@@ -5,6 +5,50 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — forge: a chrome swarm that builds a shape and breaks it
+
+From the photism list: "a chrome swarm that builds a shape and breaks it
+apart". Magneto's GPGPU rig (position and velocity ping-pong, two passes per
+frame) with a different law and a different material.
+
+- **A home on a shape, a spring to get there.** Every bead has a fixed spot on
+  each of five shapes: sphere (a Fibonacci lattice, with the golden angle
+  times the bead's real index; with anything else the lattice shows as spiral
+  bands, which the first version did), torus, trefoil knot, cube shell, and a
+  double helix with rungs. The spring is underdamped, so beads overshoot and
+  settle, which reads as material rather than as a tween.
+- **The kick breaks it.** One frame of outward impulse (bigger with more bass),
+  then the spring ramps back from nothing: 0.35 s of free-flying debris,
+  full strength by 1.9 s. In **Cycle** the debris builds the *next* shape.
+  `ForgeClock` (pure, 5 tests) decides which kicks count: the beat must cross
+  a threshold set by **Shatter**, the detector must have re-armed, and the
+  shape must be mostly rebuilt. Otherwise a four-on-the-floor track would never
+  let a shape finish.
+- **Matter, not light.** Magneto is additive points; forge is depth-tested
+  point sprites shaded as chrome spheres. The sprite coordinate is the sphere
+  normal, and the reflected view ray is rotated back to world space and looked
+  up in the same procedural studio as `chrome` (`modes3d/studio.glsl`). The
+  backdrop is that studio through the same camera, so the beads mirror the
+  room they're in.
+- **The music on the surface:** bass breathes the whole shape, each bead
+  shimmers with its own band (magneto's per-particle frequency idea), kicks
+  brighten the metal.
+- Controls: Shape, Shatter, React, Bead Size, Beads (4k / 16k / 36k), and the
+  shared Scale for the camera. New look: **foundry**.
+
+Two fixes during verification: debris originally flew past the camera and
+filled the screen with single grey discs, so the impulse and debris damping
+were tuned and debris now stops at a shell inside the camera's orbit.
+
+Verified: build clean, 114/114 tests. In the preview, each shape assembles
+from the seeded cloud and is recognisable (sphere, torus, knot, cube, helix),
+and a synthetic kick bursts the sphere outward before it reassembles.
+**Frame rate is unmeasured** — the pane was hidden, so rAF didn't run. At 16k
+sprites plus two small simulation passes it should be cheaper than magneto's
+65k default, but ≥60 fps is for the user to confirm in real Chrome.
+
+---
+
 ## Phase 7 — vector: left against right
 
 The goniometer, the last photism direction that was waiting on stereo. It
