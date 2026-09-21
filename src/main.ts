@@ -31,6 +31,7 @@ import { ControlPanel } from './ui/ControlPanel.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
 import { Transport } from './ui/Transport.ts';
 import { PerformanceBar, stepIndex } from './ui/PerformanceBar.ts';
+import { groupModes, modeOrder } from './ui/modeGroups.ts';
 import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
 import { LOOKS, defaultValues, findLook } from './presets/looks.ts';
@@ -135,8 +136,10 @@ function refreshControls(): void {
   controlPanel.update(app.getMode(), isPassEnabled);
 }
 
-// Every mode in switcher order — the performance bar's cycler walks this.
-const MODE_NAMES = [...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)];
+// Every registered mode, grouped for the picker; flattened, the same groups
+// are the order the performance bar's cycler walks.
+const MODE_GROUPS = groupModes([...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)]);
+const MODE_NAMES = modeOrder(MODE_GROUPS);
 
 // Assigned below; selectMode runs once before the bar exists.
 let perfBar: PerformanceBar | null = null;
@@ -293,7 +296,7 @@ const presetPanel = new PresetPanel(panel, {
   onLoad: (name) => {
     const preset = presetStore.load(name);
     if (!preset) return;
-    if (MODES.some((m) => m.name === preset.mode)) selectMode(preset.mode);
+    if (MODE_NAMES.includes(preset.mode)) selectMode(preset.mode);
     controlPanel.applyValues(resolvePreset(preset, allControls));
     repaintFxButtons();
     refreshControls();
@@ -626,7 +629,7 @@ perfBar = new PerformanceBar(document.body, THEMES, {
   onFullscreen: () => goFullscreen(),
   onPip: () => void togglePip(),
 });
-perfBar.setModes(MODE_NAMES);
+perfBar.setModes(MODE_GROUPS);
 perfBar.setMode(app.getMode());
 perfBar.setTheme(controlPanel.getValue('uTheme'));
 transport.watch((s) => perfBar?.setTransport(s));

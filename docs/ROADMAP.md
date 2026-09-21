@@ -390,10 +390,11 @@ Things only the user can close. They stay open until he reports back.
 
 ---
 
-## Phase 7 — Next up (candidates, 2026-09-21)
+## Phase 7 — Next up (2026-09-21)
 
-Not yet prioritised by the user — at the start of the next run, confirm which
-of these he wants and in what order before building. Each is sized to one
+Approved by the user on 2026-09-21: build all of it, autonomously, with a
+self-review of each task. Order taken: picker, stereo + goniometer, forge,
+synapse, governor, then the unscoped photism directions. Each is sized to one
 commit unless noted.
 
 - [ ] **Stereo analysis + goniometer mode.** The one photism direction FLUX
@@ -409,7 +410,7 @@ commit unless noted.
   step the active mode's quality down (and back up) with hysteresis. *Done:*
   forcing a low frame budget steps quality down within ~2 s and back up when
   headroom returns; no oscillation; the user can pin quality to opt out.
-- [ ] **Group the mode picker.** 17 modes in a flat 3-column grid is getting
+- [x] **Group the mode picker.** 17 modes in a flat 3-column grid is getting
   long. Group it by the table above (signal / fields / simulations / raymarched
   / particles). *Done:* picker shows labelled groups, keyboard/click selection
   unchanged, cycler order matches.

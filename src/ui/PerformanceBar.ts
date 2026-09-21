@@ -1,4 +1,5 @@
 import type { Theme } from './themes.ts';
+import type { ModeGroup } from './modeGroups.ts';
 
 /**
  * Step an index by `step`, wrapping in both directions. The mode cycler runs
@@ -184,21 +185,34 @@ export class PerformanceBar {
     }
   }
 
-  /** The full mode list, in cycler order, for the picker. */
-  setModes(names: string[]): void {
-    this.modeNames = names;
+  /**
+   * The modes for the picker, grouped (see `modeGroups.ts`). Each group is a
+   * labelled row of chips; read top to bottom they're the cycler order.
+   */
+  setModes(groups: ModeGroup[]): void {
+    this.modeNames = groups.flatMap((g) => g.modes);
     this.picker.textContent = '';
-    for (const name of names) {
-      const b = document.createElement('button');
-      b.className = 'perf-btn';
-      b.textContent = name;
-      b.classList.toggle('active', name === this.activeMode);
-      b.addEventListener('click', (e) => {
-        e.stopPropagation();
-        this.pickMode(name);
-        this.togglePicker(false);
-      });
-      this.picker.appendChild(b);
+    for (const group of groups) {
+      const label = document.createElement('div');
+      label.className = 'perf-picker-label';
+      label.textContent = group.label;
+      const row = document.createElement('div');
+      row.className = 'perf-picker-row';
+      row.setAttribute('role', 'group');
+      row.setAttribute('aria-label', group.label);
+      for (const name of group.modes) {
+        const b = document.createElement('button');
+        b.className = 'perf-btn';
+        b.textContent = name;
+        b.classList.toggle('active', name === this.activeMode);
+        b.addEventListener('click', (e) => {
+          e.stopPropagation();
+          this.pickMode(name);
+          this.togglePicker(false);
+        });
+        row.appendChild(b);
+      }
+      this.picker.append(label, row);
     }
   }
 

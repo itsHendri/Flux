@@ -5,6 +5,35 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — the mode picker, grouped
+
+Seventeen modes in a flat three-column grid had stopped being a picker and
+become a wall. The picker now reads as five labelled rows — **signal**,
+**fields**, **simulations**, **raymarched**, **particles** — grouped by what a
+mode *is* rather than how it's built (`spectro` is a custom-draw mode with a
+ring buffer, but it reads the signal, so it sits with `bars` and `waveform`).
+
+- **One table, two uses.** `src/ui/modeGroups.ts` holds the grouping, and the
+  ‹ › cycler walks the same table flattened, so the picker's reading order and
+  the stepping order can't drift apart. (Before, the cycler went fragment modes
+  first, then custom ones — `spectro` came after `logo`.)
+- **Nothing gets lost.** A mode the table lists but that didn't register (a
+  custom mode refuses without float render targets) is dropped along with any
+  group it leaves empty; a registered mode the table doesn't know lands in a
+  trailing `other` row.
+- **Fixed on the way:** loading a saved preset only restored its mode if it
+  was a fragment mode — a preset saved on `reaction`, `fluid`, `spectro`,
+  `magneto` or `trails3d` came back on whatever mode was showing. It now
+  checks the full list.
+- Dev server: `vite.config.ts` honours `PORT`, and `.claude/launch.json` sets
+  `autoPort`, so the preview tool can run FLUX when 5173 is taken.
+
+Verified: build clean, 102/102 tests (6 new); the picker shows the five rows in
+the preview with no overlay errors, and ‹ › from `bars` walks
+waveform → spectro → flow … → trails3d → bars.
+
+---
+
 ## SESSION HANDOFF — 2026-09-21
 
 One long run, 2026-09-16 → 09-18, closing Phases 3, 5 and 6. All the work

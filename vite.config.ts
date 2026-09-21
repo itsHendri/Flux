@@ -10,6 +10,7 @@ export default defineConfig({
   base,
   server: {
     host: 'localhost',
-    port: 5173,
+    // The preview tool hands out a free port via PORT when 5173 is taken.
+    port: Number(process.env.PORT) || 5173,
   },
 });

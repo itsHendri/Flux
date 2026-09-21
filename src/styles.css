@@ -519,12 +519,15 @@ button.perf-mode.open {
   left: 50%;
   transform: translateX(-50%);
   display: grid;
-  grid-template-columns: repeat(3, auto);
+  /* Label column + a row of chips per group. */
+  grid-template-columns: auto auto;
+  align-items: center;
   /* Absolutely positioned inside a narrow group, so without this it shrinks
      to that group's width and the labels overprint each other. */
   width: max-content;
-  gap: 4px;
-  padding: 8px;
+  max-width: calc(100vw - 32px);
+  gap: 6px 10px;
+  padding: 10px 12px;
   border-radius: 14px;
   background: rgba(14, 16, 20, 0.86);
   border: 1px solid rgba(199, 204, 214, 0.14);
@@ -535,6 +538,20 @@ button.perf-mode.open {
 
 .perf-picker[hidden] {
   display: none;
+}
+
+.perf-picker-label {
+  font-size: 10px;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: rgba(199, 204, 214, 0.5);
+  text-align: right;
+}
+
+.perf-picker-row {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
 }
 
 .perf-picker .perf-btn {
