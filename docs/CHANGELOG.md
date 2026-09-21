@@ -5,6 +5,40 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 8 — crossfades between modes
+
+Changing mode (picker, cycler, a look, a preset) now dissolves instead of
+cutting. For the length of the fade **both modes render live**: the outgoing
+one into a second scene buffer with a snapshot of the control values it had,
+the incoming one as normal. The two are blended *before* the effect chain,
+so trails, bloom and kaleidoscope see one picture dissolving rather than two
+pictures stacked.
+
+- **The snapshot has to be taken before anything changes.** A look applies its
+  values and then switches mode, so `Renderer.beginTransition` is called first
+  and captures the outgoing values then. Custom modes draw through
+  `rebindScene`, which now follows whichever buffer is being drawn.
+- **Same custom mode on both sides** (a look that keeps `reaction`, say) would
+  step its simulation twice a frame if drawn twice, so that case fades from the
+  mode's last frame, frozen, instead.
+- **The blend holds its light.** A plain 50/50 mix of two dark-background
+  modes dips visibly dark mid-fade; the crossfade shader keeps each picture's
+  brightest weighted light, so one dissolves into the other.
+- **The governor sits fades out.** Two modes cost more than one, and that's the
+  fade's cost, not the machine's.
+- A new **Set** section in the panel: Crossfade *cut / 1s / 2s / 4s* (default
+  2s), per machine in localStorage, and deliberately not a control, because
+  a look would reset it.
+
+Verified in the preview: `bars` → `raymarch` at 4 s shows the bars and the
+metaballs together mid-fade and only the metaballs after; magneto → forge →
+reaction switch cleanly; the `coral` look on `reaction` dissolves from the
+frozen purple frame to ember. Build clean, 155/155 tests (4 new on the
+settings: defaults, round trip, per-field validation, storage that throws),
+overlay empty.
+
+---
+
 ## PHASE 7 COMPLETE — review
 
 The user asked for all of Phase 7, built autonomously with self-review. All of

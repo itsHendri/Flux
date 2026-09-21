@@ -22,6 +22,7 @@ import type { CustomMode, CustomModeContext } from './CustomMode.ts';
 import vertSource from '../shaders/fullscreen.vert?raw';
 import commonSource from '../shaders/common.glsl?raw';
 import presentSource from '../shaders/present.frag?raw';
+import crossfadeSource from '../shaders/crossfade.frag?raw';
 import blueNoiseUrl from '../assets/blue-noise-128.png';
 
 /** A shader mode: a name and the source of its fragment `render()` function. */
@@ -147,6 +148,24 @@ export class Renderer {
   private history: Fbo | null = null;
   private passInput: Fbo | null = null;
   private historyValid = false;
+
+  // Mode transitions (see beginTransition): the outgoing mode renders into
+  // sceneB, and the two are blended before the effect chain.
+  private sceneB: Fbo | null = null;
+  // Where custom modes draw: normally `scene`, `sceneB` while drawing the
+  // outgoing mode of a transition (rebindScene follows it).
+  private drawTarget: Fbo | null = null;
+  private crossfade: CompiledProgram | null = null;
+  private crossfadeTried = false;
+  private transition: {
+    fromMode: CompiledProgram | null;
+    fromCustom: CustomMode | null;
+    controls: Record<string, number | number[]>;
+    duration: number;
+    start: number;
+    /** Outgoing is the same custom mode: fade from a frozen frame instead. */
+    frozen: boolean;
+  } | null = null;
 
   // RGBA16F where renderable (HDR headroom for bloom/trails), RGBA8 fallback.
   private readonly fboFormat: FboFormat;
@@ -472,6 +491,32 @@ export class Renderer {
     return true;
   }
 
+  /**
+   * Start a dissolve from whatever is showing now to whatever setMode (and the
+   * controls) change to next. Call it *before* making those changes: the
+   * outgoing mode keeps rendering, live, with `controls` — the values it had —
+   * for `seconds`. 0 (or nothing showing) is a hard cut.
+   */
+  beginTransition(seconds: number, controls: Record<string, number | number[]>): void {
+    if (!(seconds > 0) || (!this.current && !this.currentCustom)) {
+      this.transition = null;
+      return;
+    }
+    this.transition = {
+      fromMode: this.current,
+      fromCustom: this.currentCustom,
+      controls: { ...controls },
+      duration: seconds,
+      start: -1,
+      frozen: false,
+    };
+  }
+
+  /** True while a mode transition is rendering two modes. */
+  get inTransition(): boolean {
+    return this.transition !== null;
+  }
+
   setMode(name: string): void {
     const custom = this.customModes.get(name);
     if (custom) {
@@ -501,7 +546,8 @@ export class Renderer {
       uploadFrameUniforms: (prog, state) => this.uploadFrameUniforms(prog, state),
       rebindScene: () => {
         const gl = this.gl;
-        gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene ? this.scene.framebuffer : null);
+        const target = this.drawTarget ?? this.scene;
+        gl.bindFramebuffer(gl.FRAMEBUFFER, target ? target.framebuffer : null);
         gl.viewport(0, 0, this.canvas.width, this.canvas.height);
       },
     };
@@ -527,6 +573,8 @@ export class Renderer {
         const { width, height } = this.scene;
         deleteFbo(this.gl, this.scene);
         this.scene = createFbo(this.gl, width, height, this.fboFormat, true);
+        if (this.sceneB) deleteFbo(this.gl, this.sceneB);
+        this.sceneB = null; // recreated with depth when next needed
       }
     }
     this.successCb(mode.name);
@@ -611,6 +659,7 @@ export class Renderer {
     resizeFbo(gl, this.pong!, w, h);
     resizeFbo(gl, this.history!, w, h);
     resizeFbo(gl, this.passInput!, w, h);
+    if (this.sceneB) resizeFbo(gl, this.sceneB, w, h);
     this.historyValid = false; // old contents are the wrong size
   }
 
@@ -719,6 +768,72 @@ export class Renderer {
     gl.bindFramebuffer(gl.DRAW_FRAMEBUFFER, null);
   }
 
+  /** Draw one mode into `target` (the scene, or sceneB for an outgoing mode). */
+  private drawMode(
+    target: Fbo,
+    mode: CompiledProgram | null,
+    custom: CustomMode | null,
+    state: FrameState,
+    w: number,
+    h: number,
+  ): void {
+    const gl = this.gl;
+    gl.bindFramebuffer(gl.FRAMEBUFFER, target.framebuffer);
+    this.drawTarget = target;
+    if (custom) {
+      custom.draw(state, w, h);
+      // The mode may have bound its own VAO / left an FBO bound internally.
+      gl.bindVertexArray(this.vao);
+      gl.viewport(0, 0, w, h);
+    } else if (mode) {
+      gl.useProgram(mode.program);
+      this.uploadFrameUniforms(mode, state);
+      // The logo sampler rides on unit 4 (same as passes).
+      gl.activeTexture(gl.TEXTURE4);
+      gl.bindTexture(gl.TEXTURE_2D, this.logo);
+      gl.uniform1i(mode.uniforms.get('uLogo') ?? null, 4);
+      this.drawFullscreen();
+    }
+    this.drawTarget = null;
+  }
+
+  /**
+   * Advance the transition, drawing the outgoing mode into sceneB. Returns the
+   * fade progress 0..1, or null when there's no transition this frame.
+   */
+  private stepTransition(state: FrameState, w: number, h: number): number | null {
+    const tr = this.transition;
+    if (!tr || !this.scene) return null;
+    const gl = this.gl;
+    if (!this.sceneB) this.sceneB = createFbo(gl, w, h, this.fboFormat, this.sceneNeedsDepth);
+    if (tr.start < 0) {
+      tr.start = state.time;
+      // The same custom mode on both sides (a look that keeps the mode):
+      // drawing it twice a frame would step its simulation twice. Fade from
+      // its last frame, still in the scene buffer, instead.
+      tr.frozen = tr.fromCustom !== null && tr.fromCustom === this.currentCustom;
+      if (tr.frozen) this.blit(this.scene, this.sceneB, w, h);
+    }
+    const t = (state.time - tr.start) / tr.duration;
+    if (t >= 1) {
+      this.transition = null;
+      return null;
+    }
+    if (!tr.frozen) {
+      this.drawMode(this.sceneB, tr.fromMode, tr.fromCustom, { ...state, controls: tr.controls }, w, h);
+    }
+    return Math.max(0, t);
+  }
+
+  private ensureCrossfade(): CompiledProgram | null {
+    if (!this.crossfade && !this.crossfadeTried) {
+      this.crossfadeTried = true;
+      this.crossfade = this.compile('crossfade', this.composePass(crossfadeSource), PASS_SAMPLERS);
+      if (this.crossfade) this.successCb('crossfade');
+    }
+    return this.crossfade;
+  }
+
   render(state: FrameState): void {
     const gl = this.gl;
     const w = this.canvas.width;
@@ -740,22 +855,10 @@ export class Renderer {
     gl.viewport(0, 0, w, h);
 
     // 1. Mode → scene FBO. Custom (3D) modes draw for themselves (and own
-    // clearing); fragment modes are a fullscreen draw. The logo sampler
-    // rides on unit 4 (same as passes).
-    gl.bindFramebuffer(gl.FRAMEBUFFER, this.scene.framebuffer);
-    if (this.currentCustom) {
-      this.currentCustom.draw(state, w, h);
-      // The mode may have bound its own VAO / left an FBO bound internally.
-      gl.bindVertexArray(this.vao);
-      gl.viewport(0, 0, w, h);
-    } else if (mode) {
-      gl.useProgram(mode.program);
-      this.uploadFrameUniforms(mode, state);
-      gl.activeTexture(gl.TEXTURE4);
-      gl.bindTexture(gl.TEXTURE_2D, this.logo);
-      gl.uniform1i(mode.uniforms.get('uLogo') ?? null, 4);
-      this.drawFullscreen();
-    }
+    // clearing); fragment modes are a fullscreen draw. During a transition
+    // the outgoing mode draws first, into sceneB, with its old values.
+    const fade = this.stepTransition(state, w, h);
+    this.drawMode(this.scene, mode, this.currentCustom, state, w, h);
 
     // 2. Ordered, toggleable post-pass chain across the ping-pong pair. Enable
     // state comes from the control store (uFx* toggle values).
@@ -765,6 +868,26 @@ export class Renderer {
     });
     let readFbo = this.scene;
     let writeFbo = this.ping!;
+
+    // The dissolve, before the effects: they see one picture, not two.
+    if (fade !== null && this.sceneB) {
+      const xf = this.ensureCrossfade();
+      if (xf) {
+        gl.bindFramebuffer(gl.FRAMEBUFFER, writeFbo.framebuffer);
+        gl.useProgram(xf.program);
+        this.uploadFrameUniforms(xf, state);
+        gl.uniform1f(gl.getUniformLocation(xf.program, 'uFade'), fade);
+        gl.activeTexture(gl.TEXTURE0);
+        gl.bindTexture(gl.TEXTURE_2D, this.scene.texture);
+        gl.uniform1i(xf.uniforms.get('uSource') ?? null, 0);
+        gl.activeTexture(gl.TEXTURE2);
+        gl.bindTexture(gl.TEXTURE_2D, this.sceneB.texture);
+        gl.uniform1i(xf.uniforms.get('uScene') ?? null, 2);
+        this.drawFullscreen();
+        readFbo = writeFbo;
+        writeFbo = this.pong!;
+      }
+    }
 
     const prevTex = (this.historyValid ? this.history! : this.scene).texture;
 

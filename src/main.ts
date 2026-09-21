@@ -42,6 +42,8 @@ import { PresetPanel } from './ui/PresetPanel.ts';
 import { PresetStore, snapshotPreset, resolvePreset } from './presets/presets.ts';
 import { LOOKS, defaultValues, findLook } from './presets/looks.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
+import { SetPanel } from './ui/SetPanel.ts';
+import { loadSet, saveSet } from './ui/setSettings.ts';
 import { MidiEngine, MidiMap, MidiBindingStore } from './audio/midi.ts';
 import {
   QualityGovernor,
@@ -176,7 +178,11 @@ for (const lever of new Set(Object.values(QUALITY_LEVERS).map((l) => l.glslName)
   });
 }
 governor.setEnabled(loadAutoQuality(storage));
-app.onFrame((dt) => governor.frame(dt));
+// During a crossfade two modes render at once; that doubled cost is the
+// fade's, not the machine's, so the governor sits it out.
+app.onFrame((dt) => {
+  if (!renderer.inTransition) governor.frame(dt);
+});
 
 // Mode selection lives on the performance bar (cycler + picker). The dock
 // panel used to carry a second copy of the same buttons; one place is enough.
@@ -191,10 +197,23 @@ function refreshControls(): void {
 const MODE_GROUPS = groupModes([...MODES.map((m) => m.name), ...MODES_3D.map((m) => m.name)]);
 const MODE_NAMES = modeOrder(MODE_GROUPS);
 
+// How a set moves between pictures (crossfade length; auto looks later).
+// Per machine, not a control — see setSettings.ts.
+let setSettings = loadSet(storage);
+
+/**
+ * Begin a crossfade from whatever is showing, before anything changes. The
+ * snapshot is the outgoing mode's values, which it keeps for the fade.
+ */
+function beginFade(): void {
+  renderer.beginTransition(setSettings.fade, controlPanel.getValues());
+}
+
 // Assigned below; selectMode runs once before the bar exists.
 let perfBar: PerformanceBar | null = null;
 
-function selectMode(name: string): void {
+function selectMode(name: string, fade = true): void {
+  if (fade && name !== app.getMode()) beginFade();
   app.setMode(name);
   governor.setMode(name);
   perfBar?.setMode(name);
@@ -202,7 +221,7 @@ function selectMode(name: string): void {
 }
 
 // Highlight a default mode up front so the chip shows as selected on load.
-if (MODES.length > 0) selectMode(MODES[0].name);
+if (MODES.length > 0) selectMode(MODES[0].name, false);
 
 // --- Theme ------------------------------------------------------------------
 // One selector re-tints the whole instrument: picking a theme writes its three
@@ -329,9 +348,11 @@ let currentLook: string | null = null;
 function applyLook(name: string): void {
   const look = findLook(name);
   if (!look) return;
+  // Fade from the picture as it is now — before the look changes a value.
+  beginFade();
   controlPanel.applyValues(defaultValues(allControls));
   controlPanel.applyValues(resolvePreset(look.preset, allControls));
-  selectMode(look.preset.mode);
+  selectMode(look.preset.mode, false);
   repaintFxButtons();
   refreshControls();
   currentLook = name;
@@ -350,7 +371,8 @@ const presetPanel = new PresetPanel(panel, {
   onLoad: (name) => {
     const preset = presetStore.load(name);
     if (!preset) return;
-    if (MODE_NAMES.includes(preset.mode)) selectMode(preset.mode);
+    beginFade();
+    if (MODE_NAMES.includes(preset.mode)) selectMode(preset.mode, false);
     controlPanel.applyValues(resolvePreset(preset, allControls));
     repaintFxButtons();
     refreshControls();
@@ -365,6 +387,14 @@ const presetPanel = new PresetPanel(panel, {
 });
 presetPanel.setLooks(LOOKS.map((l) => ({ name: l.name, note: l.note })));
 presetPanel.refresh(presetStore.list());
+
+// --- Set --------------------------------------------------------------------
+new SetPanel(panel, setSettings, {
+  onChange: (next) => {
+    setSettings = next;
+    saveSet(storage, next);
+  },
+});
 
 // --- MIDI -------------------------------------------------------------------
 // Hardware knobs/faders drive slider controls via MIDI-learn: pick a control,

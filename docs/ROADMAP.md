@@ -492,7 +492,7 @@ crossfades instead of hard cuts.
   (and the older open items under *Waiting on the user*) in Chrome with real
   music and reports what to change. *Done:* the notes are recorded here as
   tasks and built.
-- [ ] **Crossfades between modes.** Switching mode (picker, cycler, a look)
+- [x] **Crossfades between modes.** Switching mode (picker, cycler, a look)
   dissolves over a set time instead of cutting: both modes render live for
   the length of the fade — the outgoing one with the control values it had —
   and blend before the effect chain. The governor ignores the doubled cost
