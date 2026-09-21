@@ -121,19 +121,21 @@ export class VectorMode implements CustomMode {
     gl.viewport(0, 0, w, h);
     gl.enable(gl.BLEND);
 
-    // 1. Fade what's there: dst *= fade, then dst -= a hair (see
-    // vector-fade.frag — without it an 8-bit buffer never quite goes dark).
+    // 1. Fade what's there: dst *= fade, then, on 8-bit buffers, dst -= a hair
+    // (see vector-fade.frag — without it they never quite go dark).
     const fp = this.fadeProg.program;
     gl.useProgram(fp);
     gl.uniform1f(gl.getUniformLocation(fp, 'uFade'), fade);
     gl.uniform1f(gl.getUniformLocation(fp, 'uFloor'), 0);
     gl.blendFunc(gl.ZERO, gl.SRC_ALPHA);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.uniform1f(gl.getUniformLocation(fp, 'uFloor'), 1.5 / 255);
-    gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT);
-    gl.blendFunc(gl.ONE, gl.ONE);
-    gl.drawArrays(gl.TRIANGLES, 0, 3);
-    gl.blendEquation(gl.FUNC_ADD);
+    if (this.fmt?.type === gl.UNSIGNED_BYTE) {
+      gl.uniform1f(gl.getUniformLocation(fp, 'uFloor'), 1.5 / 255);
+      gl.blendEquation(gl.FUNC_REVERSE_SUBTRACT);
+      gl.blendFunc(gl.ONE, gl.ONE);
+      gl.drawArrays(gl.TRIANGLES, 0, 3);
+      gl.blendEquation(gl.FUNC_ADD);
+    }
 
     // 2. Lay the new window of samples on top, additively.
     gl.blendFunc(gl.ONE, gl.ONE);

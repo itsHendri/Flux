@@ -51,8 +51,8 @@ const WINDOW = 31;
 const HITCH = 0.25;
 const HITCH_RUN = 3;
 /**
- * A step down that improves the median frame by less than this was useless:
- * the frames were being held back by something other than the GPU — a 30 Hz
+ * Steps down that together improve the median frame by less than this were
+ * useless: the frames are held back by something other than the GPU — a 30 Hz
  * display, Energy Saver or Low Power Mode capping the frame rate.
  */
 const USEFUL_GAIN = 0.08;
@@ -67,10 +67,17 @@ export class FrameGovernor {
   private probeAge = -1;
   private longRun = 0;
   /**
-   * The median frame time before the last step down, while that step is being
-   * judged; 0 when none is. See USEFUL_GAIN.
+   * Cap detection. A run of step-downs is a *chain*: `chainStart` is the
+   * median before its first step, `chainSteps` how many it has taken, and
+   * `pending` means the latest step still needs a full window to be judged.
+   * One useless step proves nothing (the next rung may be the one that
+   * helps); two in a row, or one with nothing below it, mean the frames are
+   * capped, and the whole chain is undone (`undoLeft` steps, one at a time).
    */
-  private judging = 0;
+  private chainStart = 0;
+  private chainSteps = 0;
+  private pending = false;
+  private undoLeft = 0;
   /**
    * The slowest frame time learned to be a cap rather than a load (0 = none
    * known). Slow and good are judged relative to it, so a machine capped at
@@ -82,8 +89,21 @@ export class FrameGovernor {
     this.upAfter = timing.upAfter;
   }
 
-  /** Forget the measurements (a new setting), keep the backoff and the floor. */
+  /**
+   * The ladder was moved from outside (the user, a look, Auto Quality):
+   * forget the measurements and any step being judged — it was judged against
+   * a rung that's no longer showing. The backoff and the floor stay.
+   */
   reset(): void {
+    this.restart();
+    this.chainStart = 0;
+    this.chainSteps = 0;
+    this.pending = false;
+    this.undoLeft = 0;
+  }
+
+  /** Our own step: forget the measurements, keep everything else. */
+  private restart(): void {
     this.frames.length = 0;
     this.slowFor = 0;
     this.goodFor = 0;
@@ -100,7 +120,6 @@ export class FrameGovernor {
   resetForMode(): void {
     this.reset();
     this.upAfter = this.timing.upAfter;
-    this.judging = 0;
   }
 
   /** The learned frame-cap floor in seconds (0 = none). */
@@ -151,17 +170,33 @@ export class FrameGovernor {
       }
     }
 
-    // Judge the last step down once there's a full window after it: if it
-    // bought nothing, the frames are capped, not loaded. Undo it and learn the
-    // cap, so neither this step nor the ones below it are taken again for it.
-    if (this.judging > 0 && this.frames.length >= 16) {
-      const before = this.judging;
-      this.judging = 0;
-      if (m > before * (1 - USEFUL_GAIN)) {
-        this.floor = Math.max(this.floor, before);
-        this.reset();
+    // Undoing a chain judged to be fighting a cap: one rung per settle.
+    if (this.undoLeft > 0) {
+      this.undoLeft = canUp ? this.undoLeft - 1 : 0;
+      if (canUp) {
+        this.restart();
         return 1;
       }
+    }
+    // Judge the chain once there's a full window after its latest step.
+    if (this.pending && this.frames.length >= 16) {
+      this.pending = false;
+      if (m < this.chainStart * (1 - USEFUL_GAIN)) {
+        // The chain has bought real frames: it was load, not a cap.
+        this.chainStart = 0;
+        this.chainSteps = 0;
+      } else if (this.chainSteps >= 2 || !canDown) {
+        // Nothing gained over two rungs (or the bottom was reached): capped.
+        // Learn the cap and give every rung of the chain back.
+        this.floor = Math.max(this.floor, this.chainStart);
+        this.undoLeft = this.chainSteps - 1;
+        this.chainStart = 0;
+        this.chainSteps = 0;
+        this.restart();
+        return 1;
+      }
+      // One step, no gain yet: the next rung may be the one that helps, so
+      // let the slowness take it.
     }
     // A median well under the floor means the cap has gone (Energy Saver off,
     // a faster display): stop excusing slow frames.
@@ -179,13 +214,14 @@ export class FrameGovernor {
         // settles instead of flapping between two settings.
         this.upAfter = Math.min(this.timing.maxUpAfter, this.upAfter * 2);
       }
-      const before = m;
-      this.reset();
-      this.judging = before;
+      if (this.chainSteps === 0) this.chainStart = m;
+      this.chainSteps++;
+      this.pending = true;
+      this.restart();
       return -1;
     }
     if (canUp && this.goodFor >= this.upAfter) {
-      this.reset();
+      this.restart();
       this.probeAge = 0;
       return 1;
     }

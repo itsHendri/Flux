@@ -19,14 +19,21 @@ out float vLight;
 out float vNear;
 out float vHue;
 
-float h1(float n) { return fract(sin(n * 12.9898) * 43758.5453); }
+// Integer hash (PCG-style) on the mote's id. The usual fract(sin(x)·43758)
+// loses its precision at arguments this large (ids up to 200k) on mobile
+// GPUs, and the dust falls onto visible lattices.
+float h1(uint n) {
+  uint s = n * 747796405u + 2891336453u;
+  uint w = ((s >> ((s >> 28u) + 4u)) ^ s) * 277803737u;
+  return float((w >> 22u) ^ w) / 4294967295.0;
+}
 
 void main() {
-  float id = float(gl_VertexID);
-  vec3 base = vec3(h1(id), h1(id + 17.31), h1(id + 41.7)) * 2.0 - 1.0;
+  uint id = uint(gl_VertexID) * 4u;
+  vec3 base = vec3(h1(id), h1(id + 1u), h1(id + 2u)) * 2.0 - 1.0;
   // A slab wider than tall: a world of air rather than a ball of it.
   vec3 p = base * vec3(4.5, 2.0, 4.5);
-  float ph = h1(id + 3.3) * 6.2831;
+  float ph = h1(id + 3u) * 6.2831;
   p += vec3(sin(uTime * 0.13 + ph), sin(uTime * 0.11 + ph * 1.7) * 0.6, cos(uTime * 0.12 + ph)) * 0.35;
 
   vec3 away = p - uWanderer;
@@ -38,7 +45,7 @@ void main() {
 
   vLight = uWispLight / (0.12 + d2 * 0.7);
   vNear = exp(-d2 * 0.8);
-  vHue = h1(id + 9.1);
+  vHue = h1(id ^ 0x9e3779b9u);
 
   vec4 vp = uView * vec4(p, 1.0);
   gl_Position = uProj * vp;

@@ -91,10 +91,46 @@ describe('FrameGovernor — the machines it must not misread', () => {
         rung -= s;
       }
     }
-    // One step down, judged useless and undone — then it holds.
-    expect(steps).toEqual([-1, 1]);
+    // Two steps down buy nothing: both undone, the cap learned — then it holds.
+    expect(steps).toEqual([-1, -1, 1, 1]);
     expect(rung).toBe(0);
     expect(g.capFloor).toBeCloseTo(1 / 30, 3);
+  });
+
+  it('one step that barely helps does not stop it reaching the rung that does', () => {
+    // 30 ms at the top, 29 one rung down, 17 two down (the review's case:
+    // a lever that saves little above a resolution rung that saves a lot).
+    const g = new FrameGovernor();
+    const frame = [1 / 33, 1 / 34.5, 1 / 59];
+    let rung = 0;
+    for (let t = 0; t < 30; ) {
+      const dt = frame[rung];
+      rung -= g.update(dt, rung > 0, rung < 2);
+      t += dt;
+    }
+    expect(rung).toBe(2);
+    expect(g.capFloor).toBe(0);
+  });
+
+  it('a step being judged is forgotten when the ladder is moved from outside', () => {
+    // A machine that 30-fps at the top and copes one rung down. The governor
+    // steps down; before that step is judged the user moves the lever and the
+    // ladder is back at the top. The 30 ms that follows must not be read as
+    // "stepping down didn't help" — it steps down again instead.
+    const g = new FrameGovernor();
+    const frame = [1 / 33, 1 / 60];
+    let rung = 0;
+    let t = 0;
+    while (rung === 0 && t < 5) {
+      rung -= g.update(frame[rung], rung > 0, rung < 1);
+      t += frame[0];
+    }
+    expect(rung).toBe(1);
+    g.reset(); // what QualityGovernor.rebuild does
+    rung = 0;
+    for (let i = 0; i < 200; i++) rung -= g.update(frame[rung], rung > 0, rung < 1);
+    expect(g.capFloor).toBe(0);
+    expect(rung).toBe(1);
   });
 
   it('forgets the cap when frames get well under it', () => {

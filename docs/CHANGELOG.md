@@ -5,6 +5,47 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — second review's fixes
+
+A second fresh-eyes review, over the seven photism modes, `uDrive` and the
+first round of fixes, found four confirmed bugs and three plausible ones.
+Six are fixed; one is documented.
+
+- **The vector fade fix had never landed.** The earlier edit to
+  `vector-fade.frag` targeted the file's old `SCOPE` header, which the rename
+  had already changed, so it matched nothing and wrote nothing. The TypeScript
+  side set a uniform that didn't exist. Now the shader has it, and the subtract
+  pass runs **only on 8-bit buffers**: on float ones nothing clamps, and the
+  subtraction would sink the black below zero and eat the next trace.
+- **The governor could learn a false cap from its own history.** A step still
+  being judged survived the user moving the lever (or a look, or MIDI) back
+  to the top rung, and was then judged against that rung: "stepping down
+  didn't help", cap learned, never stepping down again. An outside change now
+  clears the judgement.
+- **One step that barely helped stopped the governor for good.** A lever that
+  saves little above a resolution rung that saves a lot (30 → 29 → 17 ms) was
+  read as a cap after the first step. The judgement is now over a **chain** of
+  steps: one useless step proves nothing and the next rung gets tried; only
+  two in a row without real gain (or one with nothing below it) mean a cap, and
+  then the whole chain is given back one rung at a time.
+- **spacetime tore its rays along a seam.** The angular cell id wasn't wrapped,
+  so where `atan` jumps by 2π one cell got two hashes. That's a torn ray on
+  the negative x axis, curled into a spiral seam once Twist is on.
+- **grove** checks ±2 neighbouring trees instead of ±1, so wide canopies at
+  high density aren't clipped at vertical lines.
+- **wisp** hashes each mote's id with an integer (PCG-style) hash; the
+  `fract(sin(x)·43758)` idiom loses precision at ids up to 200k on mobile GPUs
+  and lays the dust on visible lattices.
+- **Documented, not fixed:** `gate`'s distance flown quantises after about 7
+  hours of continuous flight (see *Known limitations*).
+
+Verified: build clean, 151/151 tests (2 new: the 30/29/17 ms machine reaches
+the rung that helps; a mid-judgement ladder reset isn't learned as a cap; the
+30 Hz cap test now expects both chain steps given back). All ten new modes
+compile in the preview with an empty overlay.
+
+---
+
 ## Phase 7 — limitless: your image, inside itself forever
 
 The Droste effect on the uploaded image (the `logo` texture). In log-polar

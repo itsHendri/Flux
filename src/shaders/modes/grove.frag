@@ -72,7 +72,9 @@ float forestLayer(vec2 p, float layer, float px, inout float glow) {
   float id0 = floor(p.x / cell + 0.5);
   float d = 1e9;
   float g = 0.0;
-  for (int k = -1; k <= 1; k++) {
+  // ±2 cells: at high density a wide canopy reaches past the next cell over,
+  // and checking only ±1 cut branches off at vertical lines.
+  for (int k = -2; k <= 2; k++) {
     float id = id0 + float(k);
     float h = treeHash(vec2(id, layer));
     if (h < 0.18) continue; // gaps between trees

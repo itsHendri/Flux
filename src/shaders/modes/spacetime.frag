@@ -37,7 +37,10 @@ vec3 render(vec2 uv) {
     float fl = float(L);
     float cells = 70.0 + fl * 55.0;
     float ca = a / TAU * cells;
-    float id = floor(ca);
+    // Wrapped: atan jumps by 2π on the negative x axis, and an unwrapped id
+    // would give one cell two hashes either side of it — a torn ray, curled
+    // into a spiral seam once Twist is on.
+    float id = mod(floor(ca), cells);
     vec2 key = vec2(id, fl);
     float h = rayHash(key);
     if (h > mix(0.25, 0.95, uSpaceDensity)) continue;
