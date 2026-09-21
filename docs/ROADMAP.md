@@ -423,12 +423,40 @@ commit unless noted.
   (photism). The first mode that *accumulates* structure over a track. *Done:*
   nodes appear on onsets and connect; the constellation grows over a minute and
   resets cleanly on mode re-entry.
-- [ ] **Remaining photism directions**, unscoped: anemone (chains of rings
-  from one point), spacetime (neon rays rushing past — close to `tunnel`),
-  gate (falling through a corridor of gates), grove (fractal forest), wisp
-  (dust world with one bright wanderer), oracle (edge-lit dark chamber),
-  limitless (your image warped by the music — `logo` is the seed). See
-  REFERENCES.md.
+- [x] **Remaining photism directions — scoped (2026-09-21).** Split into the
+  seven tasks below. Two overlap existing work, so each is scoped to be
+  clearly different from what's there.
+- [ ] **anemone** — "chains of rings from one point". Instanced 3D rings (an
+  annulus on a quad in the ring's own plane) strung along tentacles that leave
+  one centre and curl on noise; ring *n* of a chain answers to band *n*, so
+  the spectrum runs out along every arm. *Done:* arms visibly carry the
+  spectrum outward; bass sways them; ≥3 controls.
+- [ ] **gate** — "falling through a corridor of gates". Raymarched, domain-
+  repeated gate frames along the camera's path, neon-edged; speed from bass,
+  each kick lights the next gate. *Done:* sustained forward motion through
+  distinct gates; the kick-lit gate is readable; ≥3 controls.
+- [ ] **grove** — "a fractal forest". 2D KIFS trees (fold-and-rotate
+  iterations) in parallax layers; band energy sets branch angles so the
+  canopy re-grows with the music, wind from bass. *Done:* reads as trees, not
+  noise; the spectrum visibly reshapes branches; ≥3 controls.
+- [ ] **wisp** — "a dust world with one bright wanderer". Dust placed
+  analytically in the vertex shader (no simulation) and lit by inverse-square
+  distance to a single wandering light whose path the music drives. *Done:*
+  the light moves through the dust and lights what's near it; kicks make it
+  dart; ≥3 controls.
+- [ ] **oracle** — "an edge-lit dark chamber". A raymarched interior lit only
+  along its edges (normal discontinuity → glow), with the spectrum running
+  around the edge light. *Done:* reads as a dark room drawn in light at its
+  edges; ≥3 controls.
+- [ ] **spacetime** — "neon rays rushing past". A fragment mode of radial
+  streaks with depth and parallax, speed from bass, hue from band. Unlike the
+  `tunnel` effect (which bends whatever mode is showing) this is a scene of
+  its own. *Done:* reads as rushing forward; kicks surge; ≥3 controls.
+- [ ] **limitless** — "your image warped by the music". The uploaded image
+  (the `logo` texture) as a Droste spiral: log-polar tiling so it contains
+  itself forever, zoom speed from bass, twist from the mids; a generated
+  pattern stands in until an image is uploaded. *Done:* an uploaded image
+  recurses into itself and the zoom follows the music; ≥3 controls.
 
 ---
 
