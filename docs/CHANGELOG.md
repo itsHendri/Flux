@@ -5,6 +5,36 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 8 — the beat and phrase clock
+
+`src/audio/PhraseClock.ts` answers the question a set keeps asking: *when does
+this phrase end?* It's built on the kick pulse and is pure, with no audio
+needed to test it.
+
+- **Tempo** from the gaps between kicks: the median of the last sixteen,
+  folded into 80–160 bpm, so a half-time kick pattern reads as the same tempo
+  and a missed kick or a fill doesn't drag it.
+- **Phrases** every *N* bars of 4/4 at that tempo, and **taken on a kick**:
+  once a phrase is due, the next kick ends it, which puts the change on a
+  downbeat instead of wherever the clock lands. With no kick for a bar past
+  due, it ends on time anyway.
+- **Early boundaries** on a sharp change of energy (a 1 s level average against
+  an 8 s one): a drop, or the floor falling out into a breakdown, at least two
+  bars into a phrase. That's where a DJ changes the picture regardless of the
+  count.
+- Quiet in silence. `restart()` starts a fresh count (a manual change).
+
+One fix while testing: both energy averages started at zero, so the fast one
+racing up read as a drop two bars in. They're now seeded from the first frame.
+
+Verified: 10 tests on synthetic kick tracks (120 bpm reads 117–123, and so
+does a half-time kick; boundaries every 16 s at 8 bars, each within a frame of
+a kick; 4 bars halves that; a drop at 12 s and a breakdown at 10 s each end
+the phrase within 1.5 s; no kick still ends a bar late; silence never fires).
+Build clean, 165/165 tests. Nothing uses it yet; auto looks is next.
+
+---
+
 ## Phase 8 — crossfades between modes
 
 Changing mode (picker, cycler, a look, a preset) now dissolves instead of

@@ -499,7 +499,7 @@ crossfades instead of hard cuts.
   during a fade. *Done:* a switch visibly dissolves with both pictures moving;
   0 s is a hard cut as before; custom and fragment modes both fade in and out;
   build + tests clean.
-- [ ] **Beat and phrase clock.** From the kick pulse: a tempo estimate
+- [x] **Beat and phrase clock.** From the kick pulse: a tempo estimate
   (inter-onset intervals), a beat count, and phrase boundaries every N bars,
   plus an early boundary when the energy changes sharply (a drop or a
   breakdown). Pure and tested. *Done:* a synthetic 120 bpm kick track yields
