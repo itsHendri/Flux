@@ -435,7 +435,7 @@ commit unless noted.
   repeated gate frames along the camera's path, neon-edged; speed from bass,
   each kick lights the next gate. *Done:* sustained forward motion through
   distinct gates; the kick-lit gate is readable; ≥3 controls.
-- [ ] **grove** — "a fractal forest". 2D KIFS trees (fold-and-rotate
+- [x] **grove** — "a fractal forest". 2D KIFS trees (fold-and-rotate
   iterations) in parallax layers; band energy sets branch angles so the
   canopy re-grows with the music, wind from bass. *Done:* reads as trees, not
   noise; the spectrum visibly reshapes branches; ≥3 controls.

@@ -354,6 +354,21 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'nightwood',
+    note: 'A fractal forest at dusk; the canopy re-grows with every chord.',
+    preset: {
+      mode: 'grove',
+      values: {
+        theme: 1,
+        themeMix: 0.8,
+        'fx-bloom': 1,
+        bloomIntensity: 0.5,
+        groveReact: 0.9,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

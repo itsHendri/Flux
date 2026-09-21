@@ -11,6 +11,7 @@ import bulb from './modes/bulb.frag?raw';
 import lattice from './modes/lattice.frag?raw';
 import chrome from './modes/chrome.frag?raw';
 import fur from './modes/fur.frag?raw';
+import grove from './modes/grove.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -25,6 +26,7 @@ export const MODES: ShaderMode[] = [
   { name: 'lattice', fragSource: lattice },
   { name: 'chrome', fragSource: chrome },
   { name: 'fur', fragSource: fur },
+  { name: 'grove', fragSource: grove },
   { name: 'logo', fragSource: logo },
 ];
 

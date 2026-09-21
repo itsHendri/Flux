@@ -5,6 +5,34 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — grove: a fractal forest the music re-grows
+
+Each tree is a 2D KIFS. Draw the trunk, move to its top, fold x (so one branch
+becomes both), turn, shrink, and repeat. Nine iterations give 2⁹ twig tips for
+the price of nine segment tests per pixel. **Level *n*'s branch angle answers
+to band *n***, so the canopy's shape *is* the music: bass opens the low limbs,
+hats splay the twigs, and a chord change re-grows every tree. Wind is the bass
+too, leaning each level a little more toward the tips. Blossom lights sit
+where the last twigs end and swell with the highs.
+
+Three layers at different distances make the forest: smaller trees, rooted
+higher, drifting slower and fogged toward a dusk sky with a low moon that
+swells on the bass. Trees are spaced on a hashed row with gaps, each with its
+own size and lean.
+
+One bug on the way: the first version drew only trunks. The fold keeps x ≥ 0
+and the rotation turned the new branch into x < 0, the half-plane the fold had
+just emptied. The comment at the fold now says so.
+
+Controls: Spread, React, Wind, Density. New look: **nightwood**.
+
+Verified in the preview with a synthetic chord progression (roots changing
+every 3 s, alternating low- and high-weighted partials): the canopies visibly
+change shape between chords, from compact domes to wide drooping arches.
+Build clean, 140/140 tests, overlay empty.
+
+---
+
 ## Phase 7 — gate: falling through a corridor of gates
 
 A raymarched flight down a corridor of frames. Space is cut into slabs a
