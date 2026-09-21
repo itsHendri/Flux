@@ -5,6 +5,51 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — synapse: every hit adds a star
+
+The first mode that **accumulates**. Everything else redraws the present, and
+even `spectro` only scrolls a window of it. Here each onset adds a star,
+linked into a graph, so over a track the music leaves a structure: a busy
+passage becomes a dense cluster, a sparse one a long filament.
+
+- **Growth rules** (`modes3d/constellation.ts`, pure, 13 tests). A new star
+  usually hangs off the newest one, so a run of hits draws a filament, and
+  sometimes off any star, so the graph branches. It steps outward, with bass
+  hits taking long steps (the skeleton) and bright ones short (the detail), and
+  folds back inside a fixed sky. Each star links to its parent and to at most
+  one near neighbour, which turns a tree into a web.
+- **Memory.** Stars sit in a ring: Short / Medium / Long holds 64 / 128 / 256.
+  Once it's full the oldest stars fade out ahead of their slot being reused,
+  and every star carries its `order`, so an edge can tell a live endpoint from a
+  reused slot and dies with it instead of snapping across the sky. (Fixed while
+  testing: with a small memory the fade span was bigger than the ring, so every
+  star was fading. It now scales to a quarter of the memory.)
+- **Drawing.** The graph is packed into two small float textures each frame.
+  Edges and stars are instanced screen-space quads that read them, with no
+  vertex buffers and additive light. A new edge **draws itself** from parent to
+  child over half a second with a bright pulse riding its tip; a kick fires a
+  random star, which flashes and sends pulses out along all its edges. The
+  camera follows the constellation's centroid and backs off as it spreads,
+  because growth wanders and the first version let a filament carry the whole
+  sky off-screen.
+- **A new CustomMode hook, `enter()`**, called by the Renderer only on a real
+  switch to the mode. Other modes reset after a half-second gap between frames.
+  That's wrong here: a sky can take a whole track to build, and one long frame
+  (a GC pause) mustn't wipe it. Found in the pane, where sparse frames reset the
+  sky on every capture.
+- Controls: Sensitivity, Memory, Spread, Glow. New look: **constellation**
+  (kaleidoscoped, with bloom).
+
+Verified: build clean, 127/127 tests. In the preview, with a temporary probe
+growing three stars a frame (reverted before commit), the constellation
+renders stars, self-drawing edges, pulses and the dust sky, and the camera
+re-centres. With a synthetic beat and no probe, an onset adds a star whose
+edge draws in. **Growth over a real minute can't be shown in the pane**, which
+catches few onsets at its frame rate. The growth rules are covered by the tests
+and the live feel is for real Chrome.
+
+---
+
 ## Phase 7 — forge: a chrome swarm that builds a shape and breaks it
 
 From the photism list: "a chrome swarm that builds a shape and breaks it

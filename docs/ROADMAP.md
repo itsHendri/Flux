@@ -419,7 +419,7 @@ commit unless noted.
   (photism). Magneto's particle rig with chrome's reflective shading and a
   target-shape attractor that kicks shatter. *Done:* the swarm assembles into a
   recognisable shape and a kick scatters it; ≥3 controls; ≥60 fps at default.
-- [ ] **synapse** — "every hit adds a node to a growing constellation"
+- [x] **synapse** — "every hit adds a node to a growing constellation"
   (photism). The first mode that *accumulates* structure over a track. *Done:*
   nodes appear on onsets and connect; the constellation grows over a minute and
   resets cleanly on mode re-entry.

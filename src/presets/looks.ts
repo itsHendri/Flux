@@ -306,6 +306,24 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'constellation',
+    note: 'Every hit a star — a sky that grows over the track, mirrored.',
+    preset: {
+      mode: 'synapse',
+      values: {
+        theme: 0,
+        themeMix: 0.85,
+        'fx-bloom': 1,
+        'fx-kaleido': 1,
+        kaleidoSegments: 6,
+        bloomIntensity: 0.9,
+        synMemory: 256,
+        synGlow: 1.2,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

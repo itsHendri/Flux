@@ -50,6 +50,12 @@ export interface CustomMode {
    * details via the context's buildModeProgram or throw.
    */
   init(ctx: CustomModeContext): boolean;
+  /**
+   * Called when the switcher moves to this mode from a different one (not on
+   * re-selecting it). Optional; for modes whose state should start fresh on
+   * entry and must not be reset by anything else, such as a frame hitch.
+   */
+  enter?(): void;
   /** Draw one frame into the bound scene FBO (see contract above). */
   draw(state: FrameState, w: number, h: number): void;
   dispose(): void;

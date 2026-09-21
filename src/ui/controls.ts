@@ -416,6 +416,53 @@ export const CONTROLS: ControlDef[] = [
     modes: ['forge'],
   },
   {
+    // How readily a hit becomes a star. Low: only clear accents grow the
+    // sky; high: every ghost note does.
+    id: 'synSense',
+    name: 'Sensitivity',
+    glslName: 'uSynSense',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.55,
+    modes: ['synapse'],
+  },
+  {
+    // How many stars the sky holds before the oldest start to fade — the
+    // length of the memory, roughly one, two or four minutes of a busy track.
+    id: 'synMemory',
+    name: 'Memory',
+    glslName: 'uSynMemory',
+    type: 'select',
+    options: [
+      { label: 'Short', value: 64 },
+      { label: 'Medium', value: 128 },
+      { label: 'Long', value: 256 },
+    ],
+    default: 128,
+    modes: ['synapse'],
+  },
+  {
+    id: 'synSpread',
+    name: 'Spread',
+    glslName: 'uSynSpread',
+    min: 0.5,
+    max: 1.6,
+    step: 0.01,
+    default: 1,
+    modes: ['synapse'],
+  },
+  {
+    id: 'synGlow',
+    name: 'Glow',
+    glslName: 'uSynGlow',
+    min: 0.3,
+    max: 2.5,
+    step: 0.01,
+    default: 1,
+    modes: ['synapse'],
+  },
+  {
     // X/Y is the oscilloscope (L across, R up: mono is a diagonal, and
     // oscilloscope music draws its pictures); mid/side is the goniometer
     // engineers read (mono stands upright, width spreads sideways).

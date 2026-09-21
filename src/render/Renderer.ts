@@ -471,6 +471,9 @@ export class Renderer {
   setMode(name: string): void {
     const custom = this.customModes.get(name);
     if (custom) {
+      // Only a real switch counts as entering: re-selecting the showing mode
+      // (a shader hot-reload, a look on the same mode) must not restart it.
+      if (custom !== this.currentCustom) custom.enter?.();
       this.currentCustom = custom;
       this.current = null;
       return;

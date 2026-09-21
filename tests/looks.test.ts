@@ -12,6 +12,7 @@ import { VectorMode } from '../src/modes2d/VectorMode.ts';
 import { MagnetoMode } from '../src/modes3d/MagnetoMode.ts';
 import { Trails3DMode } from '../src/modes3d/Trails3DMode.ts';
 import { ForgeMode } from '../src/modes3d/ForgeMode.ts';
+import { SynapseMode } from '../src/modes3d/SynapseMode.ts';
 import { resolvePreset } from '../src/presets/presets.ts';
 
 const PASS_NAMES = PASSES.map((p) => p.name);
@@ -28,6 +29,7 @@ const CUSTOM_MODES = [
   new MagnetoMode(),
   new Trails3DMode(),
   new ForgeMode(),
+  new SynapseMode(),
 ];
 const MODE_NAMES = [...MODES.map((m) => m.name), ...CUSTOM_MODES.map((m) => m.name)];
 
