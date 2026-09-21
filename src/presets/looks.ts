@@ -417,6 +417,21 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'droste',
+    note: 'Your image inside itself forever, spiralling in with the music — upload one in Logo.',
+    preset: {
+      mode: 'limitless',
+      values: {
+        theme: 3,
+        themeMix: 0.6,
+        'fx-bloom': 1,
+        bloomIntensity: 0.4,
+        limitArms: 1,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

@@ -5,6 +5,42 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — limitless: your image, inside itself forever
+
+The Droste effect on the uploaded image (the `logo` texture). In log-polar
+space, log z = (log r, θ), scaling is a shift along one axis and rotation a
+shift along the other. So a picture that contains itself scaled by S is just
+a picture that repeats every P = log S, and tiling the image into that strip
+puts a whole copy in every annulus from 1/S to 1, nested without end.
+
+The spiral is Escher's (*Print Gallery*; de Smit & Lenstra's analysis of it):
+multiply log z by β = 1 − i·n·P/2π before tiling, so going once round the
+screen also goes down *n* levels. Only whole *n* keeps the spiral seamless
+(any other twist tears where the tiles meet), which is why **Arms** is a
+choice (Rings, Spiral, Double, Reverse) and not a slider.
+
+The fall inward runs on **`uDrive`**, so the zoom surges with the track; the
+mids turn it. Until an image is uploaded, a generated stand-in is nested
+instead: a frame with the spectrum as a ring of bars inside it, so even with
+no image the recursion is visibly the music.
+
+Three fixes in the preview: the background glow was keyed on the tiled radius
+and showed a seam at every level (now keyed on the untiled one); the image
+was *contained*, leaving dark crescents where each circular level ran past a
+wide image's edges (now it *covers*); and Scale could zoom out past the
+picture (now it only crops inward).
+
+Controls: Arms, Nesting (S from 2 to 6), Zoom, and Scale as the crop. New
+look: **droste**.
+
+Verified in the preview: the stand-in spirals into itself with no seam in the
+spiral, and an uploaded 4:3 test image nests seamlessly and falls inward.
+Each level meets the next at a circle, which is the Droste seam any image
+that doesn't already contain itself will show. Build clean, 149/149 tests,
+overlay empty.
+
+---
+
 ## Phase 7 — spacetime: neon rays rushing past
 
 Hyperspace in polar coordinates, as a scene of its own (unlike the `tunnel`

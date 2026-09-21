@@ -452,7 +452,7 @@ commit unless noted.
   streaks with depth and parallax, speed from bass, hue from band. Unlike the
   `tunnel` effect (which bends whatever mode is showing) this is a scene of
   its own. *Done:* reads as rushing forward; kicks surge; ≥3 controls.
-- [ ] **limitless** — "your image warped by the music". The uploaded image
+- [x] **limitless** — "your image warped by the music". The uploaded image
   (the `logo` texture) as a Droste spiral: log-polar tiling so it contains
   itself forever, zoom speed from bass, twist from the mids; a generated
   pattern stands in until an image is uploaded. *Done:* an uploaded image

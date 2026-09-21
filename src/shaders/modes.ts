@@ -14,6 +14,7 @@ import fur from './modes/fur.frag?raw';
 import grove from './modes/grove.frag?raw';
 import oracle from './modes/oracle.frag?raw';
 import spacetime from './modes/spacetime.frag?raw';
+import limitless from './modes/limitless.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -31,6 +32,7 @@ export const MODES: ShaderMode[] = [
   { name: 'grove', fragSource: grove },
   { name: 'oracle', fragSource: oracle },
   { name: 'spacetime', fragSource: spacetime },
+  { name: 'limitless', fragSource: limitless },
   { name: 'logo', fragSource: logo },
 ];
 

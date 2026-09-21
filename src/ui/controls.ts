@@ -20,6 +20,7 @@ const SCALE_MODES = [
   'forge',
   'anemone',
   'wisp',
+  'limitless',
 ];
 
 /**
@@ -352,6 +353,41 @@ export const CONTROLS: ControlDef[] = [
     ],
     default: 0,
     modes: ['spectro'],
+  },
+  {
+    // Only whole numbers of arms tile without a seam (see limitless.frag).
+    id: 'limitArms',
+    name: 'Arms',
+    glslName: 'uLimitArms',
+    type: 'select',
+    options: [
+      { label: 'Rings', value: 0 },
+      { label: 'Spiral', value: 1 },
+      { label: 'Double', value: 2 },
+      { label: 'Reverse', value: -1 },
+    ],
+    default: 1,
+    modes: ['limitless'],
+  },
+  {
+    id: 'limitRatio',
+    name: 'Nesting',
+    glslName: 'uLimitRatio',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.35,
+    modes: ['limitless'],
+  },
+  {
+    id: 'limitZoom',
+    name: 'Zoom',
+    glslName: 'uLimitZoom',
+    min: 0,
+    max: 3,
+    step: 0.01,
+    default: 1,
+    modes: ['limitless'],
   },
   {
     id: 'spaceSpeed',
