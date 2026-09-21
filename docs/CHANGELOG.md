@@ -5,6 +5,49 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## SESSION HANDOFF — 2026-09-21
+
+One long run, 2026-09-16 → 09-18, closing Phases 3, 5 and 6. All the work
+below is committed and deployed; `ROADMAP.md` → *Where things stand* has the full
+inventory and the user's taste, and *Phase 7* is the queue for the next run.
+
+**What landed**, in the order it was built:
+
+- **Phase 3 — performance UI.** File playback (drop a track, Space, scrubber),
+  five global themes on `1`–`5`, and the floating performance bar.
+- **Phase 5 — the iTunes/MilkDrop lineage.** The `uAudio` texture (real
+  spectrum + triggered waveform, Shadertoy layout) — the foundation for most of
+  what followed; honest `bars`; MilkDrop `warp` feedback; `waveform` (replacing
+  `pulse`); `reaction` (replacing `plasma`); `magneto`; the built-in looks.
+- **Phase 6 — feedback rounds and the photism modes.** Panel trimmed to not
+  duplicate the bar (mode picker added to the bar); reaction gets Detail,
+  Pattern and Symmetry; raymarch gets iridescence and motion; `tunnel` added,
+  `quantize`/`chroma`/`echo`/`shock` removed as colour-only or unloved;
+  Theme/Tonemap off the panel; magneto gets nebula, rays and cores; then seven
+  new modes from the photism.app sweep — `mandala`, `sand`, `fluid`, `bulb`,
+  `spectro`, `lattice`, `chrome`, `fur` — each with a look.
+
+**The instrument now:** 17 modes, 7 effects, 5 themes, 12 looks, 96 tests,
+~63 kB gzipped, zero runtime dependencies.
+
+**Waiting on the user** (can't be closed by an agent): the Traktor S2 MIDI
+check, and a live pass in Chrome with real music — `sand` on real chord
+changes, `comet`'s brightness, `magneto`'s Charge ceiling, and the fractal and
+Ultra-simulation frame rates on anything other than the dev machine.
+
+**Lessons worth carrying** (also in `AGENT_LOOP.md` → *Verify*): a failed
+shader compile keeps the last good program, so check the error overlay after
+every shader edit — `centroid` being reserved in GLSL ES cost three edits that
+appeared to do nothing; the preview pane can't show accumulation or frame
+rate; and synthetic test signals are only useful if you predict the answer
+first.
+
+**Environment note:** mid-session an Xcode update left its licence unaccepted,
+which blocks `git`, `python3` and `grep` (all Xcode shims). The fix is
+`sudo xcodebuild -license accept`, which needs the user.
+
+---
+
 ## Phase 6 — lattice, chrome and fur: the rest of the photism list
 
 The last three directions from that sweep, built together.

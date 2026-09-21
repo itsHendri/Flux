@@ -78,8 +78,9 @@ export class AudioEngine {
 
     this.source = source;
     source.node.connect(this.analyser);
-    // A monitored source would also go to the speakers; the live mic (the only
-    // source today) does not, to avoid acoustic feedback.
+    // A monitored source also goes to the speakers. A dropped file must be (once
+    // its element is captured, the graph is its only route out); the live mic
+    // must not be, or it would feed back through the room.
     if (source.monitor) this.analyser.connect(this.ctx.destination);
 
     this.envBass.reset();

@@ -1,13 +1,51 @@
 # FLUX Roadmap
 
 The single source of truth for what's built and what's next. The autonomous
-loop (see `AGENT_LOOP.md`) reads this file, takes the **first unchecked task**,
-completes it, ticks it, and rolls straight on to the next — building
-continuously through Phase 1, with one atomic commit per task, then stopping at
-the Phase 1 → backlog boundary for review.
+loop (see `AGENT_LOOP.md`) reads this file, takes the **first unchecked task in
+the lowest-numbered open phase** (skipping tasks marked **(user)**), completes
+it, ticks it, and rolls on to the next — one atomic commit per task — until
+the phase is done or a stop condition hits.
 
 Task format: `- [ ]` unchecked / `- [x]` done. Each task has a **Done:**
-criterion — the machine-checkable condition that means it's finished.
+criterion — the condition that means it's finished. **(user)** marks a task
+only the user can complete (hardware, ears, taste); the loop records it and
+moves past it rather than stopping on it.
+
+---
+
+## Where things stand (handoff, 2026-09-21)
+
+**Live:** https://itshendri.github.io/Flux/ — deploys on every push to `main`
+(tests gate the deploy; see `DEPLOY.md`). Last deployed commit is whatever is
+at `origin/main`.
+
+**The instrument today:** 17 modes, 7 effects, 5 themes, 12 built-in looks.
+Vanilla TypeScript + raw WebGL2, zero runtime dependencies, ~63 kB gzipped.
+96 unit tests across 16 files.
+
+| Group | Modes |
+| --- | --- |
+| Reading the signal | `bars` (log spectrum), `waveform` (line / mirror / radial), `spectro` (spectrogram — the only mode with a memory) |
+| Fields | `flow`, `cells`, `mandala` (kaliset through a kaleidoscope), `sand` (Chladni plate), `fur`, `logo` |
+| Simulations (CustomMode) | `reaction` (Gray-Scott), `fluid` (stable fluids) |
+| Raymarched | `raymarch` (iridescent metaballs), `chrome` (reflective metal), `bulb` (Mandelbulb), `lattice` (Mandelbox) |
+| Particles (CustomMode) | `magneto` (charged swarm + nebula, rays, cores), `trails3d` (curl-noise) |
+
+Effects: `warp` (MilkDrop feedback), `trails`, `tunnel`, `dither`, `bloom`,
+`kaleido`, `scanline`. Looks: cathedral, coral, scope, supernova, ink,
+shrine, readout, vault, molten, coat, tape, comet.
+
+**The user's stated taste** (from the feedback rounds — worth knowing before
+proposing anything): kaleidoscope is the favourite effect; magneto, trails3d
+and reaction are the favourite modes; effects that only change *colour* rather
+than the *picture* don't earn their place (quantize, chroma, echo and shock
+were all removed for that reason); the performance bar is the primary surface
+and the dock panel should not duplicate it.
+
+**To start a new run:** read this section, then `Waiting on the user` and
+`Phase 7` below, then `CHANGELOG.md`'s newest entry. Verification recipe
+(synthetic audio, the preview-pane quirks, the shader-error trap) is in
+`AGENT_LOOP.md` → *Verify*.
 
 ---
 
@@ -24,7 +62,7 @@ criterion — the machine-checkable condition that means it's finished.
 
 ---
 
-## Phase 1 — Shader & sound-visualization core (current focus)
+## Phase 1 — Shader & sound-visualization core — complete
 
 The aesthetics of how sound is visualized are the priority. Push this furthest.
 Every task here is **research-first**: study trending and open-source/reference
@@ -85,7 +123,7 @@ sources in the commit + CHANGELOG, then implement.
 
 ---
 
-## Phase 2+ — Backlog (after Phase 1)
+## Phase 2 — Backlog after Phase 1 — complete except the (user) MIDI check
 
 Refined and prioritized at the Phase 1 review (see
 [`PHASE-1-REVIEW.md`](PHASE-1-REVIEW.md)). Grouped into a recommended order;
@@ -140,7 +178,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   bound), bindings persisted to localStorage, MIDI section in the panel.
   *Done:* a simulated CC message drives a control (slider moves, uniform
   updates); graceful no-support/no-device paths; build + tests clean.
-- [ ] **Web MIDI — hardware verification (needs the user's Traktor S2).**
+- [ ] **(user) Web MIDI — hardware verification (needs the user's Traktor S2).**
   Plug in the controller, learn a knob, confirm it drives a control live and
   the binding survives a reload. *Done:* verified by the user on hardware;
   any fixes committed.
@@ -164,7 +202,7 @@ later groups can be reordered freely. Each task keeps a **Done:** criterion.
   explicit user approval (org tooling policy). *Done:* `dist/` serves standalone;
   hosting options documented; no third-party push without approval.
 
-## Phase 3 — Performance UI & theming (from the user's waveform-visualizer design)
+## Phase 3 — Performance UI & theming (from the user's waveform-visualizer design) — complete
 
 Design reference: the user's earlier vanilla-JS/WebGL visualizer at
 `waveform-visualizer-framer.vercel.app` (no Framer/React despite the name —
@@ -194,7 +232,7 @@ theme palettes. Adapted for FLUX, in build order:
   the visual, auto-hides on idle, and every control on it works; build +
   Preview clean.
 
-## Phase 4 — True 3D mode (the user's priority visual)
+## Phase 4 — True 3D mode (the user's priority visual) — complete
 
 The one visual FLUX hasn't gotten right yet (user: "this was always my
 intention"). Target look: flowing 3D structure in the spirit of
@@ -231,7 +269,7 @@ will composite a 3D mode for free.
   bloom/trails, ≥3 meaningful controls, resolution-independent perf story
   (count control), build + Preview clean.
 
-## Phase 5 — The iTunes/MilkDrop lineage (research: REFERENCES.md, 2026-09-16)
+## Phase 5 — The iTunes/MilkDrop lineage (research: REFERENCES.md, 2026-09-16) — complete
 
 From the user's steer: study iTunes' visualizers and their open-source
 clones, and act on his read of the current modes — `pulse` isn't a favourite,
@@ -296,7 +334,7 @@ natively. Ordered by leverage: the first task unblocks most of the rest.
 
 ---
 
-## Phase 6 — First feedback round on the performance build (2026-09-16)
+## Phase 6 — Feedback rounds and the photism modes (2026-09-16 → 09-18) — complete
 
 The user's notes after using the deployed build: the bar is right, so the dock
 panel's copies of it can go; reaction wants finer lines; raymarch wants more
@@ -331,28 +369,98 @@ visual". Research round two (REFERENCES.md) looked for structural effects.
 
 ---
 
-### Known tech debt / limitations (from the Phase 1 audit)
+## Waiting on the user
 
-- **Parallel toggle mechanisms** — pass on/off (ad-hoc buttons,
-  `src/main.ts:108`) vs. the typed `'toggle'` control; pass state isn't
-  serializable. Resolved by task **2c**.
-- **RGBA8 FBOs** (`src/render/Framebuffer.ts:24`) clamp bloom/trails at 1.0.
-  Resolved by task **2a**.
-- **Bloom radius is resolution-dependent** (fixed-res Gaussian). Resolved by **2a**.
-- **Bayer dither** shows structured lines in static frames. Mitigated by **2a**
-  dither options.
-- **Minor:** stale "file, test tone" monitoring comment at
-  `src/audio/AudioEngine.ts:63` (sources are mic-only now).
-- **Perf:** no low-end fallback — a per-mode quality/step control (e.g. raymarch
-  step count) would help weak GPUs.
+Things only the user can close. They stay open until he reports back.
+
+- **Web MIDI on hardware** — the Traktor S2 check, tracked as the open
+  **(user)** task in Phase 2d: learn a knob, confirm it drives a control live
+  and survives a reload.
+- [ ] **(user) Live taste pass in Chrome with real music.** The embedded
+  preview pane only renders frames while it captures, so feedback, trails and
+  bloom never accumulate there and sustained frame rate can't be judged. Worth
+  the user's eye in particular:
+  - **sand** — does the figure redraw at chord changes on real tracks, and
+    hold still in between? It was only tested with synthetic tone steps; the
+    centroid mapping (`(balance - 0.18) / 0.5`) may need widening.
+  - **comet / trails3d** — dim in the pane; should be brighter live.
+  - **magneto** — where Charge stops being a swarm and becomes a starfield.
+  - **bulb, lattice, fluid Ultra, reaction Ultra** — 120 fps on the dev
+    machine (Apple silicon) only; unknown on weaker GPUs.
+
+---
+
+## Phase 7 — Next up (candidates, 2026-09-21)
+
+Not yet prioritised by the user — at the start of the next run, confirm which
+of these he wants and in what order before building. Each is sized to one
+commit unless noted.
+
+- [ ] **Stereo analysis + goniometer mode.** The one photism direction FLUX
+  can't do yet: the analyser is mono. Split the source into L/R
+  (`ChannelSplitterNode` → two analysers), add a stereo waveform to the audio
+  texture (a third row, or a second texture), and a `scope` mode plotting L
+  against R (the goniometer / vectorscope). Engine change, likely two commits
+  (engine, then mode). *Done:* a hard-panned tone draws a vertical/horizontal
+  line, a mono signal a diagonal, a wide stereo pad a cloud; mono sources still
+  work; tests cover the channel packing.
+- [ ] **Performance governor.** Most heavy modes now have a Quality/Detail
+  control, but nothing lowers it when a machine struggles. Watch frame time and
+  step the active mode's quality down (and back up) with hysteresis. *Done:*
+  forcing a low frame budget steps quality down within ~2 s and back up when
+  headroom returns; no oscillation; the user can pin quality to opt out.
+- [ ] **Group the mode picker.** 17 modes in a flat 3-column grid is getting
+  long. Group it by the table above (signal / fields / simulations / raymarched
+  / particles). *Done:* picker shows labelled groups, keyboard/click selection
+  unchanged, cycler order matches.
+- [ ] **forge** — "a chrome swarm that builds a shape and breaks it apart"
+  (photism). Magneto's particle rig with chrome's reflective shading and a
+  target-shape attractor that kicks shatter. *Done:* the swarm assembles into a
+  recognisable shape and a kick scatters it; ≥3 controls; ≥60 fps at default.
+- [ ] **synapse** — "every hit adds a node to a growing constellation"
+  (photism). The first mode that *accumulates* structure over a track. *Done:*
+  nodes appear on onsets and connect; the constellation grows over a minute and
+  resets cleanly on mode re-entry.
+- [ ] **Remaining photism directions**, unscoped: anemone (chains of rings
+  from one point), spacetime (neon rays rushing past — close to `tunnel`),
+  gate (falling through a corridor of gates), grove (fractal forest), wisp
+  (dust world with one bright wanderer), oracle (edge-lit dark chamber),
+  limitless (your image warped by the music — `logo` is the seed). See
+  REFERENCES.md.
+
+---
+
+## Known limitations
+
+- **Mono analysis only.** One `AnalyserNode` on a mixed-down signal; nothing
+  stereo is available to shaders (see Phase 7).
+- **Heavy modes are only measured on one machine.** Raymarched fractals and
+  the Ultra settings of the simulations held 120 fps on Apple silicon; there's
+  no data for integrated or older GPUs, and no automatic fallback yet.
+- **The preview pane can't judge accumulation or frame rate** (see *Waiting on
+  the user*). Verify those in real Chrome.
+- **A failed shader compile is quiet.** FLUX keeps the last good program, so
+  the mode keeps rendering the *previous* shader; only the on-screen error
+  overlay says so. Always check it after a shader edit (`AGENT_LOOP.md`).
+- **Editing a `.frag` owned by a CustomMode reloads the page** (Vite HMR can't
+  hot-swap it the way it swaps `modes.ts` fragments), which drops a loaded
+  audio file. Re-drop the file after such edits when verifying.
+
+Resolved from the Phase 1 audit: parallel toggle mechanisms (2c), RGBA8
+clamping and resolution-dependent bloom (2a), Bayer banding (2a dither
+options), the stale mic-only comment in `AudioEngine.ts`, and the missing
+per-mode quality controls (bulb, lattice, fluid, reaction now have them).
 
 ---
 
 ## Notes for the loop
 
-- Build continuously through Phase 1, one atomic commit per task. **Stop at the
-  end of Phase 1** (don't start the backlog) and flag for review.
-- If a task needs a human product decision, **stop and record the question in
-  `CHANGELOG.md`** rather than guessing.
+- Work the lowest-numbered open phase first, one atomic commit per task, and
+  stop at the end of that phase with a review note in `CHANGELOG.md`.
+- Skip **(user)** tasks — don't stop on them; they're recorded for the user.
+- If a task needs a human product decision (removing or replacing something
+  the user has, or a direction he hasn't chosen), **stop and record the
+  question under `NEEDS DECISION` in `CHANGELOG.md`** rather than guessing.
 - Keep tasks small enough to finish as one commit. If a task is too big, split
   it into 2–3 smaller `- [ ]` tasks and commit that planning change first.
+- **Never push** unless the user asks — pushing to `main` deploys the live site.

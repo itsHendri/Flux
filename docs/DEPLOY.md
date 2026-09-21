@@ -2,7 +2,7 @@
 
 FLUX builds to a fully static bundle — no backend, no runtime dependencies.
 `npm run build` emits `dist/` (one HTML file, one JS bundle, one CSS file, one
-blue-noise PNG; ~80 kB gzipped total), verified to serve standalone from any
+blue-noise PNG; ~66 kB gzipped JS+CSS as of 2026-09-21), verified to serve standalone from any
 plain static file server.
 
 ## Requirements

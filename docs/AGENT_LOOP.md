@@ -16,9 +16,10 @@ safe. Every task is its own atomic, reversible checkpoint in `git log`, narrated
 in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
 
 ### Stop conditions (end the run when any is true)
-1. **End of Phase 1.** When the last Phase 1 task in `ROADMAP.md` is ticked,
-   STOP. Do not start the Phase 2+ backlog. Add a `## PHASE 1 COMPLETE — review`
-   note to `CHANGELOG.md` summarising what landed, and finish.
+1. **End of the current phase.** When the last non-**(user)** task in the
+   phase you're working is ticked, STOP. Don't start the next phase. Add a
+   `## PHASE N COMPLETE — review` note to `CHANGELOG.md` summarising what landed
+   and what's waiting on the user, and finish.
 2. **Blocked on a human decision.** A task needs a genuine product call (not an
    aesthetic judgment you can research). Record it under `## NEEDS DECISION` in
    `CHANGELOG.md`, commit only that, and stop.
@@ -34,7 +35,10 @@ in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
 ## Per-task procedure
 
 ### 1. Pick the task
-- Read `docs/ROADMAP.md`. Take the **first unchecked `- [ ]` task** in Phase 1.
+- Read `docs/ROADMAP.md` — start with *Where things stand*, which summarises the
+  instrument and the user's taste. Take the **first unchecked `- [ ]` task in
+  the lowest-numbered open phase**, skipping tasks marked **(user)**. Phase 7's
+  tasks are *candidates*: confirm the user wants them before building.
 - Confirm the working tree is clean (`git status`). If not, a prior task is
   half-done — inspect, finish or revert it before starting new work.
 - Check the stop conditions above before beginning.
@@ -61,14 +65,33 @@ in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
 - Keep the diff focused on the one task.
 
 ### 4. Verify (all gates must pass before committing)
-- `npm run build` exits 0 (type-check + bundle).
-- `npm test` passes (if tests exist).
-- **Visual gate** via the Preview MCP:
-  - `preview_start` the dev server.
-  - `preview_screenshot` — save it; reference it in the CHANGELOG entry.
-  - `preview_console_logs` at level `error` — must be empty.
-  - Assert the error overlay is empty:
-    `preview_eval` → `document.getElementById('errors')?.childElementCount === 0`.
+- `npm run build` exits 0 (type-check + bundle) and `npm test` passes.
+- **Visual gate**, in the in-app browser:
+  - Start the dev server. `.claude/launch.json` defines `flux` on :5173, but if
+    the session didn't *start* in this repo the preview tool may launch a
+    different project's server — then run `npm run dev -- --port 5180
+    --strictPort` in the background and `navigate` a tab to it.
+  - **Check the error overlay after every shader edit:**
+    `document.getElementById('errors').textContent` must be empty. A failed
+    compile doesn't break the page — FLUX keeps the last good program — so a
+    broken shader looks like an edit that "did nothing". GLSL ES reserves some
+    tempting names: `centroid`, `sample`, `filter`, `active`, `common`,
+    `partition`, `input`, `output`.
+  - **Fake the audio in-page.** Build a WAV as an `ArrayBuffer` in
+    `javascript_tool`, wrap it in a `File`, and dispatch a `DragEvent('drop')`
+    on `window` — the file source loads and drives the analyser for real. Use
+    signals whose answer you can predict (a tone at `sampleRate/8` lands at
+    x=0.25 on the spectrum; a 30 Hz→15 kHz sweep walks the bars; chord steps
+    move `sand`), and assert against the prediction, not just "it moved".
+  - Screenshot it. Remember the pane only renders frames while capturing:
+    feedback, trails and bloom won't accumulate and FPS can't be judged there.
+    Say so in the changelog rather than claiming a result the pane can't show.
+  - For numbers, read the canvas: inside a `requestAnimationFrame` callback
+    (which runs after the app's, before compositing) `gl.readPixels` sees the
+    finished frame. A temporary probe shader writing a value into a colour is
+    fine — **revert it before committing** and say it was reverted.
+  - Measure FPS with a rAF counter only when the pane is visible; with the pane
+    hidden rAF doesn't fire and the probe never returns.
 - If a gate fails: fix it, or if unfixable, trigger stop condition 3.
 
 ### 5. Commit
@@ -82,7 +105,8 @@ in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
 
   Changelog: Add toggleable Bayer dither post-effect
   ```
-- **Never push.** Local commits only.
+- **Never push** unless the user asks. Pushing to `main` deploys the live site
+  (GitHub Pages, gated on tests — see `DEPLOY.md`).
 
 ### 6. Log + tick
 - Prepend a plain-English entry to `docs/CHANGELOG.md`: what changed, why,
@@ -103,6 +127,6 @@ continue with the first sub-task.
 - Commit per task; never push; never commit a failing build.
 - Research before any aesthetic decision; cite sources.
 - Keep failures visible; keep diffs focused.
-- Stop at the end of Phase 1, when blocked on a human decision, on an unfixable
+- Stop at the end of the current phase, when blocked on a human decision, on an unfixable
   failure, or when context grows heavy. State is always recoverable from git +
   `ROADMAP.md`.
