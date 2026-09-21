@@ -21,9 +21,10 @@ at `origin/main`. **The Phase 7 run is committed locally and not pushed** —
 pushing deploys it.
 
 **The instrument today:** 27 modes, 7 effects, 5 themes, 22 built-in looks,
-crossfades and phrase-timed auto looks.
+crossfades, phrase-timed auto looks, and a beat tracker that locks six modes
+and the kaleido effect to the bar.
 Vanilla TypeScript + raw WebGL2, zero runtime dependencies, ~91 kB gzipped.
-170 unit tests across 24 files. Stereo analysis, a performance governor, and
+186 unit tests across 28 files. Stereo analysis, a performance governor, and
 a music-paced clock (`uDrive`) for shaders.
 
 | Group (as the picker shows it) | Modes |
@@ -48,8 +49,8 @@ were all removed for that reason); the performance bar is the primary surface
 and the dock panel should not duplicate it.
 
 **To start a new run:** read this section, then `Waiting on the user`
-below, then `CHANGELOG.md`'s newest entry (the Phase 8 review note). Phase 8's
-open task is the user's live-pass notes; build those when they arrive. Verification recipe
+below, then `CHANGELOG.md`'s newest entry (the Phase 9 review note). The open
+task is Phase 8's: the user's live-pass notes; build those when they arrive. Verification recipe
 (synthetic audio, the preview-pane quirks, the shader-error trap) is in
 `AGENT_LOOP.md` → *Verify*.
 
@@ -407,6 +408,11 @@ Things only the user can close. They stay open until he reports back.
     (`gate` has its own speed; the others run on `uDrive`.)
   - **grove** — the blossom lights draw dotted arcs along the canopies; keep,
     soften, or drop?
+  - **The beat lock (Phase 9)** — does the light on the bar lock within a few
+    bars on real tracks, and hold through fills? Do gate's gates land on the
+    beat, forge shatter on the one, kaleido turn on the bar? Watch for a lock
+    that sits a hair late (it locks to the *detected* kick, which trails the
+    real one by a frame or so) — if so it wants a latency offset.
   - **The governor** — on your machine it should do nothing. If a mode ever
     looks softer than it should, check the Output section's toggle (and tell
     me which mode — it shouldn't be stepping on Apple silicon).
@@ -514,7 +520,7 @@ crossfades instead of hard cuts.
 
 
 
-## Phase 9 — Tempo-locked motion (2026-09-21)
+## Phase 9 — Tempo-locked motion (2026-09-21) — complete
 
 Chosen by the user on 2026-09-21. Every mode so far *reacts*: something
 happens after a kick is detected. With the tempo known, motion can be

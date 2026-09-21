@@ -15,9 +15,9 @@ vec3 render(vec2 uv) {
   float segs = max(1.0, floor(uKaleidoSegments + 0.5));
   float seg = TAU / segs;
   // Locked to the beat, the rosette turns half a wedge on each bar, easing
-  // into the downbeat. uDownbeats only counts while locked, so without a lock
-  // it simply holds where it was.
-  a += (uDownbeats + uLock * smoothstep(0.75, 1.0, uBarPhase)) * seg * 0.5;
+  // into the downbeat. uBarTurn only advances while locked and never jumps,
+  // so without a lock it simply holds where it was.
+  a += uBarTurn * seg * 0.5;
   a = mod(a, seg);
   a = abs(a - seg * 0.5);
 

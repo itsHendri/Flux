@@ -107,3 +107,28 @@ describe('BeatTracker — counting', () => {
     expect(t2.lockedBeats).toBe(0);
   });
 });
+
+describe('BeatTracker — robustness', () => {
+  it('forgets the old track on reset, keeping its counts climbing', () => {
+    const tr = new BeatTracker();
+    run(tr, 12, kicksAt(120, 0.3, 12));
+    expect(tr.locked).toBe(true);
+    const bars = tr.lockedBars;
+    tr.reset();
+    expect(tr.locked).toBe(false);
+    expect(tr.lockedBars).toBe(bars);
+  });
+
+  it('the bar turn never jumps, even when the lock is lost mid-ease', () => {
+    const tr = new BeatTracker();
+    const kicks = kicksAt(120, 0.3, 12);
+    let last = 0;
+    let maxStep = 0;
+    for (let i = 0; i < 30 * FPS; i++) {
+      tr.update(i === 0 ? 0 : DT, pulse(i * DT, kicks));
+      maxStep = Math.max(maxStep, Math.abs(tr.barTurn - last));
+      last = tr.barTurn;
+    }
+    expect(maxStep).toBeLessThan(0.15);
+  });
+});

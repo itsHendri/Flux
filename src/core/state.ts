@@ -37,6 +37,8 @@ export interface AudioFrame {
    */
   beatCount: number;
   barCount: number;
+  /** barCount eased into each downbeat and smoothed: never jumps. */
+  barTurn: number;
 }
 
 export const SILENT_FRAME: AudioFrame = {
@@ -54,6 +56,7 @@ export const SILENT_FRAME: AudioFrame = {
   lock: 0,
   beatCount: 0,
   barCount: 0,
+  barTurn: 0,
 };
 
 /**

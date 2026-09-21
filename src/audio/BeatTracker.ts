@@ -25,7 +25,7 @@ const ON_TIME = 0.15;
 
 export class BeatTracker {
   private readonly kicks = new HitGate(0.2);
-  private readonly tempo = new TempoEstimator();
+  private tempo = new TempoEstimator();
   private time = 0;
   /** Beats since the first kick; fractional part = phase through the beat. */
   private beats = 0;
@@ -35,16 +35,42 @@ export class BeatTracker {
   private topBeat = 0;
   private lockedBeatCount = 0;
   private lockedBarCount = 0;
+  /** The bar turn for shaders: see `barTurn`. */
+  private turn = 0;
 
-  /** Advance by `dt` seconds with this frame's kick pulse. */
+  /**
+   * A new source: forget the beat, the tempo and the lock — a new track has
+   * its own grid, and holding the old one would fire downbeats off it. The
+   * locked counts keep climbing (modes compare them frame to frame; going
+   * back to 0 would read as an event).
+   */
+  reset(): void {
+    this.tempo = new TempoEstimator();
+    this.kicks.reset();
+    this.started = false;
+    this.beats = 0;
+    this.topBeat = 0;
+    this.onTime = 0;
+  }
+
+  /**
+   * Advance by `dt` seconds (real time — a predictor that loses time drifts
+   * off the beat) with this frame's kick pulse.
+   */
   update(dt: number, beat: number): void {
     this.time += dt;
     if (this.started) this.beats += dt / this.tempo.period;
     if (this.kicks.update(beat, this.time, 0.5)) {
+      // After four bars of no kicks the grid is gone: the next kick heard is
+      // a fresh start (the first thing after a breakdown is usually the one).
+      if (this.started && this.tempo.since(this.time) > 16 * this.tempo.period) {
+        this.started = false;
+      }
       this.tempo.kick(this.time);
       if (!this.started) {
         this.started = true;
         this.beats = 0;
+        this.topBeat = 0;
       } else {
         // How far this kick is from the nearest predicted beat, in beats.
         const err = Math.round(this.beats) - this.beats;
@@ -65,6 +91,20 @@ export class BeatTracker {
         if (this.topBeat % 4 === 0) this.lockedBarCount++;
       }
     }
+    // The bar turn: the locked downbeat count plus an ease into the next
+    // downbeat, smoothed, so it never jumps — not when the lock arrives
+    // late in a bar, not when it leaves mid-ease.
+    const ease = this.locked ? smoothstep(0.75, 1, this.barPhase) : 0;
+    const target = this.lockedBarCount + ease;
+    this.turn += (target - this.turn) * (1 - Math.exp(-dt / 0.12));
+  }
+
+  /**
+   * Downbeats passed while locked, as a smooth, never-jumping value that eases
+   * into each downbeat — for anything that turns a step per bar.
+   */
+  get barTurn(): number {
+    return this.turn;
   }
 
   /**
@@ -99,4 +139,9 @@ export class BeatTracker {
     return b - Math.floor(b);
   }
 
+}
+
+function smoothstep(a: number, b: number, x: number): number {
+  const t = Math.max(0, Math.min(1, (x - a) / (b - a)));
+  return t * t * (3 - 2 * t);
 }

@@ -94,6 +94,8 @@ export class SynapseMode implements CustomMode {
     // frame (a GC pause, a file decoding) mustn't wipe it.
     if (this.entered) {
       this.entered = false;
+      // Downbeats that passed while away aren't events.
+      this.lastBar = state.audio.barCount;
       this.graph.reset(t);
       this.hits.reset();
       this.fires.reset();

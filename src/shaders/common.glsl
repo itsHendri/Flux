@@ -106,8 +106,10 @@ vec2 stereoAt(int i) {
 // --- Tempo -----------------------------------------------------------------
 // The beat tracker's prediction (uBeatPhase / uBarPhase, 0 on the beat). Unlike
 // uBeat, which fires after a kick is heard, these land *on* the beat and keep
-// time through a fill. Both are 0 when not locked (uLock = 0), so a mode that
-// uses them should keep its reactive behaviour as the fallback.
+// time through a fill. The phases run whether or not the tracker is locked —
+// unlocked, they're a guess — so use them through the pulses below, which are
+// 0 when uLock is 0, or weigh them by uLock yourself, and keep the mode's
+// reactive behaviour as the fallback.
 
 // 1 on each beat, decaying through it; `sharp` sets how fast (8 is punchy).
 float beatPulse(float sharp) {

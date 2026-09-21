@@ -79,6 +79,8 @@ export class MagnetoMode implements CustomMode {
   private poleCharge = [1, -1, 1, -1];
   private beatArmed = true;
   private lastBar = 0;
+  /** Set on entry: re-read the bar count without treating it as a downbeat. */
+  private resync = true;
   private readonly poleData = new Float32Array(POLE_COUNT * 4);
 
   init(ctx: CustomModeContext): boolean {
@@ -191,8 +193,9 @@ export class MagnetoMode implements CustomMode {
     const t = state.time * (0.15 + 0.5 * num(state.controls['uMagSpin'], 0.4));
     const beat = state.audio.beat;
     const bar = state.audio.barCount;
-    const onBar = bar !== this.lastBar;
+    const onBar = bar !== this.lastBar && !this.resync;
     this.lastBar = bar;
+    this.resync = false;
     const locked = state.audio.lock > 0.5;
     if (locked ? onBar : beat > 0.6 && this.beatArmed) {
       // Flip one pole per kick, not all of them: flipping everything at once
@@ -307,6 +310,11 @@ export class MagnetoMode implements CustomMode {
     gl.blendFunc(gl.ONE, gl.ONE);
     gl.drawArrays(gl.POINTS, 0, this.texSize * this.texSize);
     gl.disable(gl.BLEND);
+  }
+
+  /** Back to this mode: the downbeats that passed while away aren't events. */
+  enter(): void {
+    this.resync = true;
   }
 
   private disposePrograms(): void {

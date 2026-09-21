@@ -3,7 +3,7 @@ import type { CompiledProgram } from '../render/Renderer.ts';
 import type { FrameState } from '../core/state.ts';
 import { createFbo, deleteFbo, type Fbo, type FboFormat } from '../render/Framebuffer.ts';
 import { perspective, lookAt, type Vec3 } from '../render/math3d.ts';
-import { ForgeClock } from './forgeClock.ts';
+import { ForgeClock, REBUILD_SECONDS } from './forgeClock.ts';
 import simVert from '../shaders/modes3d/sim.vert?raw';
 import fullscreenVert from '../shaders/fullscreen.vert?raw';
 import studioGlsl from '../shaders/modes3d/studio.glsl?raw';
@@ -131,7 +131,12 @@ export class ForgeMode implements CustomMode {
     const onBar = a.barCount !== this.lastBar;
     this.lastBar = a.barCount;
     if (a.lock < 0.5) return a.beat;
-    const every = shatter >= 0.7 ? 1 : shatter >= 0.35 ? 2 : 4;
+    // …but never more often than a shape can rebuild: the clock ignores a
+    // shatter during a rebuild, so at a fast tempo "every bar" would silently
+    // become every other bar, and a calm setting could lose one for 8 bars.
+    const barSeconds = (4 * 60) / a.bpm;
+    const minBars = Math.ceil((REBUILD_SECONDS * 0.8) / barSeconds);
+    const every = Math.max(minBars, shatter >= 0.7 ? 1 : shatter >= 0.35 ? 2 : 4);
     return onBar && a.barCount % every === 0 ? 1 : 0;
   }
 

@@ -62,6 +62,8 @@ export class AudioEngine {
   /** The music's clock, integrated here because only the CPU can integrate. */
   private drive = 0;
   private readonly tracker = new BeatTracker();
+  /** Wall clock of the last tick, for the tracker's unclamped time. */
+  private lastTickMs = -1;
   private frame: AudioFrame = SILENT_FRAME;
   // The 512x2 spectrum+waveform texture data, refilled in place each tick —
   // one allocation for the life of the app rather than one per frame.
@@ -131,6 +133,7 @@ export class AudioEngine {
     this.envHigh.reset();
     this.envLevel.reset();
     this.envWidth.reset();
+    this.tracker.reset();
     this.stereoTex.fill(0);
     this.beatDetector.reset();
     this.onsetDetector.reset();
@@ -164,6 +167,7 @@ export class AudioEngine {
         bpm: this.tracker.bpm,
         beatCount: this.tracker.lockedBeats,
         barCount: this.tracker.lockedBars,
+        barTurn: this.tracker.barTurn,
       };
       return this.frame;
     }
@@ -186,7 +190,13 @@ export class AudioEngine {
     const level = this.envLevel.update(raw.level, dt);
     const beat = this.beatDetector.update(this.freqData, dt, this.ctx.sampleRate, this.analyser.fftSize);
     this.drive += Math.min(dt, 0.1) * driveRate(bass, level, beat);
-    this.tracker.update(Math.min(dt, 0.1), beat);
+    // The tracker predicts in wall-clock time, so it gets the real elapsed
+    // time: the clamped dt would lose whatever a long frame took and leave it
+    // off the beat.
+    const nowMs = performance.now();
+    const realDt = this.lastTickMs < 0 ? dt : (nowMs - this.lastTickMs) / 1000;
+    this.lastTickMs = nowMs;
+    this.tracker.update(realDt, beat);
     this.frame = {
       bass,
       mid: this.envMid.update(raw.mid, dt),
@@ -207,6 +217,7 @@ export class AudioEngine {
       lock: this.tracker.locked ? 1 : 0,
       beatCount: this.tracker.lockedBeats,
       barCount: this.tracker.lockedBars,
+      barTurn: this.tracker.barTurn,
     };
     return this.frame;
   }

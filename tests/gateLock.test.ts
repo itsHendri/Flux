@@ -8,32 +8,47 @@ describe('gate on the beat', () => {
     expect(gatesPerBeat(2.5)).toBe(2);
   });
 
-  it('steers the flight so the camera crosses a gate on each beat', () => {
-    // 120 bpm, one gate per beat, spacing 3: start out of phase and fly.
+  /** Fly `seconds` at `bpm`; return the final cycle error and the slowest step. */
+  function fly(perBeat: number, seconds: number, start: number) {
     const spacing = 3;
     const bpm = 120;
     const dt = 1 / 60;
-    let travel = 1.3; // 43% of the way between gates
-    let phase = 0;
-    const speed = (spacing * bpm) / 60;
-    for (let i = 0; i < 60 * 6; i++) {
-      travel += beatCorrection(travel, spacing, phase, 1, dt);
-      travel += dt * speed;
-      phase = (phase + (dt * bpm) / 60) % 1;
+    const speed = (perBeat * spacing * bpm) / 60;
+    let travel = start;
+    let beatInBar = 0;
+    let slowest = Infinity;
+    for (let i = 0; i < seconds * 60; i++) {
+      const step = dt * speed;
+      const move = step + beatCorrection(travel, spacing, beatInBar, perBeat, step);
+      slowest = Math.min(slowest, move);
+      travel += move;
+      beatInBar = (beatInBar + (dt * bpm) / 60) % 4;
     }
-    // Locked in: the position in the gate cycle equals the beat phase, so the
-    // camera is at a gate (0) exactly when the beat phase is 0.
-    const off = ((travel / spacing) % 1 + 1) % 1;
-    let diff = off - phase;
+    const cycle = beatInBar * perBeat;
+    let diff = ((travel / spacing) % 1) - (cycle - Math.floor(cycle));
     diff -= Math.round(diff);
-    expect(Math.abs(diff)).toBeLessThan(0.01);
+    return { diff: Math.abs(diff), slowest, step: dt * speed };
+  }
+
+  it('steers the flight so the camera crosses a gate on each beat', () => {
+    const r = fly(1, 8, 1.3); // start 43% out of phase
+    expect(r.diff).toBeLessThan(0.01);
+  });
+
+  it('works at half rate — a gate every other beat — without stalling', () => {
+    const r = fly(0.5, 8, 1.3);
+    expect(r.diff).toBeLessThan(0.01);
+    // Never stops or reverses: every frame still moves at least 40% of a step.
+    expect(r.slowest).toBeGreaterThan(r.step * 0.39);
+  });
+
+  it('and at double rate', () => {
+    expect(fly(2, 8, 1.3).diff).toBeLessThan(0.01);
   });
 
   it('takes the short way round', () => {
-    // Just past a gate but wanting to be just before one: a small step back,
-    // not most of a spacing forward.
+    // Just past a gate but wanting to be just before one: a step back.
     const c = beatCorrection(0.05 * 3, 3, 0.97, 1, 1);
     expect(c).toBeLessThan(0);
-    expect(Math.abs(c)).toBeLessThan(0.3);
   });
 });

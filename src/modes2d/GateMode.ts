@@ -25,6 +25,8 @@ export class GateMode implements CustomMode {
   private litGate = -1e6;
   private litAt = -1e6;
   private lastBar = 0;
+  /** Set on entry: re-read the bar count without treating it as a downbeat. */
+  private resync = true;
   /** Units per second, eased, so gaining or losing the lock doesn't lurch. */
   private speed = 1.2;
   private readonly kicks = new HitGate(0.15);
@@ -49,8 +51,9 @@ export class GateMode implements CustomMode {
     const speedCtl = num(state.controls['uGateSpeed'], 1);
     const spacing = num(state.controls['uGateSpacing'], 3);
     const locked = a.lock > 0.5;
-    const onBar = a.barCount !== this.lastBar;
+    const onBar = a.barCount !== this.lastBar && !this.resync;
     this.lastBar = a.barCount;
+    this.resync = false;
 
     let target: number;
     if (locked) {
@@ -59,7 +62,7 @@ export class GateMode implements CustomMode {
       // the camera crosses a gate exactly on the beat.
       const perBeat = gatesPerBeat(speedCtl);
       target = (perBeat * spacing * a.bpm) / 60;
-      this.travel += beatCorrection(this.travel, spacing, a.beatPhase, perBeat, dt);
+      this.travel += beatCorrection(this.travel, spacing, a.barPhase * 4, perBeat, dt * this.speed);
     } else {
       // Reacting: a steady drift even in silence, pushed by the bass, surged
       // by a kick.
@@ -81,6 +84,11 @@ export class GateMode implements CustomMode {
     gl.uniform1f(gl.getUniformLocation(p, 'uLitGate'), this.litGate);
     gl.uniform1f(gl.getUniformLocation(p, 'uLitAge'), state.time - this.litAt);
     gl.drawArrays(gl.TRIANGLES, 0, 3);
+  }
+
+  /** Back to this mode: the downbeats that passed while away aren't events. */
+  enter(): void {
+    this.resync = true;
   }
 
   dispose(): void {

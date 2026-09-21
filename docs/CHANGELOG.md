@@ -5,6 +5,49 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 9 COMPLETE — review
+
+Tempo-locked motion is built: a **beat tracker** (a phase-locked loop on the
+kick, predicting beat and bar), and **six modes plus the kaleido effect**
+placed on it.
+
+**Self-review.** The in-browser sweep caught a builtin named like a control,
+which broke every shader. It's renamed, and a test now guards the whole class.
+A fresh review agent then found six real bugs and a misleading comment. All
+are fixed:
+
+- **gate at half rate stalled or backed up on every beat.** A gate every
+  *other* beat needs to know which beat of the pair it's on, and the beat phase
+  can't say, so the target snapped back each beat and the correction pulled
+  backwards. Now the target comes from the position in the bar, and each
+  correction is capped at 60% of the frame's own travel, so the flight can
+  slow or hurry but never stop or reverse. That also fixes the lurch when a
+  lock is first gained.
+- **The tracker lost time on long frames.** It was fed the frame time clamped
+  at 100 ms, so a hitch left it off the beat and could drop the lock. It now
+  gets the real elapsed time.
+- **A new track kept the old track's grid**, firing downbeats off it for
+  seconds. The tracker resets on a source change (its locked counts keep
+  climbing, so no mode sees a false downbeat), and after four bars without a
+  kick the next kick starts a fresh grid.
+- **kaleido snapped** when the lock came or went late in a bar. It now turns by
+  `uBarTurn`, a smoothed, never-jumping value computed on the CPU.
+- **Coming back to gate, magneto or synapse** fired an off-beat event for the
+  downbeats that passed while away; they resync on entry.
+- **forge's "every bar" silently became every other bar near 160 bpm**, since
+  a bar ended before the shape could rebuild. The cadence is now never shorter
+  than a rebuild.
+- The `common.glsl` comment claimed the phases were 0 when unlocked; they run
+  regardless. The comment now says to use the pulses or weigh by `uLock`.
+
+Verified: build clean, 186/186 tests (new: gate locks on the beat at half,
+single and double rate without ever stalling; tracker reset; the bar turn
+never jumps). All 27 modes and 7 effects compile in the preview. **The live
+lock can't be seen in the pane**, so it's on the user's list, including
+whether it sits a frame late and wants a latency offset. **Not pushed.**
+
+---
+
 ## Phase 9 — modes on the bar
 
 The beat tracker put to work. Each of these keeps its old reactive behaviour

@@ -87,9 +87,10 @@ export const BUILTIN_UNIFORMS = [
   'uBarPhase',
   'uBpm',
   'uLock',
-  // Downbeats passed while locked — an integer that only ever steps up.
-  // (Not "uBarCount": that's the bars mode's column control.)
-  'uDownbeats',
+  // Downbeats passed while locked, eased into each one and smoothed so it
+  // never jumps — for anything that turns a step per bar. (Not "uBarCount":
+  // that's the bars mode's column control.)
+  'uBarTurn',
   // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
   'uLogoAspect',
 ];
@@ -744,7 +745,7 @@ export class Renderer {
     gl.uniform1f(u.get('uBarPhase') ?? null, state.audio.barPhase);
     gl.uniform1f(u.get('uBpm') ?? null, state.audio.bpm);
     gl.uniform1f(u.get('uLock') ?? null, state.audio.lock);
-    gl.uniform1f(u.get('uDownbeats') ?? null, state.audio.barCount);
+    gl.uniform1f(u.get('uBarTurn') ?? null, state.audio.barTurn);
     gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     // Spectrum + waveform on unit 5 for every program (the data is re-uploaded
     // once per frame in render(), not once per program).
