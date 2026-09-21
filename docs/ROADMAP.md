@@ -448,7 +448,7 @@ commit unless noted.
   along its edges (normal discontinuity → glow), with the spectrum running
   around the edge light. *Done:* reads as a dark room drawn in light at its
   edges; ≥3 controls.
-- [ ] **spacetime** — "neon rays rushing past". A fragment mode of radial
+- [x] **spacetime** — "neon rays rushing past". A fragment mode of radial
   streaks with depth and parallax, speed from bass, hue from band. Unlike the
   `tunnel` effect (which bends whatever mode is showing) this is a scene of
   its own. *Done:* reads as rushing forward; kicks surge; ≥3 controls.

@@ -401,6 +401,22 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'hyperspace',
+    note: 'Neon rays rushing past, coloured by the bands that are playing.',
+    preset: {
+      mode: 'spacetime',
+      values: {
+        theme: 0,
+        themeMix: 0.9,
+        'fx-bloom': 1,
+        'fx-trails': 1,
+        trailDecay: 0.8,
+        bloomIntensity: 0.9,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

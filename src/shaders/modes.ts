@@ -13,6 +13,7 @@ import chrome from './modes/chrome.frag?raw';
 import fur from './modes/fur.frag?raw';
 import grove from './modes/grove.frag?raw';
 import oracle from './modes/oracle.frag?raw';
+import spacetime from './modes/spacetime.frag?raw';
 
 /** All shader modes. Each is a `vec3 render(vec2 uv)` fragment. */
 export const MODES: ShaderMode[] = [
@@ -29,6 +30,7 @@ export const MODES: ShaderMode[] = [
   { name: 'fur', fragSource: fur },
   { name: 'grove', fragSource: grove },
   { name: 'oracle', fragSource: oracle },
+  { name: 'spacetime', fragSource: spacetime },
   { name: 'logo', fragSource: logo },
 ];
 

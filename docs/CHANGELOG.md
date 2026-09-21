@@ -5,6 +5,31 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — spacetime: neon rays rushing past
+
+Hyperspace in polar coordinates, as a scene of its own (unlike the `tunnel`
+effect, which bends whatever mode is showing). The screen is cut into thin
+angular cells in three layers, some holding a ray, and each ray has a depth
+that runs from far to near and wraps. Perspective does the rest: a ray at
+depth *z* sits at radius *R/z*, so far rays bunch at the centre and near ones
+race to the edges and stretch. The streak is the span covered in one step of
+depth, which is how motion blur would draw it.
+
+Depth advances by a slow drift plus **`uDrive`**, so the flight surges with
+the track and eases in quiet passages, never running backwards. Each ray's hue
+is its own, and **its brightness is the band that hue stands for**, so the
+colours that light up are the frequencies that are playing. Kicks widen the
+rays and flare the glare at the vanishing point; Twist corkscrews the flight.
+
+Controls: Speed, Density, Streak, Twist. New look: **hyperspace** (with trails
+and bloom).
+
+Verified in the preview with a chord progression over a kick: a dense burst
+of mixed-hue rays from a glowing centre, long and bright at the edges, short
+and packed toward the middle. Build clean, 149/149 tests, overlay empty.
+
+---
+
 ## Phase 7 — uDrive: the music's own clock
 
 A new builtin for every shader. `uTime` runs at one second per second whatever
