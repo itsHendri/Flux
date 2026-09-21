@@ -482,7 +482,36 @@ commit unless noted.
 
 ---
 
-## Known limitations
+## Phase 8 — Tuning from use, and a set that plays itself (2026-09-21)
+
+Chosen by the user on 2026-09-21: act on the live-pass notes, and build
+set-list tools so the instrument can carry a set — timed look changes and
+crossfades instead of hard cuts.
+
+- [ ] **(user) Live-pass notes → tuning.** The user plays the Phase 7 modes
+  (and the older open items under *Waiting on the user*) in Chrome with real
+  music and reports what to change. *Done:* the notes are recorded here as
+  tasks and built.
+- [ ] **Crossfades between modes.** Switching mode (picker, cycler, a look)
+  dissolves over a set time instead of cutting: both modes render live for
+  the length of the fade — the outgoing one with the control values it had —
+  and blend before the effect chain. The governor ignores the doubled cost
+  during a fade. *Done:* a switch visibly dissolves with both pictures moving;
+  0 s is a hard cut as before; custom and fragment modes both fade in and out;
+  build + tests clean.
+- [ ] **Beat and phrase clock.** From the kick pulse: a tempo estimate
+  (inter-onset intervals), a beat count, and phrase boundaries every N bars,
+  plus an early boundary when the energy changes sharply (a drop or a
+  breakdown). Pure and tested. *Done:* a synthetic 120 bpm kick track yields
+  ~120 bpm and a boundary every 8 bars at the default; a drop fires early.
+- [ ] **Auto looks.** A switch on the performance bar: on each phrase
+  boundary, change to another built-in look (in order, or shuffled without
+  repeats), crossfading. Phrase length, order and fade time live in a *Set*
+  section of the panel and persist per machine. *Done:* with a synthetic
+  track, looks change on boundaries with a crossfade; turning it off stops it;
+  a manual look or mode change restarts the phrase count.
+
+
 
 - **Heavy modes are only measured on one machine.** Raymarched fractals and
   the Ultra settings of the simulations held 120 fps on Apple silicon; there's
