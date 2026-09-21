@@ -444,7 +444,7 @@ commit unless noted.
   distance to a single wandering light whose path the music drives. *Done:*
   the light moves through the dust and lights what's near it; kicks make it
   dart; ≥3 controls.
-- [ ] **oracle** — "an edge-lit dark chamber". A raymarched interior lit only
+- [x] **oracle** — "an edge-lit dark chamber". A raymarched interior lit only
   along its edges (normal discontinuity → glow), with the spectrum running
   around the edge light. *Done:* reads as a dark room drawn in light at its
   edges; ≥3 controls.

@@ -5,6 +5,32 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — oracle: a dark chamber drawn in light at its edges
+
+A room of pillars around an altar, and above the altar a turning octahedron,
+the oracle. Nothing is lit the usual way. Faces stay near-black, and what
+shows is the **edges**, found from the distance field itself: on a flat face
+an SDF is linear, so its Laplacian (six taps around the hit point, minus six
+times the centre) is exactly zero, and it's non-zero only where two faces
+meet. That's a line drawing of the room for six extra evaluations per pixel,
+with the tap spacing scaled by distance so lines keep a steady width on screen.
+
+The **spectrum runs around the room**: an edge's brightness is the band at
+its angle about the altar, so the chamber lights in an arc that moves as the
+music moves through the frequencies. The oracle's own edges burn white-hot on
+the kick and swell with the bass, and its glow (inverse square) is the only
+light that falls on the faces.
+
+Controls: Line Weight, Glow, Spin, Colonnade (pillar spacing). New look:
+**sanctum**.
+
+Verified in the preview with a rising sweep: the room renders as a clean line
+drawing (pillars with capitals, the stepped altar, the octahedron), and the
+lit arc moves from the right-hand colonnade to the far wall as the sweep
+climbs. Build clean, 147/147 tests, overlay empty.
+
+---
+
 ## Phase 7 — wisp: a dust world with one bright wanderer
 
 The picture is made by a light moving, not by the things it lights. The dust

@@ -386,6 +386,21 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'sanctum',
+    note: 'A dark chamber drawn in light at its edges; the spectrum runs round the walls.',
+    preset: {
+      mode: 'oracle',
+      values: {
+        theme: 0,
+        themeMix: 0.9,
+        'fx-bloom': 1,
+        bloomIntensity: 0.8,
+        oracleGlow: 1.2,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**
