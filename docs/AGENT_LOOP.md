@@ -92,6 +92,20 @@ in `CHANGELOG.md`. "Continuous" never means "one giant unreviewable change."
     fine — **revert it before committing** and say it was reverted.
   - Measure FPS with a rAF counter only when the pane is visible; with the pane
     hidden rAF doesn't fire and the probe never returns.
+  - **With the pane hidden, frames only happen while capturing.** A batch of
+    rapid tiny screenshots (`scale: 0.1`) advances the app a frame or so each;
+    a `wait` between them does not. Anything keyed on wall-clock gaps between
+    frames (a "back after a detour" reset) will fire on every capture, and
+    onsets are mostly missed, so to see accumulation (synapse) or a
+    controller's decisions (the governor) use a temporary probe — grow the
+    state directly, or expose the object on `window` and feed it synthetic
+    frame times — and **revert it before committing**.
+  - The preview tool may assign a port other than 5173 when another project's
+    server holds it (`autoPort` in `.claude/launch.json`; `vite.config.ts`
+    honours `PORT`).
+  - A fresh-eyes review agent on the phase's diff is worth running before the
+    phase-end note: in Phase 7 it found a governor that ignored 3 fps machines
+    and chased 30 Hz caps to the bottom rung, which no screenshot would show.
 - If a gate fails: fix it, or if unfixable, trigger stop condition 3.
 
 ### 5. Commit

@@ -13,27 +13,31 @@ moves past it rather than stopping on it.
 
 ---
 
-## Where things stand (handoff, 2026-09-21)
+## Where things stand (handoff, 2026-09-21, after the Phase 7 run)
 
 **Live:** https://itshendri.github.io/Flux/ — deploys on every push to `main`
 (tests gate the deploy; see `DEPLOY.md`). Last deployed commit is whatever is
-at `origin/main`.
+at `origin/main`. **The Phase 7 run is committed locally and not pushed** —
+pushing deploys it.
 
-**The instrument today:** 17 modes, 7 effects, 5 themes, 12 built-in looks.
-Vanilla TypeScript + raw WebGL2, zero runtime dependencies, ~63 kB gzipped.
-96 unit tests across 16 files.
+**The instrument today:** 27 modes, 7 effects, 5 themes, 22 built-in looks.
+Vanilla TypeScript + raw WebGL2, zero runtime dependencies, ~91 kB gzipped.
+151 unit tests across 21 files. Stereo analysis, a performance governor, and
+a music-paced clock (`uDrive`) for shaders.
 
-| Group | Modes |
+| Group (as the picker shows it) | Modes |
 | --- | --- |
-| Reading the signal | `bars` (log spectrum), `waveform` (line / mirror / radial), `spectro` (spectrogram — the only mode with a memory) |
-| Fields | `flow`, `cells`, `mandala` (kaliset through a kaleidoscope), `sand` (Chladni plate), `fur`, `logo` |
-| Simulations (CustomMode) | `reaction` (Gray-Scott), `fluid` (stable fluids) |
-| Raymarched | `raymarch` (iridescent metaballs), `chrome` (reflective metal), `bulb` (Mandelbulb), `lattice` (Mandelbox) |
-| Particles (CustomMode) | `magneto` (charged swarm + nebula, rays, cores), `trails3d` (curl-noise) |
+| signal | `bars`, `waveform`, `spectro`, `vector` (goniometer / X-Y scope) |
+| fields | `flow`, `cells`, `mandala`, `sand`, `fur`, `grove` (fractal forest), `spacetime` (neon rays), `logo`, `limitless` (Droste spiral of your image) |
+| simulations | `reaction`, `fluid` |
+| raymarched | `raymarch`, `chrome`, `bulb`, `lattice`, `gate` (corridor of gates), `oracle` (edge-lit chamber) |
+| particles | `magneto`, `trails3d`, `forge` (chrome beads that shatter), `synapse` (a constellation that grows per hit), `anemone` (chains of rings), `wisp` (a wanderer lighting dust) |
 
 Effects: `warp` (MilkDrop feedback), `trails`, `tunnel`, `dither`, `bloom`,
 `kaleido`, `scanline`. Looks: cathedral, coral, scope, supernova, ink,
-shrine, readout, vault, molten, coat, tape, comet.
+shrine, readout, vault, molten, coat, tape, comet, phosphor, foundry,
+constellation, polyp, corridor, nightwood, firefly, sanctum, hyperspace,
+droste.
 
 **The user's stated taste** (from the feedback rounds — worth knowing before
 proposing anything): kaleidoscope is the favourite effect; magneto, trails3d
@@ -42,8 +46,9 @@ than the *picture* don't earn their place (quantize, chroma, echo and shock
 were all removed for that reason); the performance bar is the primary surface
 and the dock panel should not duplicate it.
 
-**To start a new run:** read this section, then `Waiting on the user` and
-`Phase 7` below, then `CHANGELOG.md`'s newest entry. Verification recipe
+**To start a new run:** read this section, then `Waiting on the user`
+below, then `CHANGELOG.md`'s newest entry (the Phase 7 review note). Phase 7
+is complete; there is no queued phase — propose one and confirm it first. Verification recipe
 (synthetic audio, the preview-pane quirks, the shader-error trap) is in
 `AGENT_LOOP.md` → *Verify*.
 
@@ -387,10 +392,27 @@ Things only the user can close. They stay open until he reports back.
   - **magneto** — where Charge stops being a swarm and becomes a starfield.
   - **bulb, lattice, fluid Ultra, reaction Ultra** — 120 fps on the dev
     machine (Apple silicon) only; unknown on weaker GPUs.
+- [ ] **(user) Live pass on the Phase 7 modes, in Chrome with real music.**
+  All of them were verified in the preview pane with synthetic audio, which
+  catches few onsets and can't show accumulation, persistence or frame rate.
+  In particular:
+  - **vector** — with a real stereo track; and try a piece of oscilloscope
+    music (e.g. Jerobeam Fenderson) in X / Y. Does Persistence feel right?
+  - **forge** — ≥60 fps at the default 16k beads (unmeasured); do the
+    shatters land on the right kicks, and does Shatter's range make sense?
+  - **synapse** — let it grow over a whole track: is the sky interesting at
+    the one-minute mark, and at Memory: Long? Is the camera's framing calm?
+  - **wisp, gate, spacetime, limitless** — do they feel paced by the music?
+    (`gate` has its own speed; the others run on `uDrive`.)
+  - **grove** — the blossom lights draw dotted arcs along the canopies; keep,
+    soften, or drop?
+  - **The governor** — on your machine it should do nothing. If a mode ever
+    looks softer than it should, check the Output section's toggle (and tell
+    me which mode — it shouldn't be stepping on Apple silicon).
 
 ---
 
-## Phase 7 — Next up (2026-09-21)
+## Phase 7 — the candidates, then the rest of photism (2026-09-21) — complete
 
 Approved by the user on 2026-09-21: build all of it, autonomously, with a
 self-review of each task. Order taken: picker, stereo + goniometer, forge,
@@ -462,11 +484,22 @@ commit unless noted.
 
 ## Known limitations
 
-- **Mono analysis only.** One `AnalyserNode` on a mixed-down signal; nothing
-  stereo is available to shaders (see Phase 7).
 - **Heavy modes are only measured on one machine.** Raymarched fractals and
   the Ultra settings of the simulations held 120 fps on Apple silicon; there's
-  no data for integrated or older GPUs, and no automatic fallback yet.
+  no data for integrated or older GPUs. The performance governor is the
+  fallback now, but its thresholds are only exercised by tests and a
+  synthetic-frame-time check, never by a genuinely slow GPU.
+- **The governor can't see a GPU-bound 30 fps behind a 30 Hz cap.** It learns
+  a capped frame rate by noticing that stepping down doesn't help; a machine
+  that is both capped *and* too slow to reach the cap is read as capped.
+- **`gate` drifts after hours.** Its distance flown grows without bound and
+  reaches the shader as a 32-bit float; past roughly 7 hours of continuous
+  flight the camera and the thin gate slabs start to quantise. Re-entering
+  the mode doesn't reset it; a page reload does. (`uDrive` has the same
+  growth but far more headroom at the rates the modes use.)
+- **Most new Phase 7 modes weren't timed** — the pane was hidden, so no rAF
+  frame-rate numbers exist for vector, forge, synapse, anemone, gate, grove,
+  wisp, oracle, spacetime or limitless.
 - **The preview pane can't judge accumulation or frame rate** (see *Waiting on
   the user*). Verify those in real Chrome.
 - **A failed shader compile is quiet.** FLUX keeps the last good program, so
@@ -474,12 +507,16 @@ commit unless noted.
   overlay says so. Always check it after a shader edit (`AGENT_LOOP.md`).
 - **Editing a `.frag` owned by a CustomMode reloads the page** (Vite HMR can't
   hot-swap it the way it swaps `modes.ts` fragments), which drops a loaded
-  audio file. Re-drop the file after such edits when verifying.
+  audio file. Re-drop the file after such edits when verifying. And a
+  hot-swapped `modes.ts` fragment has at least once shown a stale version —
+  when a shader edit seems not to take, hard-reload before debugging it.
 
 Resolved from the Phase 1 audit: parallel toggle mechanisms (2c), RGBA8
 clamping and resolution-dependent bloom (2a), Bayer banding (2a dither
 options), the stale mic-only comment in `AudioEngine.ts`, and the missing
 per-mode quality controls (bulb, lattice, fluid, reaction now have them).
+Resolved in Phase 7: mono-only analysis (stereo path + `uStereo`/`uWidth`)
+and the missing automatic fallback (the governor).
 
 ---
 

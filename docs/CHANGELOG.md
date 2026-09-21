@@ -5,6 +5,50 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## PHASE 7 COMPLETE — review
+
+The user asked for all of Phase 7, built autonomously with self-review. All of
+it landed: the five scoped candidates, then the seven photism directions that
+were still unscoped (scoped into tasks first, then built). **Nothing is pushed.**
+Pushing `main` deploys the live site, so that's the user's call.
+
+**What landed** (17 → 27 modes, 12 → 22 looks, 96 → 151 tests):
+
+- **Picker grouped** into signal / fields / simulations / raymarched /
+  particles; the cycler walks the same order. Preset recall now restores
+  custom-draw modes too.
+- **Stereo**: a per-channel analyser pair, `uStereo` (sample-aligned floats)
+  and `uWidth`. **`vector`** is the goniometer / X-Y scope that reads it.
+- **`forge`** (chrome beads that build shapes and shatter on kicks),
+  **`synapse`** (a constellation that grows one star per hit; the first mode
+  that accumulates, with a new `CustomMode.enter()` hook).
+- **Performance governor**: per-mode ladders (quality lever, then
+  resolution, or resolution first where the lever would wipe a simulation),
+  probe-and-backoff stepping up, frame-cap learning, pinnable per machine.
+- **`uDrive`**, the music's own clock, integrated on the CPU.
+- **The rest of photism**: `anemone`, `gate`, `grove`, `wisp`, `oracle`,
+  `spacetime`, `limitless`.
+
+**Self-review.** Two independent review agents read the diffs cold. Between
+them they found eight confirmed bugs and five plausible ones that no
+screenshot would have shown: a governor that ignored 3 fps machines, chased
+30 Hz caps to the bottom rung, learned false caps from its own history and
+gave up after one weak step; an orphaned-star bug in synapse; seams and
+clipping in two shaders; a vector fade fix that had silently never landed. All
+are fixed with regression tests except `gate`'s after-seven-hours float drift,
+which is documented.
+
+**Not verifiable here, so waiting on the user** (ROADMAP → *Waiting on the
+user*): frame rates for every new mode (the pane was hidden, so rAF never
+ran); persistence, trails and accumulation, which the pane can't show; synapse
+over a whole real track; vector with real stereo and oscilloscope music; and
+whether grove's blossom arcs stay.
+
+**Next:** no phase is queued. The ROADMAP's handoff section says to propose one
+and confirm it before building.
+
+---
+
 ## Phase 7 — second review's fixes
 
 A second fresh-eyes review, over the seven photism modes, `uDrive` and the

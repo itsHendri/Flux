@@ -3,9 +3,9 @@
 An audio-reactive WebGL2 **instrument** that runs in the browser. Not a
 passive visualizer — you steer the visuals live while sound plays. Audio from
 your microphone or a dropped file is analysed in real time and drives
-seventeen modes — shader fields, live simulations, raymarched fractals and
-GPU particle swarms — with a control surface where every knob maps to a shader
-uniform. The aesthetic is a dark "instrument panel": it should feel like a
+twenty-seven modes — shader fields, live simulations, raymarched fractals,
+GPU particle swarms and a growing constellation — with a control surface where
+every knob maps to a shader uniform. The aesthetic is a dark "instrument panel": it should feel like a
 piece of gear.
 
 **Live:** https://itshendri.github.io/Flux/ (deploys on every push to `main`).
@@ -34,22 +34,29 @@ npm test         # run the unit tests (vitest)
 
 ## What it has
 
-- **17 modes**, in five families:
-  - *Reading the signal* — `bars` (a real log-frequency spectrum), `waveform`
-    (the time-domain trace: line, mirrored or radial), `spectro` (a
-    spectrogram — the one mode with a memory).
+- **27 modes**, in five families (the bar's picker groups them the same way):
+  - *Signal* — `bars` (a real log-frequency spectrum), `waveform` (the
+    time-domain trace: line, mirrored or radial), `spectro` (a spectrogram),
+    `vector` (left against right: a goniometer / X-Y oscilloscope).
   - *Fields* — `flow` (domain warp), `cells` (Voronoi), `mandala` (a kaliset
     fractal folded through a kaleidoscope), `sand` (a Chladni plate driven by
-    the spectrum), `fur` (a coat the bass combs), `logo` (your uploaded image,
-    audio-displaced).
+    the spectrum), `fur` (a coat the bass combs), `grove` (a fractal forest
+    the bands re-grow), `spacetime` (neon rays rushing past), `logo` (your
+    uploaded image, audio-displaced), `limitless` (your image nested inside
+    itself as an Escher spiral).
   - *Simulations* — `reaction` (Gray-Scott reaction-diffusion) and `fluid`
     (Stam's stable fluids, stirred by the music).
   - *Raymarched* — `raymarch` (iridescent metaballs), `chrome` (molten metal
     reflecting a studio), `bulb` (the Mandelbulb, re-grown by accents),
-    `lattice` (the Mandelbox from outside).
+    `lattice` (the Mandelbox from outside), `gate` (falling through a
+    corridor of neon gates), `oracle` (a dark chamber drawn in light at its
+    edges).
   - *Particles* — `magneto` (charged particles in the spirit of the iTunes
-    visualizer, each listening to its own frequency, with nebula, rays and
-    cores) and `trails3d` (GPGPU curl-noise).
+    visualizer, each listening to its own frequency), `trails3d` (GPGPU
+    curl-noise), `forge` (chrome beads that build a shape and shatter on the
+    kick), `synapse` (every hit adds a star to a growing constellation),
+    `anemone` (chains of rings carrying the spectrum out along each arm),
+    `wisp` (one bright wanderer lighting a world of dust).
 - **7 toggleable post-effects** — MilkDrop-style warp feedback, trails, a
   polar tunnel, dither (Bayer/IGN/blue-noise), mip-chain bloom, kaleidoscope
   and scanline/VHS.
@@ -59,6 +66,12 @@ npm test         # run the unit tests (vitest)
 - **Beat detection** — spectral-flux onset detectors feed `uBeat` (kick) and
   `uOnset` (any transient) pulses to every shader, beyond the smoothed
   bass/mid/high/level bands.
+- **Stereo** — a per-channel analyser pair gives shaders the left and right
+  waveforms (`uStereo`) and the mix's width (`uWidth`).
+- **Performance governor** — when frames fall behind it steps the mode's own
+  quality control down, then the render resolution, and probes back up when
+  they recover; it learns a capped frame rate (a 30 Hz display, Energy Saver)
+  instead of chasing it. Pinnable per machine from the Output section.
 - **Performance bar** — a floating pill over the visual with the mid-set
   essentials (source, transport, theme swatches, mode cycler, fullscreen,
   PiP); it fades out when the mouse goes still. Every control on it is a
@@ -67,7 +80,7 @@ npm test         # run the unit tests (vitest)
 - **Themes** — five global palettes (keys `1`-`5`) that every mode bends its
   own colour toward, keeping the mode's brightness so contrast survives; a
   Tint control sets how far. **Hotkeys** — Space plays/pauses a loaded file.
-- **Looks** — twelve built-in combinations (mode + effect chain + theme +
+- **Looks** — twenty-two built-in combinations (mode + effect chain + theme +
   controls) in the panel and on a cycling button in the bar; each lands on a
   clean slate so it always looks the same. **Presets** — mode + every control
   + effect state saved/recalled from localStorage. **Web MIDI** — learn-mode binds hardware knobs to any slider,
@@ -77,17 +90,21 @@ npm test         # run the unit tests (vitest)
 
 ## How it works
 
-- **AudioEngine** (`src/audio/`) — one `AudioContext` + `AnalyserNode`. The FFT
+- **AudioEngine** (`src/audio/`) — one `AudioContext`, a mono `AnalyserNode`
+  and a per-channel pair for stereo. The FFT
   is split into bass / mid / high bands (`bands.ts`), smoothed with an
   asymmetric **fast-attack / slow-release** envelope follower
   (`EnvelopeFollower.ts`), and watched by two spectral-flux **onset
   detectors** (`OnsetDetector.ts`) for beat/onset pulses. Source-agnostic:
   the mic and a dropped file (`sources.ts`) feed the same analyser.
-- **Audio texture** (`audioTexture.ts`) — alongside the six smoothed scalars,
+- **Audio texture** (`audioTexture.ts`) — alongside the smoothed scalars,
   every shader gets `uAudio`: a 512×2 texture in **Shadertoy's layout** (row 0
   the spectrum, per-bin smoothed; row 1 the waveform, triggered on a rising
   zero crossing so it holds still). `common.glsl` wraps it as `spectrum(x)`,
-  `spectrumLog(x)` and `wave(x)`.
+  `spectrumLog(x)` and `wave(x)`. Beside it, `uStereo` (2048×2 floats, left
+  and right sample-aligned, `stereoAt(i)`), and two builtins: `uWidth` (stereo
+  width) and `uDrive` — the music's own clock, integrated on the CPU, which
+  advances at the music's pace and never runs backwards (`drive.ts`).
 - **Renderer** (`src/render/Renderer.ts`) — WebGL2. The active mode renders
   into an off-screen FBO (RGBA16F where renderable — `Framebuffer.ts`), an
   ordered, toggleable post-pass chain runs across a ping-pong pair (with
@@ -103,10 +120,16 @@ npm test         # run the unit tests (vitest)
   prepends the version header + uniform block + `common.glsl` (which also
   holds the theme helpers). Editing a `.frag` hot-reloads.
 - **Custom modes** (`src/render/CustomMode.ts`, `src/modes2d/`,
-  `src/modes3d/`) — anything that needs state across frames: `reaction`,
-  `fluid` and `spectro` own their own buffers; `magneto` and `trails3d` run
-  GPGPU particle sims. They draw into the same scene FBO, so every effect,
-  theme and look works on them unchanged.
+  `src/modes3d/`) — anything that needs state across frames or its own
+  geometry: `reaction`, `fluid`, `spectro` and `vector` own buffers; `magneto`,
+  `trails3d` and `forge` run GPGPU particle sims; `synapse` keeps a graph on
+  the CPU (`constellation.ts`); `anemone` and `wisp` draw instanced geometry;
+  `gate` integrates its own flight. They draw into the same scene FBO, so
+  every effect, theme and look works on them unchanged. An optional `enter()`
+  hook fires on a real switch to the mode.
+- **Governor** (`src/core/governor.ts`) — `FrameGovernor` decides when to
+  step (median frame time, hysteresis, probe backoff, cap learning);
+  `QualityGovernor` owns what a step means per mode (`QUALITY_LEVERS`).
 - **Looks** (`src/presets/looks.ts`) — the built-in combinations, applied onto
   a reset to defaults; a test checks every id and value against the schema.
 - **UI** (`src/ui/`) — control panel generated from a single typed schema
