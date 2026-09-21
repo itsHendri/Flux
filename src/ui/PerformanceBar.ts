@@ -26,6 +26,8 @@ export interface PerformanceBarCallbacks {
   onPickMode(name: string): void;
   /** Advance to the next built-in look. */
   onCycleLook(): void;
+  /** Switch auto looks (a look change on every phrase boundary) on or off. */
+  onAuto(): void;
   onFullscreen(): void;
   onPip(): void;
 }
@@ -53,6 +55,7 @@ export class PerformanceBar {
   private modeNames: string[] = [];
   private activeMode = '';
   private readonly lookBtn: HTMLButtonElement;
+  private readonly autoBtn: HTMLButtonElement;
   private readonly swatches: HTMLButtonElement[] = [];
   private readonly pipBtn: HTMLButtonElement;
   private idleTimer = 0;
@@ -122,7 +125,9 @@ export class PerformanceBar {
     // not "which of six".
     this.lookBtn = this.iconButton('looks', 'Next built-in look', cb.onCycleLook);
     this.lookBtn.classList.add('perf-look');
-    const lookGroup = this.group(this.lookBtn);
+    // Auto: let the phrase clock change the look on its own (key A).
+    this.autoBtn = this.iconButton('auto', 'Change look every phrase (A)', cb.onAuto);
+    const lookGroup = this.group(this.lookBtn, this.autoBtn);
 
     // --- Output ----------------------------------------------------------
     const fsBtn = this.iconButton('⛶', 'Fullscreen', cb.onFullscreen);
@@ -228,6 +233,13 @@ export class PerformanceBar {
   setLook(name: string | null): void {
     this.lookBtn.textContent = name ?? 'looks';
     this.lookBtn.classList.toggle('active', name !== null);
+  }
+
+  /** Auto looks on/off; `bpm` (when measured) goes in the tooltip. */
+  setAuto(on: boolean, bpm?: number): void {
+    this.autoBtn.classList.toggle('active', on);
+    const tempo = bpm ? ` — ${Math.round(bpm)} bpm` : '';
+    this.autoBtn.title = `Change look every phrase (A)${on ? tempo : ''}`;
   }
 
   setPip(on: boolean): void {

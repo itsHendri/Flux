@@ -1,4 +1,4 @@
-import { FADE_OPTIONS, type SetSettings } from './setSettings.ts';
+import { FADE_OPTIONS, PHRASE_OPTIONS, type SetSettings } from './setSettings.ts';
 
 export interface SetPanelCallbacks {
   onChange(next: SetSettings): void;
@@ -19,6 +19,10 @@ export class SetPanel {
     section.innerHTML = '<h2>Set</h2>';
 
     this.row(section, 'Crossfade', FADE_OPTIONS, (v) => (v === 0 ? 'cut' : `${v}s`), 'fade');
+    // Auto looks itself is switched from the performance bar (and key A);
+    // these are how it behaves.
+    this.row(section, 'Auto looks every', PHRASE_OPTIONS, (v) => `${v} bars`, 'phraseBars');
+    this.row(section, 'Order', ['shuffle', 'sequence'] as const, (v) => v, 'order');
 
     parent.appendChild(section);
   }

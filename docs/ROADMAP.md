@@ -504,7 +504,7 @@ crossfades instead of hard cuts.
   plus an early boundary when the energy changes sharply (a drop or a
   breakdown). Pure and tested. *Done:* a synthetic 120 bpm kick track yields
   ~120 bpm and a boundary every 8 bars at the default; a drop fires early.
-- [ ] **Auto looks.** A switch on the performance bar: on each phrase
+- [x] **Auto looks.** A switch on the performance bar: on each phrase
   boundary, change to another built-in look (in order, or shuffled without
   repeats), crossfading. Phrase length, order and fade time live in a *Set*
   section of the panel and persist per machine. *Done:* with a synthetic

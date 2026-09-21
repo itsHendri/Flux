@@ -5,6 +5,30 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 8 — auto looks
+
+The set can now play itself. An **auto** switch on the performance bar (and key
+**A**) hands look changes to the phrase clock: on every phrase boundary it
+changes to another built-in look, crossfading.
+
+- **Which look next** (`presets/lookSequence.ts`, 3 tests). *Sequence* walks
+  the list. *Shuffle* draws from a bag (every look once before any repeats,
+  and never the one showing), because random picks with replacement repeat
+  themselves and leave some looks unseen for a whole set.
+- **Any change you make restarts the count**, so an automatic change never
+  lands a moment after a manual one.
+- **Settings** in the panel's Set section: *Auto looks every 4 / 8 / 16 / 32
+  bars* and *Order*. The switch itself is only on the bar, since the panel
+  doesn't duplicate the bar. All per machine.
+- The auto button's tooltip shows the measured tempo.
+
+Verified in the preview: with 4-bar phrases and a synthetic 120 bpm kick,
+the tooltip reads 120 bpm and the picture changes on its own from `bars` to
+the **corridor** look (`gate`) at the phrase boundary, crossfading. Build clean,
+168/168 tests, overlay empty.
+
+---
+
 ## Phase 8 — the beat and phrase clock
 
 `src/audio/PhraseClock.ts` answers the question a set keeps asking: *when does

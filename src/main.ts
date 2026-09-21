@@ -44,6 +44,8 @@ import { LOOKS, defaultValues, findLook } from './presets/looks.ts';
 import { MidiPanel } from './ui/MidiPanel.ts';
 import { SetPanel } from './ui/SetPanel.ts';
 import { loadSet, saveSet } from './ui/setSettings.ts';
+import { PhraseClock } from './audio/PhraseClock.ts';
+import { LookSequence } from './presets/lookSequence.ts';
 import { MidiEngine, MidiMap, MidiBindingStore } from './audio/midi.ts';
 import {
   QualityGovernor,
@@ -182,7 +184,17 @@ governor.setEnabled(loadAutoQuality(storage));
 // fade's, not the machine's, so the governor sits it out.
 app.onFrame((dt) => {
   if (!renderer.inTransition) governor.frame(dt);
+  tickAuto();
 });
+
+/** Feed the phrase clock; on a boundary with auto on, change the look. */
+function tickAuto(): void {
+  const f = audio.getFrame();
+  const boundary = phraseClock.update(nowSeconds(), f.beat, f.level, setSettings.phraseBars);
+  if (boundary && setSettings.auto) {
+    applyLook(lookSequence.next(currentLook, setSettings.order));
+  }
+}
 
 // Mode selection lives on the performance bar (cycler + picker). The dock
 // panel used to carry a second copy of the same buttons; one place is enough.
@@ -209,11 +221,18 @@ function beginFade(): void {
   renderer.beginTransition(setSettings.fade, controlPanel.getValues());
 }
 
+// Phrase clock for auto looks. Any change the user makes restarts the count,
+// so an automatic change never lands a moment after a manual one.
+const phraseClock = new PhraseClock();
+const lookSequence = new LookSequence(LOOKS.map((l) => l.name));
+const nowSeconds = (): number => performance.now() / 1000;
+
 // Assigned below; selectMode runs once before the bar exists.
 let perfBar: PerformanceBar | null = null;
 
 function selectMode(name: string, fade = true): void {
   if (fade && name !== app.getMode()) beginFade();
+  phraseClock.restart(nowSeconds());
   app.setMode(name);
   governor.setMode(name);
   perfBar?.setMode(name);
@@ -389,7 +408,7 @@ presetPanel.setLooks(LOOKS.map((l) => ({ name: l.name, note: l.note })));
 presetPanel.refresh(presetStore.list());
 
 // --- Set --------------------------------------------------------------------
-new SetPanel(panel, setSettings, {
+const setPanel = new SetPanel(panel, setSettings, {
   onChange: (next) => {
     setSettings = next;
     saveSet(storage, next);
@@ -726,6 +745,7 @@ perfBar = new PerformanceBar(document.body, THEMES, {
     const next = stepIndex(MODE_NAMES.indexOf(app.getMode()), step, MODE_NAMES.length);
     selectMode(MODE_NAMES[next]);
   },
+  onAuto: () => toggleAuto(),
   onCycleLook: () => {
     const i = currentLook ? LOOKS.findIndex((l) => l.name === currentLook) : -1;
     applyLook(LOOKS[stepIndex(i, 1, LOOKS.length)].name);
@@ -734,6 +754,19 @@ perfBar = new PerformanceBar(document.body, THEMES, {
   onPip: () => void togglePip(),
 });
 perfBar.setModes(MODE_GROUPS);
+perfBar.setAuto(setSettings.auto);
+
+/** Auto looks on/off — from the bar or key A. Starts a fresh phrase count. */
+function toggleAuto(): void {
+  setSettings = { ...setSettings, auto: !setSettings.auto };
+  saveSet(storage, setSettings);
+  setPanel.set(setSettings);
+  phraseClock.restart(nowSeconds());
+  perfBar?.setAuto(setSettings.auto, phraseClock.bpm);
+}
+hotkeys.bind('KeyA', 'Auto looks on / off', () => toggleAuto());
+// Keep the tempo in the auto button's tooltip roughly current.
+window.setInterval(() => perfBar?.setAuto(setSettings.auto, phraseClock.bpm), 2000);
 perfBar.setMode(app.getMode());
 perfBar.setTheme(controlPanel.getValue('uTheme'));
 transport.watch((s) => perfBar?.setTransport(s));
