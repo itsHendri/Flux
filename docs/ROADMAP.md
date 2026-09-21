@@ -431,7 +431,7 @@ commit unless noted.
   one centre and curl on noise; ring *n* of a chain answers to band *n*, so
   the spectrum runs out along every arm. *Done:* arms visibly carry the
   spectrum outward; bass sways them; ≥3 controls.
-- [ ] **gate** — "falling through a corridor of gates". Raymarched, domain-
+- [x] **gate** — "falling through a corridor of gates". Raymarched, domain-
   repeated gate frames along the camera's path, neon-edged; speed from bass,
   each kick lights the next gate. *Done:* sustained forward motion through
   distinct gates; the kick-lit gate is readable; ≥3 controls.

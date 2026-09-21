@@ -30,6 +30,7 @@ import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
 import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
 import { VectorMode } from './modes2d/VectorMode.ts';
+import { GateMode } from './modes2d/GateMode.ts';
 import { patternValues } from './modes2d/patterns.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -118,6 +119,7 @@ const MODES_3D = [
   new ForgeMode(),
   new SynapseMode(),
   new AnemoneMode(),
+  new GateMode(),
 ].filter((m) => renderer.registerCustomMode(m));
 for (const pass of PASSES) renderer.registerPass(pass);
 

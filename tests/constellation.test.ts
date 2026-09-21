@@ -2,11 +2,11 @@ import { describe, it, expect } from 'vitest';
 import {
   Constellation,
   FADE_SPAN,
-  HitGate,
   hitBand,
   packEdges,
   packNodes,
 } from '../src/modes3d/constellation.ts';
+import { HitGate } from '../src/core/hitGate.ts';
 
 /** Deterministic rng (mulberry32) so growth is reproducible. */
 function rng(seed = 1): () => number {

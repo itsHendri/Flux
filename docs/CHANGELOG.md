@@ -5,6 +5,36 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — gate: falling through a corridor of gates
+
+A raymarched flight down a corridor of frames. Space is cut into slabs a
+Spacing apart (domain repetition, per iq), and each slab holds one gate:
+square, ring or hexagon, picked and turned by the slab's own index, so the
+corridor never repeats in a way the eye catches. The path bends on slow sines
+and the camera rides it, banking a little into the curves. The gates are lit
+the neon way, the same glow accumulation lattice uses: every march step adds
+light by how close the ray passed to a frame, so edges shine with no lights in
+the scene. Each gate glows its own step along the theme.
+
+It's a thin CustomMode rather than a fragment mode, for the two things a
+shader can't do. **Distance flown** is the integral of a speed that follows
+the bass (plus a steady drift in silence and a surge on kicks), so it's
+accumulated on the CPU as `uTravel`. **Which gate a kick lit**: the next one
+ahead at the moment of the kick, remembered so it stays lit as you fly
+through it.
+
+`HitGate` (one hit per decaying pulse) moved from synapse's graph module to
+`core/hitGate.ts` now that two modes use it.
+
+Controls: Speed, Spacing, Twist, Glow. New look: **corridor**.
+
+Verified in the preview: steady forward flight past distinct gates of all
+three shapes; with a synthetic kick every second, the ring gate ahead flares
+cyan as it approaches and is flown through. Build clean, 140/140 tests,
+overlay empty.
+
+---
+
 ## Phase 7 — anemone: chains of rings from one point
 
 Arms leave one centre, spread evenly over the sphere (a Fibonacci spread, so

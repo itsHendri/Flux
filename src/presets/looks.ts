@@ -339,6 +339,21 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'corridor',
+    note: 'Falling through neon gates; the kick lights the next one.',
+    preset: {
+      mode: 'gate',
+      values: {
+        theme: 0,
+        themeMix: 0.9,
+        'fx-bloom': 1,
+        bloomIntensity: 0.9,
+        gateGlow: 1.3,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**
