@@ -397,7 +397,8 @@ self-review of each task. Order taken: picker, stereo + goniometer, forge,
 synapse, governor, then the unscoped photism directions. Each is sized to one
 commit unless noted.
 
-- [ ] **Stereo analysis + goniometer mode.** The one photism direction FLUX
+- [x] **Stereo analysis + goniometer mode.** *(Shipped as `vector` — a look
+  called `scope` already existed — with the `phosphor` look.)* The one photism direction FLUX
   can't do yet: the analyser is mono. Split the source into L/R
   (`ChannelSplitterNode` → two analysers), add a stereo waveform to the audio
   texture (a third row, or a second texture), and a `scope` mode plotting L

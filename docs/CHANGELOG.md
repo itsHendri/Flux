@@ -5,6 +5,46 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 7 — vector: left against right
+
+The goniometer, the last photism direction that was waiting on stereo. It
+plots each instant's left sample against its right, so the picture is the
+**space between the speakers**: mono is a line, a hard-panned signal lies on an
+axis, a wide pad blooms into a cloud, and a phase problem turns the shape
+sideways. It's called `vector` (as in vectorscope) because the built-in *look*
+`scope` already existed.
+
+- **Two views.** **X / Y** is the oscilloscope: L across, R up, so mono is the
+  diagonal, and "oscilloscope music" written for an X/Y display draws its
+  pictures here. **Mid / Side** is the goniometer engineers read: mono stands
+  upright and width spreads it sideways.
+- **The beam is woscope's** (m1el, github.com/m1el/woscope, MIT): one quad per
+  segment between consecutive samples, 2047 of them instanced with no vertex
+  buffers, and a Gaussian spot integrated along each segment in closed form
+  (a Gaussian across times a difference of erfs along). Energy is per unit
+  *time*, so where the beam lingers it burns: the turning points of a sine are
+  brighter than its middle, as on a real tube.
+- **Phosphor that fades in place.** The buffer is multiplied down with a blend
+  (ZERO, SRC_ALPHA), no ping-pong, and the new frame is laid on with the
+  complementary weight. Together that's an exponential moving average, so the
+  trace is equally bright at any Persistence and any frame rate.
+- **Automatic gain** like a scope's AGC, up to 8×: fast down, slow up, so a quiet
+  passage fills the face without pumping. Zoom sits on top of it.
+- Colour is P31 green pulled toward the theme by Tint; the hue walks with
+  `uWidth`, so a mix that opens up changes colour. Kicks flare the beam a
+  little. Graticule toggle for the scope face.
+- New look: **phosphor** — green on black with bloom.
+
+Verified in the preview with synthetic stereo WAVs, predictions first: a tone
+hard left draws a horizontal line; identical channels a diagonal; a
+**1-channel** WAV also a diagonal (the upmix working — this is how a mono mic
+arrives); a 3:2 frequency pair the textbook 3:2 Lissajous knot; decorrelated
+partials a cloud; Mid / Side stands mono upright (and needed halving to fit
+the height — fixed). Build clean, 109/109 tests, overlay empty. Persistence
+can't accumulate in the pane, so the length of the trail is for real Chrome.
+
+---
+
 ## Phase 7 — stereo analysis (engine)
 
 FLUX has only ever heard in mono: one analyser fed the source mixed down.

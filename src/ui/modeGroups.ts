@@ -13,7 +13,7 @@ export interface ModeGroup {
 }
 
 export const MODE_GROUPS: ModeGroup[] = [
-  { label: 'signal', modes: ['bars', 'waveform', 'spectro', 'scope'] },
+  { label: 'signal', modes: ['bars', 'waveform', 'spectro', 'vector'] },
   { label: 'fields', modes: ['flow', 'cells', 'mandala', 'sand', 'fur', 'logo'] },
   { label: 'simulations', modes: ['reaction', 'fluid'] },
   { label: 'raymarched', modes: ['raymarch', 'chrome', 'bulb', 'lattice'] },

@@ -351,6 +351,61 @@ export const CONTROLS: ControlDef[] = [
     modes: ['spectro'],
   },
   {
+    // X/Y is the oscilloscope (L across, R up: mono is a diagonal, and
+    // oscilloscope music draws its pictures); mid/side is the goniometer
+    // engineers read (mono stands upright, width spreads sideways).
+    id: 'scopeView',
+    name: 'View',
+    glslName: 'uScopeView',
+    type: 'select',
+    options: [
+      { label: 'X / Y', value: 0 },
+      { label: 'Mid / Side', value: 1 },
+    ],
+    default: 0,
+    modes: ['vector'],
+  },
+  {
+    id: 'scopePersist',
+    name: 'Persistence',
+    glslName: 'uScopePersist',
+    min: 0,
+    max: 1,
+    step: 0.01,
+    default: 0.45,
+    modes: ['vector'],
+  },
+  {
+    id: 'scopeBeam',
+    name: 'Beam',
+    glslName: 'uScopeBeam',
+    min: 0.3,
+    max: 4,
+    step: 0.05,
+    default: 1,
+    modes: ['vector'],
+  },
+  {
+    // On top of the automatic gain, which already keeps a quiet signal from
+    // shrinking to a dot.
+    id: 'scopeZoom',
+    name: 'Zoom',
+    glslName: 'uScopeZoom',
+    min: 0.25,
+    max: 2,
+    step: 0.01,
+    default: 1,
+    modes: ['vector'],
+  },
+  {
+    id: 'scopeGraticule',
+    name: 'Graticule',
+    glslName: 'uScopeGraticule',
+    type: 'toggle',
+    default: true,
+    modes: ['vector'],
+  },
+  {
     // Simulation height in cells; width follows the window's aspect. Every
     // pass is a full-screen draw over this and the pressure solve runs
     // eighteen of them, so this is the perf control for the mode.

@@ -272,6 +272,24 @@ export const LOOKS: Look[] = [
       },
     },
   },
+  {
+    name: 'phosphor',
+    note: 'Left against right on a green scope face — the stereo picture, glowing.',
+    preset: {
+      mode: 'vector',
+      values: {
+        // Mostly the phosphor's own green: a scope that takes on the theme
+        // fully stops reading as a scope.
+        theme: 2,
+        themeMix: 0.25,
+        'fx-bloom': 1,
+        bloomIntensity: 0.6,
+        scopePersist: 0.6,
+        scopeBeam: 1.2,
+        tonemap: 2,
+      },
+    },
+  },
 ];
 
 /**

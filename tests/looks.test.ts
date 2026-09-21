@@ -8,6 +8,7 @@ import { MODES } from '../src/shaders/modes.ts';
 import { ReactionMode } from '../src/modes2d/ReactionMode.ts';
 import { FluidMode } from '../src/modes2d/FluidMode.ts';
 import { SpectrogramMode } from '../src/modes2d/SpectrogramMode.ts';
+import { VectorMode } from '../src/modes2d/VectorMode.ts';
 import { MagnetoMode } from '../src/modes3d/MagnetoMode.ts';
 import { Trails3DMode } from '../src/modes3d/Trails3DMode.ts';
 import { resolvePreset } from '../src/presets/presets.ts';
@@ -22,6 +23,7 @@ const CUSTOM_MODES = [
   new ReactionMode(),
   new FluidMode(),
   new SpectrogramMode(),
+  new VectorMode(),
   new MagnetoMode(),
   new Trails3DMode(),
 ];

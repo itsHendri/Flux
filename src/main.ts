@@ -26,6 +26,7 @@ import { MagnetoMode } from './modes3d/MagnetoMode.ts';
 import { ReactionMode } from './modes2d/ReactionMode.ts';
 import { FluidMode } from './modes2d/FluidMode.ts';
 import { SpectrogramMode } from './modes2d/SpectrogramMode.ts';
+import { VectorMode } from './modes2d/VectorMode.ts';
 import { patternValues } from './modes2d/patterns.ts';
 import { ControlPanel } from './ui/ControlPanel.ts';
 import { SourcePicker } from './ui/SourcePicker.ts';
@@ -102,6 +103,7 @@ const MODES_3D = [
   new ReactionMode(),
   new FluidMode(),
   new SpectrogramMode(),
+  new VectorMode(),
   new MagnetoMode(),
   new Trails3DMode(),
 ].filter((m) => renderer.registerCustomMode(m));
