@@ -4,14 +4,16 @@ import type { FrameState } from '../core/state.ts';
 import fullscreenVert from '../shaders/fullscreen.vert?raw';
 import gateFrag from '../shaders/modes2d/gate.frag?raw';
 import { HitGate } from '../core/hitGate.ts';
+import { beatCorrection, gatesPerBeat } from './gateLock.ts';
 
 /**
  * GATE — falling through a corridor of gates (photism).
  *
  * The picture is one raymarched fullscreen pass (gate.frag); this class exists
  * for the two things a shader can't do. **Distance flown**: speed follows the
- * bass, and position is the integral of speed, so it's accumulated here and
- * handed over as uTravel. **Which gate a kick lit**: the next gate ahead at the
+ * bass — or, locked to the beat, is steered so a gate passes on each beat —
+ * and position is the integral of speed, so it's accumulated here and handed
+ * over as uTravel. **Which gate a kick lit**: the next gate ahead at the
  * moment of the kick, remembered so it keeps glowing as you fly through it.
  */
 export class GateMode implements CustomMode {
@@ -22,6 +24,9 @@ export class GateMode implements CustomMode {
   private travel = 0;
   private litGate = -1e6;
   private litAt = -1e6;
+  private lastBar = 0;
+  /** Units per second, eased, so gaining or losing the lock doesn't lurch. */
+  private speed = 1.2;
   private readonly kicks = new HitGate(0.15);
 
   init(ctx: CustomModeContext): boolean {
@@ -40,14 +45,32 @@ export class GateMode implements CustomMode {
     const p = this.prog.program;
     const a = state.audio;
 
-    // Units per second: a steady drift even in silence, pushed by the bass,
-    // surged by a kick.
-    const speed = num(state.controls['uGateSpeed'], 1);
-    this.travel += Math.min(state.dt, 0.1) * speed * (1.2 + a.bass * 4.5 + a.beat * 3);
-
+    const dt = Math.min(state.dt, 0.1);
+    const speedCtl = num(state.controls['uGateSpeed'], 1);
     const spacing = num(state.controls['uGateSpacing'], 3);
-    if (this.kicks.update(a.beat, state.time, 0.6)) {
-      // The next gate ahead of the camera — close enough to reach while it's lit.
+    const locked = a.lock > 0.5;
+    const onBar = a.barCount !== this.lastBar;
+    this.lastBar = a.barCount;
+
+    let target: number;
+    if (locked) {
+      // On the beat: gates pass at a whole number per beat (Speed picks one
+      // every other beat, one per beat, or two), and the flight is steered so
+      // the camera crosses a gate exactly on the beat.
+      const perBeat = gatesPerBeat(speedCtl);
+      target = (perBeat * spacing * a.bpm) / 60;
+      this.travel += beatCorrection(this.travel, spacing, a.beatPhase, perBeat, dt);
+    } else {
+      // Reacting: a steady drift even in silence, pushed by the bass, surged
+      // by a kick.
+      target = speedCtl * (1.2 + a.bass * 4.5 + a.beat * 3);
+    }
+    this.speed += (target - this.speed) * (1 - Math.exp(-dt / 0.4));
+    this.travel += dt * this.speed;
+
+    // Light the next gate ahead: on each downbeat while locked, else on a kick.
+    const kick = this.kicks.update(a.beat, state.time, 0.6);
+    if (locked ? onBar : kick) {
       this.litGate = Math.floor(this.travel / spacing + 0.5) + 1;
       this.litAt = state.time;
     }

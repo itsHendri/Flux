@@ -5,6 +5,49 @@ adds one entry (see `AGENT_LOOP.md`).
 
 ---
 
+## Phase 9 — modes on the bar
+
+The beat tracker put to work. Each of these keeps its old reactive behaviour
+whenever there's no lock, so nothing changes on music without a clear kick.
+
+- **gate** flies **a whole number of gates per beat** (Speed picks one every
+  other beat, one, or two) and is steered so the camera crosses a gate
+  *exactly on the beat*. The correction takes the short way round and eases in
+  over a quarter second, so gaining the lock glides rather than jumps; speed
+  itself eases too. The downbeat lights the next gate.
+- **forge** shatters **on the downbeat**: every bar, every 2 or every 4, as
+  Shatter goes from touchy to calm, so each shape has time to rebuild.
+- **magneto** flips a pole **on the downbeat**, so the swarm re-sorts on the
+  one.
+- **synapse** fires a star **on the downbeat**.
+- **spacetime** surges on a *predicted* pulse on every beat, with an extra
+  glare on the downbeat.
+- **The kaleido effect** turns half a wedge **on every bar**, easing into the
+  downbeat, on any mode.
+
+To make that possible the tracker now counts **beats and downbeats passed
+while locked** (`AudioFrame.beatCount` / `barCount`, builtin `uDownbeats`).
+A mode acts when the count changes. The counts never change while unlocked,
+so a lost lock just holds still, and a correction that nudges the counter
+back across a beat can't count it twice.
+
+**A near miss, and a test so it can't recur.** The downbeat builtin was first
+called `uBarCount`, which is also the `bars` mode's column control. Every
+program declares builtins and controls side by side, so the redefinition broke
+*every shader at once*, and neither TypeScript nor the unit tests could see
+it; only the in-browser sweep did. A new test fails if any builtin shares a
+name with a control, or two controls share a uniform.
+
+Verified: build clean, 182/182 tests (new: locked beat/bar counting, gate's
+beat steering converging onto the beat from 43% out of phase and taking the
+short way round, and the uniform-name test). In the preview all 27 modes and
+all 7 effects compile with an empty overlay, and without a lock each mode
+runs as before. The locked behaviour itself can't be seen in the pane (its
+sparse frames starve the tracker), so it rests on the tests and is on the
+user's live-pass list.
+
+---
+
 ## Phase 9 — the beat tracker
 
 Every mode so far *reacts*: `uBeat` fires after a kick is heard, so a picture

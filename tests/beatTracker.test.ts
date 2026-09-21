@@ -82,3 +82,28 @@ describe('BeatTracker', () => {
     expect(Math.abs(bar * 4 - Math.floor(bar * 4) - beat)).toBeLessThan(1e-6);
   });
 });
+
+describe('BeatTracker — counting', () => {
+  it('counts each beat and each bar once while locked, and nothing unlocked', () => {
+    const tr = new BeatTracker();
+    const kicks = kicksAt(120, 0.3, 20);
+    let beats = 0;
+    let bars = 0;
+    let lastBeat = 0;
+    let lastBar = 0;
+    for (let i = 0; i < 20 * FPS; i++) {
+      tr.update(i === 0 ? 0 : DT, pulse(i * DT, kicks));
+      if (tr.lockedBeats !== lastBeat) beats += tr.lockedBeats - lastBeat;
+      if (tr.lockedBars !== lastBar) bars += tr.lockedBars - lastBar;
+      lastBeat = tr.lockedBeats;
+      lastBar = tr.lockedBars;
+    }
+    // Locked after a few seconds; 2 beats/s from then on, a bar every 4.
+    expect(beats).toBeGreaterThan(20);
+    expect(beats).toBeLessThanOrEqual(40);
+    expect(Math.abs(bars - beats / 4)).toBeLessThanOrEqual(1);
+    const t2 = new BeatTracker();
+    for (let i = 0; i < 10 * FPS; i++) t2.update(DT, 0);
+    expect(t2.lockedBeats).toBe(0);
+  });
+});

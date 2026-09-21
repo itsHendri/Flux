@@ -31,6 +31,12 @@ export interface AudioFrame {
   barPhase: number;
   bpm: number;
   lock: number;
+  /**
+   * Beats and downbeats passed while locked (never counting when not). A mode
+   * acting on the beat compares with last frame's; a shader can turn by it.
+   */
+  beatCount: number;
+  barCount: number;
 }
 
 export const SILENT_FRAME: AudioFrame = {
@@ -46,6 +52,8 @@ export const SILENT_FRAME: AudioFrame = {
   barPhase: 0,
   bpm: 120,
   lock: 0,
+  beatCount: 0,
+  barCount: 0,
 };
 
 /**

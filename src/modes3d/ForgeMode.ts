@@ -52,6 +52,7 @@ export class ForgeMode implements CustomMode {
 
   private readonly clock = new ForgeClock();
   private shape = 0;
+  private lastBar = 0;
   private lastDraw = -1;
 
   init(ctx: CustomModeContext): boolean {
@@ -120,6 +121,20 @@ export class ForgeMode implements CustomMode {
     this.clock.reset(state.time);
   }
 
+  /**
+   * What the shatter clock listens to. Unlocked, the kick. Locked to the
+   * beat, the downbeat — every bar, every 2 or every 4 as Shatter goes from
+   * touchy to calm — so the shape breaks on the one, with time to rebuild.
+   */
+  private shatterPulse(state: FrameState, shatter: number): number {
+    const a = state.audio;
+    const onBar = a.barCount !== this.lastBar;
+    this.lastBar = a.barCount;
+    if (a.lock < 0.5) return a.beat;
+    const every = shatter >= 0.7 ? 1 : shatter >= 0.35 ? 2 : 4;
+    return onBar && a.barCount % every === 0 ? 1 : 0;
+  }
+
   /** Which shape to build: a fixed one, or the next in turn after each shatter. */
   private pickShape(control: number, shattered: boolean): void {
     if (control >= 0) {
@@ -141,7 +156,8 @@ export class ForgeMode implements CustomMode {
     if (this.lastDraw >= 0 && state.time - this.lastDraw > 0.5) this.seed(state);
     this.lastDraw = state.time;
 
-    const tick = this.clock.update(state.audio.beat, state.time, num(state.controls['uForgeShatter'], 0.6));
+    const shatter = num(state.controls['uForgeShatter'], 0.6);
+    const tick = this.clock.update(this.shatterPulse(state, shatter), state.time, shatter);
     this.pickShape(num(state.controls['uForgeShape'], -1), tick.shattered);
     const step = Math.min(state.dt, 0.033);
 

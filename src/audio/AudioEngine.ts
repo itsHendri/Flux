@@ -158,7 +158,13 @@ export class AudioEngine {
     if (!this.source) {
       // Hold the clock where it stopped: a shader driven by it freezes rather
       // than jumping back to the start.
-      this.frame = { ...SILENT_FRAME, drive: this.drive, bpm: this.tracker.bpm };
+      this.frame = {
+        ...SILENT_FRAME,
+        drive: this.drive,
+        bpm: this.tracker.bpm,
+        beatCount: this.tracker.lockedBeats,
+        barCount: this.tracker.lockedBars,
+      };
       return this.frame;
     }
     this.analyserL.getFloatTimeDomainData(this.leftData);
@@ -199,6 +205,8 @@ export class AudioEngine {
       barPhase: this.tracker.barPhase,
       bpm: this.tracker.bpm,
       lock: this.tracker.locked ? 1 : 0,
+      beatCount: this.tracker.lockedBeats,
+      barCount: this.tracker.lockedBars,
     };
     return this.frame;
   }

@@ -31,6 +31,9 @@ vec3 render(vec2 uv) {
   a += uSpaceTwist * (0.35 / (r + 0.25) + uDrive * 0.05);
 
   float travel = uTime * 0.12 + uDrive * 0.45;
+  // The surge: locked to the beat, a predicted pulse on every beat; otherwise
+  // the detected kick.
+  float hit = mix(uBeat, beatPulse(7.0), uLock);
   vec3 col = vec3(0.0);
 
   for (int L = 0; L < 3; L++) {
@@ -55,7 +58,7 @@ vec3 render(vec2 uv) {
 
     // Across the ray: arc distance from the cell's centre line.
     float across = (fract(ca) - 0.5) / cells * TAU * r;
-    float width = (0.0012 + 0.0025 * (1.0 - z)) * (1.0 + uBeat * 0.8);
+    float width = (0.0012 + 0.0025 * (1.0 - z)) * (1.0 + hit * 0.8);
     float line = exp(-across * across / (width * width));
     // Along it: inside the span, brightest at the head.
     float along = smoothstep(rTail, rTail + 0.02, r) * smoothstep(rHead + 0.004, rHead - 0.004, r);
@@ -67,6 +70,6 @@ vec3 render(vec2 uv) {
   }
 
   // The destination: a soft glare at the centre that flares on the kick.
-  col += themeRamp(0.5) * exp(-r * r * 60.0) * (0.25 + uLevel * 0.6 + uBeat * 1.2);
+  col += themeRamp(0.5) * exp(-r * r * 60.0) * (0.25 + uLevel * 0.6 + hit * 1.2 + barPulse(5.0) * 0.8);
   return col * mix(0.6, 1.8, uGain);
 }

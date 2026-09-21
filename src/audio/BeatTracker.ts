@@ -31,6 +31,10 @@ export class BeatTracker {
   private beats = 0;
   private started = false;
   private onTime = 0;
+  /** Highest whole beat reached; phase correction can nudge `beats` back. */
+  private topBeat = 0;
+  private lockedBeatCount = 0;
+  private lockedBarCount = 0;
 
   /** Advance by `dt` seconds with this frame's kick pulse. */
   update(dt: number, beat: number): void {
@@ -49,6 +53,31 @@ export class BeatTracker {
       }
     }
     if (this.tempo.since(this.time) > 16 * this.tempo.period) this.onTime = 0;
+
+    // Count beats and downbeats passed while locked. Counting the highest beat
+    // reached (not the current floor) means a correction that nudges the
+    // counter back across a beat can't count that beat twice.
+    const whole = Math.floor(this.beats);
+    while (this.started && whole > this.topBeat) {
+      this.topBeat++;
+      if (this.locked) {
+        this.lockedBeatCount++;
+        if (this.topBeat % 4 === 0) this.lockedBarCount++;
+      }
+    }
+  }
+
+  /**
+   * Beats passed while locked. A mode that acts on the beat compares this with
+   * last frame's: a change is a beat, and it never changes while unlocked.
+   */
+  get lockedBeats(): number {
+    return this.lockedBeatCount;
+  }
+
+  /** Downbeats passed while locked (see lockedBeats). */
+  get lockedBars(): number {
+    return this.lockedBarCount;
   }
 
   get locked(): boolean {
@@ -70,8 +99,4 @@ export class BeatTracker {
     return b - Math.floor(b);
   }
 
-  /** Whole beats counted (for modes that act once per beat or bar). */
-  get beatCount(): number {
-    return Math.floor(this.beats);
-  }
 }

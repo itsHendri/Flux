@@ -529,7 +529,7 @@ happens after a kick is detected. With the tempo known, motion can be
   bar shows the lock. *Done:* on a synthetic 120 bpm kick the tracker reads
   ~120 and its phase sits within a few percent of each kick; it re-locks after
   a tempo change and unlocks when the kicks stop; tests cover all three.
-- [ ] **Modes on the bar.** Put the lock to work where it reads best, with
+- [x] **Modes on the bar.** Put the lock to work where it reads best, with
   every mode unchanged when there's no lock: `gate` flies one gate per beat;
   `forge` shatters on the downbeat; `magneto` flips a pole on the bar;
   `spacetime` surges on each beat; `synapse` fires a star on each downbeat;

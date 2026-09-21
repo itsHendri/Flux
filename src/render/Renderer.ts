@@ -62,7 +62,7 @@ interface CompiledPass {
   stages: CompiledProgram[];
 }
 
-const BUILTIN_UNIFORMS = [
+export const BUILTIN_UNIFORMS = [
   'uTime',
   // Seconds since the last frame. Feedback effects are the reason: a per-frame
   // transform (MilkDrop's model) moves twice as fast at 120 fps as at 60, so
@@ -87,6 +87,9 @@ const BUILTIN_UNIFORMS = [
   'uBarPhase',
   'uBpm',
   'uLock',
+  // Downbeats passed while locked — an integer that only ever steps up.
+  // (Not "uBarCount": that's the bars mode's column control.)
+  'uDownbeats',
   // Uploaded-logo aspect ratio (w/h); 0 until an image is set (see setLogo).
   'uLogoAspect',
 ];
@@ -741,6 +744,7 @@ export class Renderer {
     gl.uniform1f(u.get('uBarPhase') ?? null, state.audio.barPhase);
     gl.uniform1f(u.get('uBpm') ?? null, state.audio.bpm);
     gl.uniform1f(u.get('uLock') ?? null, state.audio.lock);
+    gl.uniform1f(u.get('uDownbeats') ?? null, state.audio.barCount);
     gl.uniform1f(u.get('uLogoAspect') ?? null, this.logoAspect);
     // Spectrum + waveform on unit 5 for every program (the data is re-uploaded
     // once per frame in render(), not once per program).

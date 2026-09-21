@@ -78,6 +78,7 @@ export class MagnetoMode implements CustomMode {
   /** Pole charges, flipped on kicks so the composition keeps reorganising. */
   private poleCharge = [1, -1, 1, -1];
   private beatArmed = true;
+  private lastBar = 0;
   private readonly poleData = new Float32Array(POLE_COUNT * 4);
 
   init(ctx: CustomModeContext): boolean {
@@ -182,11 +183,18 @@ export class MagnetoMode implements CustomMode {
     }
   }
 
-  /** Orbit the poles, and flip their charges on a kick. */
+  /**
+   * Orbit the poles, and flip one's charge: on each downbeat while the beat
+   * tracker is locked (so the swarm re-sorts on the one), else on each kick.
+   */
   private updatePoles(state: FrameState): void {
     const t = state.time * (0.15 + 0.5 * num(state.controls['uMagSpin'], 0.4));
     const beat = state.audio.beat;
-    if (beat > 0.6 && this.beatArmed) {
+    const bar = state.audio.barCount;
+    const onBar = bar !== this.lastBar;
+    this.lastBar = bar;
+    const locked = state.audio.lock > 0.5;
+    if (locked ? onBar : beat > 0.6 && this.beatArmed) {
       // Flip one pole per kick, not all of them: flipping everything at once
       // just mirrors the scene, while flipping one re-sorts which half of the
       // swarm each pole owns.

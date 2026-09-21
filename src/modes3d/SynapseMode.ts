@@ -40,6 +40,7 @@ export class SynapseMode implements CustomMode {
   private graph = new Constellation(128);
   private readonly hits = new HitGate(0.09);
   private readonly fires = new HitGate(0.2);
+  private lastBar = 0;
   private entered = true;
   private camDist = 3;
   private readonly camTarget: Vec3 = [0, 0, 0];
@@ -100,14 +101,18 @@ export class SynapseMode implements CustomMode {
       this.camTarget.fill(0);
     }
 
-    // Grow on onsets; fire on kicks.
+    // Grow on onsets.
     const a = state.audio;
     const sense = num(state.controls['uSynSense'], 0.55);
     const threshold = 0.95 - sense * 0.7;
     if (this.hits.update(a.onset, t, threshold)) {
       this.graph.grow(t, hitBand(a.bass, a.mid, a.high), a.level, Math.random, num(state.controls['uSynSpread'], 1));
     }
-    if (this.fires.update(a.beat, t, 0.6)) {
+    // Fire a star: on each downbeat while locked, else on each kick.
+    const kick = this.fires.update(a.beat, t, 0.6);
+    const onBar = a.barCount !== this.lastBar;
+    this.lastBar = a.barCount;
+    if (a.lock > 0.5 ? onBar : kick) {
       const n = this.graph.randomLive(Math.random);
       if (n) this.graph.fire(n.order, t);
     }
